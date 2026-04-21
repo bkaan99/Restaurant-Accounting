@@ -17,6 +17,9 @@ export function TransactionsTab({
   tl: Intl.NumberFormat;
 }) {
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const rows = useMemo(() => {
     const incomeRows = sales.map((sale) => ({
@@ -45,10 +48,24 @@ export function TransactionsTab({
   }, [sales, expenses, menuItems]);
 
   const filteredRows = rows.filter((row) => {
-    if (filter === "all") return true;
-    if (filter === "income") return row.type === "income";
-    return row.type === "expense";
+    const typeMatch = filter === "all" ? true : filter === "income" ? row.type === "income" : row.type === "expense";
+    if (!typeMatch) return false;
+
+    const afterStart = startDate ? row.createdAtMs >= new Date(`${startDate}T00:00:00`).getTime() : true;
+    const beforeEnd = endDate ? row.createdAtMs <= new Date(`${endDate}T23:59:59`).getTime() : true;
+
+    return afterStart && beforeEnd;
   });
+
+  const setQuickRange = (days: number) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (days - 1));
+    const startIso = start.toISOString().slice(0, 10);
+    const endIso = end.toISOString().slice(0, 10);
+    setStartDate(startIso);
+    setEndDate(endIso);
+  };
 
   return (
     <section className={`${panelClass} border border-slate-200/80 bg-white`}>
@@ -83,11 +100,71 @@ export function TransactionsTab({
           >
             Gider
           </button>
+          <button
+            onClick={() => setShowFilters((prev) => !prev)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              showFilters ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Filtre
+          </button>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
             Toplam {filteredRows.length} işlem
           </span>
         </div>
       </div>
+
+      {showFilters ? (
+        <div className="mb-4 flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <button
+            onClick={() => setQuickRange(1)}
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+          >
+            Bugün
+          </button>
+          <button
+            onClick={() => setQuickRange(7)}
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+          >
+            Son 7 Gün
+          </button>
+          <button
+            onClick={() => setQuickRange(30)}
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+          >
+            Son 30 Gün
+          </button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Başlangıç</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-600 outline-none focus:border-indigo-400"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Bitiş</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-600 outline-none focus:border-indigo-400"
+              />
+            </div>
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              Filtreleri Temizle
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="overflow-auto">
         <table className="w-full min-w-[740px] text-xs">
