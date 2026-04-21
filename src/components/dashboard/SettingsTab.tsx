@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppUser } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
@@ -17,12 +17,16 @@ export function SettingsTab({
   inputClass,
   darkMode,
   onToggleDarkMode,
+  restaurantName,
+  onRestaurantNameChange,
 }: {
   user: AppUser;
   panelClass: string;
   inputClass: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  restaurantName: string;
+  onRestaurantNameChange: (name: string) => void;
 }) {
   const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX Restaurant",
@@ -33,9 +37,14 @@ export function SettingsTab({
 
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
     ...defaultRestaurantSettings,
+    restaurantName,
   });
   const [saved, setSaved] = useState(false);
   const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "appearance" | "system">("profile");
+
+  useEffect(() => {
+    setRestaurantSettings((prev) => ({ ...prev, restaurantName }));
+  }, [restaurantName]);
 
   const handleSave = () => {
     setSaved(true);
@@ -161,7 +170,11 @@ export function SettingsTab({
                 <input
                   className={inputClass}
                   value={restaurantSettings.restaurantName}
-                  onChange={(e) => setRestaurantSettings((p) => ({ ...p, restaurantName: e.target.value }))}
+                  onChange={(e) => {
+                    const nextName = e.target.value;
+                    setRestaurantSettings((p) => ({ ...p, restaurantName: nextName }));
+                    onRestaurantNameChange(nextName);
+                  }}
                 />
               </div>
               <div>
@@ -209,7 +222,10 @@ export function SettingsTab({
                 {saved ? "✓ Kaydedildi" : "Kaydet"}
               </button>
               <button
-                onClick={() => setRestaurantSettings({ ...defaultRestaurantSettings })}
+                onClick={() => {
+                  setRestaurantSettings({ ...defaultRestaurantSettings });
+                  onRestaurantNameChange(defaultRestaurantSettings.restaurantName);
+                }}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
               >
                 Sıfırla

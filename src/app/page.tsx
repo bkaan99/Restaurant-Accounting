@@ -15,6 +15,7 @@ type TabType = "dashboard" | "sales" | "expenses" | "menu" | "settings";
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const RESTAURANT_NAME_STORAGE_KEY = "restaurant_name";
 
 export default function Home() {
   const [email, setEmail] = useState("admin@restaurant.local");
@@ -32,9 +33,17 @@ export default function Home() {
   const [loading, setLoading] = useState(hasSupabaseConfig);
   const [syncError, setSyncError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+  const [restaurantName, setRestaurantName] = useState(() => {
+    if (typeof window === "undefined") return "LUMINOX";
+    return localStorage.getItem(RESTAURANT_NAME_STORAGE_KEY) || "LUMINOX";
+  });
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+
+  useEffect(() => {
+    localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
+  }, [restaurantName]);
 
   useEffect(() => {
     if (!hasSupabaseConfig || !supabase) return;
@@ -389,7 +398,7 @@ export default function Home() {
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
         <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-white/80 px-0 py-5 shadow-lg shadow-slate-900/5 backdrop-blur">
           <div className="border-b border-slate-200/80 px-6 pb-4">
-            <p className="text-xl font-bold tracking-tight text-slate-900">LUMINOX</p>
+            <p className="text-xl font-bold tracking-tight text-slate-900">{restaurantName || "LUMINOX"}</p>
             <p className="mt-1 text-xs text-slate-400">Restoran Analitiği</p>
           </div>
           <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Ana Menü</p>
@@ -453,7 +462,7 @@ export default function Home() {
 
         <section className="space-y-4">
           <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">Restaurant Yönetim Sistemi</h1>
+            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">{restaurantName || "Restaurant Yönetim Sistemi"}</h1>
             <div className="ml-auto flex items-center gap-3">
               <div className="flex h-11 min-w-[280px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3">
                 <span className="text-sm text-slate-500">⌕</span>
@@ -533,6 +542,8 @@ export default function Home() {
               inputClass={inputClass}
               darkMode={darkMode}
               onToggleDarkMode={() => setDarkMode((d) => !d)}
+              restaurantName={restaurantName}
+              onRestaurantNameChange={setRestaurantName}
             />
           ) : null}
         </section>
