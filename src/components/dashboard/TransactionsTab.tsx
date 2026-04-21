@@ -1,19 +1,17 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Expense, MenuItem, Sale } from "@/lib/types";
+import { Expense, Sale } from "@/lib/types";
 
 export function TransactionsTab({
   panelClass,
   sales,
   expenses,
-  menuItems,
   tl,
 }: {
   panelClass: string;
   sales: Sale[];
   expenses: Expense[];
-  menuItems: MenuItem[];
   tl: Intl.NumberFormat;
 }) {
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
@@ -21,6 +19,8 @@ export function TransactionsTab({
   const [endDate, setEndDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<15 | 30 | 50>(15);
 
   const rows = useMemo(() => {
     const incomeRows = sales.map((sale) => ({
@@ -50,7 +50,7 @@ export function TransactionsTab({
     }));
 
     return [...incomeRows, ...expenseRows].sort((a, b) => b.createdAtMs - a.createdAtMs);
-  }, [sales, expenses, menuItems]);
+  }, [sales, expenses]);
 
   const filteredRows = rows.filter((row) => {
     const typeMatch = filter === "all" ? true : filter === "income" ? row.type === "income" : row.type === "expense";
@@ -61,6 +61,9 @@ export function TransactionsTab({
 
     return afterStart && beforeEnd;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const setQuickRange = (days: number) => {
     const end = new Date();
@@ -116,6 +119,21 @@ export function TransactionsTab({
           <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
             Toplam {filteredRows.length} işlem
           </span>
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Sayfa Boyutu</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value) as 15 | 30 | 50);
+                setPage(1);
+              }}
+              className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 outline-none"
+            >
+              <option value={15}>15</option>
+              <option value={30}>30</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -190,7 +208,7 @@ export function TransactionsTab({
                 </td>
               </tr>
             ) : (
-              filteredRows.map((row) => (
+              paginatedRows.map((row) => (
                 <Fragment key={row.id}>
                   <tr
                     onClick={() => setExpandedRowId((prev) => (prev === row.id ? null : row.id))}
@@ -237,6 +255,27 @@ export function TransactionsTab({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+        <p className="text-xs text-slate-500">
+          Sayfa {currentPage} / {totalPages} - Toplam {filteredRows.length} kayıt
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Önceki
+          </button>
+          <button
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Sonraki
+          </button>
+        </div>
       </div>
     </section>
   );

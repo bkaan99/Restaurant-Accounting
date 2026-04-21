@@ -718,7 +718,6 @@ export default function Home() {
               panelClass={panelClass}
               sales={sales}
               expenses={expenses}
-              menuItems={menuItems}
               tl={tl}
             />
           ) : null}
