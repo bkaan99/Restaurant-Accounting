@@ -8,8 +8,9 @@ import { DashboardTab } from "@/components/dashboard/DashboardTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
+import { SettingsTab } from "@/components/dashboard/SettingsTab";
 
-type TabType = "dashboard" | "sales" | "expenses" | "menu";
+type TabType = "dashboard" | "sales" | "expenses" | "menu" | "settings";
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
@@ -30,6 +31,7 @@ export default function Home() {
   const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(hasSupabaseConfig);
   const [syncError, setSyncError] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
@@ -353,49 +355,58 @@ export default function Home() {
       <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
         <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="mb-5 text-2xl font-bold tracking-wide text-slate-800">LUMINOX</p>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Main Menu</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Ana Menü</p>
           <nav className="space-y-1.5">
-            {(["dashboard", "sales", "expenses", "menu"] as TabType[]).map((item) => (
+            {(["dashboard", "sales", "expenses", "menu", "settings"] as TabType[]).map((item) => (
               <button
                 key={item}
                 onClick={() => setTab(item)}
-                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${
+                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
                   tab === item ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                {item}
+                {item === "dashboard" && "Gösterge Paneli"}
+                {item === "sales" && "Satışlar"}
+                {item === "expenses" && "Giderler"}
+                {item === "menu" && "Menü"}
+                {item === "settings" && "Ayarlar"}
               </button>
             ))}
           </nav>
           <div className="mt-6 border-t border-slate-100 pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Help Center</p>
-            <button className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Setting</button>
-            <button className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Help Center</button>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Destek</p>
+            <button onClick={() => setTab("settings")} className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Ayarlar</button>
+            <button className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Yardım Merkezi</button>
             <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-600">
-              <span>Dark Mode</span>
-              <span className="h-5 w-10 rounded-full bg-slate-200" />
+              <span>Karanlık Mod</span>
+              <button
+                onClick={() => setDarkMode((d) => !d)}
+                className={`relative h-5 w-10 rounded-full transition-colors duration-200 ${darkMode ? "bg-indigo-600" : "bg-slate-200"}`}
+              >
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${darkMode ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
             </div>
           </div>
         </aside>
 
         <section className="space-y-4">
           <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3`}>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Satış Paneli</h1>
             <div className="min-w-[260px] flex-1">
               <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <span className="text-slate-400">🔎</span>
                 <input
                   readOnly
-                  value="Search"
+                  value="Ara..."
                   className="w-full bg-transparent text-sm text-slate-400 outline-none"
                 />
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">🔔</button>
-              <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">⚙️</button>
+              <button onClick={() => setTab("settings")} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">⚙️</button>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                {loading ? "Veriler yukleniyor..." : "Canli"}
+                {loading ? "Yükleniyor..." : "Canlı"}
               </div>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
@@ -463,6 +474,16 @@ export default function Home() {
               menuItems={menuItems}
               tl={tl}
               toggleMenuItem={toggleMenuItem}
+            />
+          ) : null}
+
+          {tab === "settings" ? (
+            <SettingsTab
+              user={user}
+              panelClass={panelClass}
+              inputClass={inputClass}
+              darkMode={darkMode}
+              onToggleDarkMode={() => setDarkMode((d) => !d)}
             />
           ) : null}
         </section>
