@@ -386,13 +386,14 @@ export default function Home() {
 
   return (
     <main className="min-h-screen w-full bg-slate-100 p-4">
-      <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
-        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-none border border-slate-200 bg-[#fafafa] px-0 py-4 shadow-sm">
-          <div className="border-b border-slate-200 px-6 pb-4">
-            <p className="text-2xl font-bold tracking-tight text-slate-900">LUMINOX</p>
+      <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
+        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-white/80 px-0 py-5 shadow-lg shadow-slate-900/5 backdrop-blur">
+          <div className="border-b border-slate-200/80 px-6 pb-4">
+            <p className="text-xl font-bold tracking-tight text-slate-900">LUMINOX</p>
+            <p className="mt-1 text-xs text-slate-400">Restaurant Analytics</p>
           </div>
-          <p className="px-6 pb-3 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Main Menu</p>
-          <nav className="space-y-0.5">
+          <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Main Menu</p>
+          <nav className="space-y-1 px-3">
             {[
               { key: "dashboard" as TabType, label: "Dashboard", icon: "◻︎" },
               { key: "menu" as TabType, label: "Product", icon: "⌂" },
@@ -403,35 +404,35 @@ export default function Home() {
               <button
                 key={item.key}
                 onClick={() => setTab(item.key)}
-                className={`flex w-full items-center gap-3 px-6 py-3 text-left text-[22px] font-semibold transition ${
+                className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
                   tab === item.key
-                    ? "bg-indigo-50/80 text-violet-600"
-                    : "text-slate-800 hover:bg-slate-100/80"
+                    ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
+                    : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
                 }`}
               >
-                <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500 transition group-hover:bg-slate-200 group-hover:text-slate-700">
                   {item.icon}
                 </span>
-                <span className="text-[18px]">{item.label}</span>
+                <span className="text-[15px] font-semibold">{item.label}</span>
               </button>
             ))}
           </nav>
-          <div className="mt-4 border-t border-slate-200 px-6 pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Help Center</p>
+          <div className="mx-3 mt-5 border-t border-slate-200/80 px-3 pt-4">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Help Center</p>
             <button
               onClick={() => setTab("settings")}
-              className="mt-1 flex w-full items-center gap-3 py-3 text-left text-[18px] font-semibold text-slate-800 transition hover:bg-slate-100/80"
+              className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
             >
-              <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">⚙</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">⚙</span>
               <span>Setting</span>
             </button>
-            <button className="mt-1 flex w-full items-center gap-3 py-3 text-left text-[18px] font-semibold text-slate-800 transition hover:bg-slate-100/80">
-              <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">ⓘ</span>
+            <button className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">ⓘ</span>
               <span>Help Center</span>
             </button>
-            <div className="mt-1 flex items-center justify-between py-3 text-[18px] font-semibold text-slate-800">
+            <div className="mt-1 flex items-center justify-between rounded-2xl px-2 py-3 text-[15px] font-semibold text-slate-700">
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">◔</span>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
                 <span>Dark Mode</span>
               </div>
               <button
@@ -451,22 +452,22 @@ export default function Home() {
         </aside>
 
         <section className="space-y-4">
-          <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-4 border border-slate-200 bg-white px-5">
-            <h1 className="text-[36px] font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
+          <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-900/5 backdrop-blur">
+            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
             <div className="ml-auto flex items-center gap-3">
-              <div className="flex h-11 min-w-[260px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+              <div className="flex h-11 min-w-[280px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3">
                 <span className="text-sm text-slate-500">⌕</span>
                 <input readOnly value="Search" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
                 <span className="text-xs text-slate-400">⌘+K</span>
               </div>
-              <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">✉</button>
-              <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">◔</button>
-              <button onClick={() => setTab("settings")} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">⚙</button>
+              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>
+              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">◔</button>
+              <button onClick={() => setTab("settings")} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">⚙</button>
               <div className="flex items-center gap-2 pl-1">
-                <div className="h-9 w-9 rounded-full bg-slate-300" />
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                  className="rounded-xl border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
                 >
                   Çıkış
                 </button>
