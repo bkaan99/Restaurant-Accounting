@@ -387,72 +387,86 @@ export default function Home() {
   return (
     <main className="min-h-screen w-full bg-slate-100 p-4">
       <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
-        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="mb-5 text-2xl font-bold tracking-wide text-slate-800">LUMINOX</p>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Ana Menü</p>
-          <nav className="space-y-1.5">
-            {(["dashboard", "sales", "expenses", "menu", "settings"] as TabType[]).map((item) => (
+        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-none border border-slate-200 bg-[#fafafa] px-0 py-4 shadow-sm">
+          <div className="border-b border-slate-200 px-6 pb-4">
+            <p className="text-2xl font-bold tracking-tight text-slate-900">LUMINOX</p>
+          </div>
+          <p className="px-6 pb-3 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Main Menu</p>
+          <nav className="space-y-0.5">
+            {[
+              { key: "dashboard" as TabType, label: "Dashboard", icon: "◻︎" },
+              { key: "menu" as TabType, label: "Product", icon: "⌂" },
+              { key: "sales" as TabType, label: "Statistic", icon: "↗" },
+              { key: "expenses" as TabType, label: "Analytics", icon: "◔" },
+              { key: "settings" as TabType, label: "Customers", icon: "◌" },
+            ].map((item) => (
               <button
-                key={item}
-                onClick={() => setTab(item)}
-                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-                  tab === item ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                key={item.key}
+                onClick={() => setTab(item.key)}
+                className={`flex w-full items-center gap-3 px-6 py-3 text-left text-[22px] font-semibold transition ${
+                  tab === item.key
+                    ? "bg-indigo-50/80 text-violet-600"
+                    : "text-slate-800 hover:bg-slate-100/80"
                 }`}
               >
-                {item === "dashboard" && "Gösterge Paneli"}
-                {item === "sales" && "Satışlar"}
-                {item === "expenses" && "Giderler"}
-                {item === "menu" && "Menü"}
-                {item === "settings" && "Ayarlar"}
+                <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">
+                  {item.icon}
+                </span>
+                <span className="text-[18px]">{item.label}</span>
               </button>
             ))}
           </nav>
-          <div className="mt-6 border-t border-slate-100 pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Destek</p>
-            <button onClick={() => setTab("settings")} className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Ayarlar</button>
-            <button className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Yardım Merkezi</button>
-            <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-600">
-              <span>Karanlık Mod</span>
+          <div className="mt-4 border-t border-slate-200 px-6 pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Help Center</p>
+            <button
+              onClick={() => setTab("settings")}
+              className="mt-1 flex w-full items-center gap-3 py-3 text-left text-[18px] font-semibold text-slate-800 transition hover:bg-slate-100/80"
+            >
+              <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">⚙</span>
+              <span>Setting</span>
+            </button>
+            <button className="mt-1 flex w-full items-center gap-3 py-3 text-left text-[18px] font-semibold text-slate-800 transition hover:bg-slate-100/80">
+              <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">ⓘ</span>
+              <span>Help Center</span>
+            </button>
+            <div className="mt-1 flex items-center justify-between py-3 text-[18px] font-semibold text-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center text-base leading-none">◔</span>
+                <span>Dark Mode</span>
+              </div>
               <button
                 onClick={() => setDarkMode((d) => !d)}
-                className={`relative h-5 w-10 rounded-full transition-colors duration-200 ${darkMode ? "bg-indigo-600" : "bg-slate-200"}`}
+                className={`relative h-7 w-12 rounded-full border transition-colors duration-200 ${
+                  darkMode ? "border-indigo-600 bg-indigo-600" : "border-slate-300 bg-white"
+                }`}
               >
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${darkMode ? "translate-x-5" : "translate-x-0.5"}`} />
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                    darkMode ? "translate-x-6" : "translate-x-0.5"
+                  }`}
+                />
               </button>
             </div>
           </div>
         </aside>
 
         <section className="space-y-4">
-          <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3`}>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Satış Paneli</h1>
-            <div className="min-w-[260px] flex-1">
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <span className="text-slate-400">🔎</span>
-                <input
-                  readOnly
-                  value="Ara..."
-                  className="w-full bg-transparent text-sm text-slate-400 outline-none"
-                />
+          <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-4 border border-slate-200 bg-white px-5">
+            <h1 className="text-[36px] font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
+            <div className="ml-auto flex items-center gap-3">
+              <div className="flex h-11 min-w-[260px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+                <span className="text-sm text-slate-500">⌕</span>
+                <input readOnly value="Search" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
+                <span className="text-xs text-slate-400">⌘+K</span>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">🔔</button>
-              <button onClick={() => setTab("settings")} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">⚙️</button>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                {loading ? "Yükleniyor..." : "Canlı"}
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-semibold leading-tight text-slate-800">{user.name}</p>
-                  <p className="text-xs capitalize text-slate-500">{user.role}</p>
-                </div>
+              <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">✉</button>
+              <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">◔</button>
+              <button onClick={() => setTab("settings")} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600">⚙</button>
+              <div className="flex items-center gap-2 pl-1">
+                <div className="h-9 w-9 rounded-full bg-slate-300" />
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
                 >
                   Çıkış
                 </button>
