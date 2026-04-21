@@ -12,6 +12,8 @@ export function LoginView({
   onEmailChange,
   onPasswordChange,
   onLogin,
+  errorMessage,
+  isSubmitting,
 }: {
   hasSupabaseConfig: boolean;
   loading: boolean;
@@ -20,6 +22,8 @@ export function LoginView({
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onLogin: () => void | Promise<void>;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
 }) {
   const [typedHeroTitle, setTypedHeroTitle] = useState("");
 
@@ -94,8 +98,25 @@ export function LoginView({
                 className="w-full rounded-xl border border-white/30 bg-white/85 px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
               />
             </div>
-            <button onClick={onLogin} className="mt-1 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2.5 font-semibold text-white transition hover:from-indigo-700 hover:to-violet-700">
-              Giris Yap
+            {errorMessage ? (
+              <div className="flex items-start gap-2 rounded-xl border border-red-300/70 bg-red-50/90 px-3 py-2.5 text-sm text-red-700">
+                <span className="mt-0.5 shrink-0 text-base leading-none">⚠</span>
+                <span>{errorMessage}</span>
+              </div>
+            ) : null}
+            <button
+              onClick={onLogin}
+              disabled={isSubmitting}
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2.5 font-semibold text-white transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-80"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  <span>Giriş yapılıyor...</span>
+                </>
+              ) : (
+                <span>Giriş Yap</span>
+              )}
             </button>
           </div>
           <p className="mt-4 text-xs text-slate-200/90">Supabase Auth ile e-posta/sifre girisi kullanilir.</p>

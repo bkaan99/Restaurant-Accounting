@@ -36,6 +36,10 @@ export default function Home() {
   const [expenseForm, setExpenseForm] = useState({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
   const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
   const [loading, setLoading] = useState(hasSupabaseConfig);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
+  const [dashboardVisible, setDashboardVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [restaurantName, setRestaurantName] = useState(() => {
@@ -247,32 +251,50 @@ export default function Home() {
   }, [sales]);
 
   const handleLogin = async () => {
+    setLoginError(null);
     if (!email || !password) {
-      pushToast("E-posta ve sifre gerekli.", "warning");
+      setLoginError("E-posta ve şifre gerekli.");
       return;
     }
+
+    setLoginSubmitting(true);
 
     if (hasSupabaseConfig && supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) {
-        pushToast("Giris basarisiz. E-posta veya sifre hatali.");
+        setLoginError("Giriş başarısız. E-posta veya şifre hatalı.");
+        setLoginSubmitting(false);
         return;
       }
       const found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
       if (!found) {
-        pushToast("Kullanici profili bulunamadi. users tablosunu kontrol edin.");
+        setLoginError("Kullanıcı profili bulunamadı. Lütfen yöneticinizle iletişime geçin.");
+        setLoginSubmitting(false);
         return;
       }
-      setCurrentUserId(found.id);
+      setShowSplash(true);
+      setTimeout(() => {
+        setCurrentUserId(found.id);
+        setShowSplash(false);
+        setLoginSubmitting(false);
+        setTimeout(() => setDashboardVisible(true), 50);
+      }, 1000);
       return;
     }
 
     const fallbackUser = appUsers.find((u) => u.email === email);
     if (!fallbackUser || password !== "123456") {
-      pushToast("Demo giris: e-posta veya sifre hatali.");
+      setLoginError("Demo giriş: e-posta veya şifre hatalı.");
+      setLoginSubmitting(false);
       return;
     }
-    setCurrentUserId(fallbackUser.id);
+    setShowSplash(true);
+    setTimeout(() => {
+      setCurrentUserId(fallbackUser.id);
+      setShowSplash(false);
+      setLoginSubmitting(false);
+      setTimeout(() => setDashboardVisible(true), 50);
+    }, 1000);
   };
 
   const handleLogout = async () => {
@@ -551,20 +573,39 @@ export default function Home() {
 
   if (!user) {
     return (
-      <LoginView
-        hasSupabaseConfig={hasSupabaseConfig}
-        loading={loading}
-        email={email}
-        password={password}
-        onEmailChange={setEmail}
-        onPasswordChange={setPassword}
-        onLogin={handleLogin}
-      />
+      <>
+        {showSplash && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-slate-950">
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute inline-block h-16 w-16 animate-spin rounded-full border-4 border-indigo-500/30 border-t-indigo-500" />
+              <span className="text-2xl">◻︎</span>
+            </div>
+            <p className="text-sm font-semibold tracking-widest text-indigo-300 uppercase">Yükleniyor...</p>
+          </div>
+        )}
+        {!showSplash && (
+          <LoginView
+            hasSupabaseConfig={hasSupabaseConfig}
+            loading={loading}
+            email={email}
+            password={password}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onLogin={handleLogin}
+            errorMessage={loginError}
+            isSubmitting={loginSubmitting}
+          />
+        )}
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen w-full bg-slate-100 p-4">
+    <main
+      className={`min-h-screen w-full bg-slate-100 p-4 transition-opacity duration-700 ${
+        dashboardVisible ? "opacity-100" : "opacity-0"
+      }`}
+    >
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
         <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 px-0 py-5 shadow-lg shadow-slate-900/5">
           <div className="mx-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 px-4 py-4">
