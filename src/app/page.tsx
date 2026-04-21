@@ -9,8 +9,9 @@ import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
+import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
 
-type TabType = "dashboard" | "sales" | "expenses" | "menu" | "settings";
+type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "settings";
 type RestaurantSettings = { restaurantName: string; currency: string; timezone: string; taxRate: string };
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
@@ -477,6 +478,7 @@ export default function Home() {
               { key: "dashboard" as TabType, label: "Gösterge", icon: "◻︎" },
               { key: "menu" as TabType, label: "Menü", icon: "⌂" },
               { key: "sales" as TabType, label: "Satış", icon: "↗" },
+              { key: "transactions" as TabType, label: "İşlemler", icon: "◫" },
               { key: "expenses" as TabType, label: "Gider", icon: "◔" },
               { key: "settings" as TabType, label: "Ayarlar", icon: "◌" },
             ].map((item) => (
@@ -580,6 +582,16 @@ export default function Home() {
               createSale={createSale}
               clearCart={clearCart}
               sales={sales}
+            />
+          ) : null}
+
+          {tab === "transactions" ? (
+            <TransactionsTab
+              panelClass={panelClass}
+              sales={sales}
+              expenses={expenses}
+              menuItems={menuItems}
+              tl={tl}
             />
           ) : null}
 
