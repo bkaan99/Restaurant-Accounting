@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { MenuItem } from "@/lib/types";
 
 export function MenuTab({
@@ -23,36 +24,13 @@ export function MenuTab({
   toggleMenuItem: (item: MenuItem) => Promise<void>;
   deleteMenuItem: (item: MenuItem) => Promise<void>;
 }) {
+  const [showAddModal, setShowAddModal] = useState(false);
   const activeCount = menuItems.filter((item) => item.active).length;
   const passiveCount = menuItems.length - activeCount;
 
   return (
-    <section className="grid gap-4 lg:grid-cols-3">
-      <div className={`${panelClass} border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40`}>
-        <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Yeni Ürün</p>
-          <h2 className="mt-1 text-lg font-semibold text-slate-900">Menüye Ürün Ekle</h2>
-          <p className="mt-1 text-sm text-slate-500">Ürün adı, kategorisi ve fiyatını girerek menünüzü güncel tutun.</p>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Ürün Adı</label>
-            <input className={inputClass} placeholder="Örn: Izgara Köfte" value={menuForm.name} onChange={(e) => setMenuForm((prev) => ({ ...prev, name: e.target.value }))} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Kategori</label>
-            <input className={inputClass} placeholder="Örn: Ana Yemek" value={menuForm.category} onChange={(e) => setMenuForm((prev) => ({ ...prev, category: e.target.value }))} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Satış Fiyatı</label>
-            <input className={inputClass} placeholder="0" type="number" value={menuForm.price} onChange={(e) => setMenuForm((prev) => ({ ...prev, price: e.target.value }))} />
-          </div>
-          <button onClick={createMenuItem} className="w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
-            Ürün Ekle
-          </button>
-        </div>
-      </div>
-      <div className={`${panelClass} lg:col-span-2`}>
+    <section className="space-y-4">
+      <div className={panelClass}>
         <div className="mb-4 grid gap-2 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Toplam</p>
@@ -73,9 +51,17 @@ export function MenuTab({
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Menü</p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Menü Listesi</h2>
           </div>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            Toplam {menuItems.length} ürün
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              Toplam {menuItems.length} ürün
+            </span>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              + Ürün Ekle
+            </button>
+          </div>
         </div>
         <div className="overflow-auto">
           <table className="w-full min-w-[500px] text-sm">
@@ -129,6 +115,59 @@ export function MenuTab({
           </table>
         </div>
       </div>
+
+      {showAddModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-indigo-100 bg-white p-5 shadow-xl">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Yeni Ürün</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-900">Menüye Ürün Ekle</h3>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="rounded-lg px-2 py-1 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Ürün Adı</label>
+                <input className={inputClass} placeholder="Örn: Izgara Köfte" value={menuForm.name} onChange={(e) => setMenuForm((prev) => ({ ...prev, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Kategori</label>
+                <input className={inputClass} placeholder="Örn: Ana Yemek" value={menuForm.category} onChange={(e) => setMenuForm((prev) => ({ ...prev, category: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Satış Fiyatı</label>
+                <input className={inputClass} placeholder="0" type="number" value={menuForm.price} onChange={(e) => setMenuForm((prev) => ({ ...prev, price: e.target.value }))} />
+              </div>
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!menuForm.name || !menuForm.category || !menuForm.price) return;
+                    await createMenuItem();
+                    setShowAddModal(false);
+                  }}
+                  className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                >
+                  Ürün Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
