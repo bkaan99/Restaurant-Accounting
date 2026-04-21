@@ -26,6 +26,7 @@ export type SaleItem = {
 
 export type Sale = {
   id: string;
+  receiptNo: string;
   createdAt: string;
   createdBy: string;
   totalAmount: number;
@@ -34,6 +35,7 @@ export type Sale = {
 
 export type Expense = {
   id: string;
+  receiptNo: string;
   title: string;
   supplier: string;
   amount: number;

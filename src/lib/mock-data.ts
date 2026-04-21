@@ -35,6 +35,7 @@ export const menuItemsSeed: MenuItem[] = [
 export const salesSeed: Sale[] = [
   {
     id: "s1",
+    receiptNo: "SAT-S1",
     createdAt: new Date().toISOString(),
     createdBy: "Ahmet Yildiz",
     totalAmount: 390,
@@ -48,6 +49,7 @@ export const salesSeed: Sale[] = [
 export const expensesSeed: Expense[] = [
   {
     id: "e1",
+    receiptNo: "GDR-E1",
     title: "Tavuk Alimi",
     supplier: "Toptanci A",
     amount: 3200,
@@ -56,6 +58,7 @@ export const expensesSeed: Expense[] = [
   },
   {
     id: "e2",
+    receiptNo: "GDR-E2",
     title: "Icecek Alimi",
     supplier: "Toptanci B",
     amount: 1450,

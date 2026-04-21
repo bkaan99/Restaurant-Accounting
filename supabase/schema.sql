@@ -53,12 +53,29 @@ create table if not exists public.expenses (
 
 alter table public.sales add column if not exists receipt_no text;
 alter table public.expenses add column if not exists receipt_no text;
-update public.sales
-set receipt_no = concat('SAT-', upper(substr(replace(id::text, '-', ''), 1, 10)))
-where receipt_no is null;
-update public.expenses
-set receipt_no = concat('GDR-', upper(substr(replace(id::text, '-', ''), 1, 10)))
-where receipt_no is null;
+with ranked_sales as (
+  select
+    id,
+    concat('F-', to_char(created_at, 'YYYY-MM-DD'), '-', lpad(row_number() over (partition by date(created_at) order by created_at, id)::text, 3, '0')) as next_receipt_no
+  from public.sales
+  where receipt_no is null
+)
+update public.sales s
+set receipt_no = ranked_sales.next_receipt_no
+from ranked_sales
+where s.id = ranked_sales.id;
+
+with ranked_expenses as (
+  select
+    id,
+    concat('F-', to_char(expense_date, 'YYYY-MM-DD'), '-', lpad(row_number() over (partition by expense_date order by created_at, id)::text, 3, '0')) as next_receipt_no
+  from public.expenses
+  where receipt_no is null
+)
+update public.expenses e
+set receipt_no = ranked_expenses.next_receipt_no
+from ranked_expenses
+where e.id = ranked_expenses.id;
 create unique index if not exists sales_receipt_no_unique_idx on public.sales(receipt_no);
 create unique index if not exists expenses_receipt_no_unique_idx on public.expenses(receipt_no);
 

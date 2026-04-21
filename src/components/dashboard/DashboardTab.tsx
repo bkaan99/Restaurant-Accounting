@@ -160,7 +160,7 @@ export function DashboardTab({
               {recentSales.map((sale) => (
                 <tr key={sale.id} className="border-b border-slate-100">
                   <td className="py-1.5 text-slate-700">{sale.items[0]?.name ?? menuItems[0]?.name ?? "Bilinmiyor"}</td>
-                  <td className="text-slate-500">{sale.id.slice(0, 12).toUpperCase()}</td>
+                  <td className="text-slate-500">{sale.receiptNo}</td>
                   <td className="text-slate-500">{new Date(sale.createdAt).toLocaleDateString("tr-TR")}</td>
                   <td className="text-right font-semibold text-emerald-600">{tl.format(sale.totalAmount)}</td>
                 </tr>

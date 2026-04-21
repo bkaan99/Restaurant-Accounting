@@ -20,6 +20,7 @@ const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", 
 const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 const RESTAURANT_NAME_STORAGE_KEY = "restaurant_name";
+const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(seq).padStart(3, "0")}`;
 
 export default function Home() {
   const [email, setEmail] = useState("admin@restaurant.local");
@@ -122,9 +123,9 @@ export default function Home() {
       const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
         supabase.from("users").select("id, name, role, email, auth_user_id"),
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
-        supabase.from("sales").select("id, created_at, created_by, total_amount").order("created_at", { ascending: false }),
+        supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
-        supabase.from("expenses").select("id, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
+        supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
       ]);
 
       const hasError = usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error;
@@ -165,6 +166,7 @@ export default function Home() {
       }, {});
       const mappedSales: Sale[] = (salesRes.data ?? []).map((s) => ({
         id: s.id,
+        receiptNo: s.receipt_no ?? `SAT-${s.id.slice(0, 12).toUpperCase()}`,
         createdAt: s.created_at,
         createdBy: usersById[s.created_by] ?? "Bilinmiyor",
         totalAmount: Number(s.total_amount),
@@ -172,6 +174,7 @@ export default function Home() {
       }));
       const mappedExpenses: Expense[] = (expensesRes.data ?? []).map((e) => ({
         id: e.id,
+        receiptNo: e.receipt_no ?? `GDR-${e.id.slice(0, 12).toUpperCase()}`,
         title: e.title,
         supplier: e.supplier ?? "Bilinmiyor",
         amount: Number(e.amount),
@@ -283,8 +286,12 @@ export default function Home() {
 
     if (items.length === 0) return;
     const totalAmount = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const saleDateIso = new Date().toISOString().slice(0, 10);
+    const saleSeq = sales.filter((sale) => sale.createdAt.slice(0, 10) === saleDateIso).length + 1;
+    const receiptNo = makeReceiptNo(saleDateIso, saleSeq);
     const newSale: Sale = {
       id: crypto.randomUUID(),
+      receiptNo,
       createdAt: new Date().toISOString(),
       createdBy: user.name,
       totalAmount,
@@ -296,10 +303,11 @@ export default function Home() {
         .from("sales")
         .insert({
           created_by: user.id,
+          receipt_no: receiptNo,
           total_amount: totalAmount,
           payment_status: "paid_manual",
         })
-        .select("id, created_at")
+        .select("id, receipt_no, created_at")
         .single();
       if (saleError || !saleInsert) {
         pushToast("Satis Supabase'e kaydedilemedi.");
@@ -320,6 +328,7 @@ export default function Home() {
         return;
       }
       newSale.id = saleInsert.id;
+      newSale.receiptNo = saleInsert.receipt_no ?? receiptNo;
       newSale.createdAt = saleInsert.created_at;
     }
 
@@ -332,8 +341,12 @@ export default function Home() {
     if (!expenseForm.title || !expenseForm.amount || !expenseForm.expenseDate) return;
     const amount = Number(expenseForm.amount);
     if (Number.isNaN(amount) || amount <= 0) return;
+    const expenseDateIso = expenseForm.expenseDate;
+    const expenseSeq = expenses.filter((expense) => expense.expenseDate === expenseDateIso).length + 1;
+    const receiptNo = makeReceiptNo(expenseDateIso, expenseSeq);
     const newExpense: Expense = {
       id: crypto.randomUUID(),
+      receiptNo,
       title: expenseForm.title,
       supplier: expenseForm.supplier || "Bilinmiyor",
       amount,
@@ -345,6 +358,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from("expenses")
         .insert({
+          receipt_no: receiptNo,
           title: newExpense.title,
           supplier: newExpense.supplier,
           amount: newExpense.amount,
@@ -352,13 +366,14 @@ export default function Home() {
           note: newExpense.note,
           created_by: user?.id ?? null,
         })
-        .select("id")
+        .select("id, receipt_no")
         .single();
       if (error || !data) {
         pushToast("Gider Supabase'e kaydedilemedi.");
         return;
       }
       newExpense.id = data.id;
+      newExpense.receiptNo = data.receipt_no ?? receiptNo;
     }
 
     setExpenses((prev) => [newExpense, ...prev]);
