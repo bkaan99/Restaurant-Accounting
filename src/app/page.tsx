@@ -19,7 +19,10 @@ const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2
 export default function Home() {
   const [email, setEmail] = useState("admin@restaurant.local");
   const [password, setPassword] = useState("123456");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem("ra_current_user_id");
+  });
   const [appUsers, setAppUsers] = useState<AppUser[]>(users);
   const [tab, setTab] = useState<TabType>("dashboard");
   const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
@@ -35,6 +38,14 @@ export default function Home() {
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      window.localStorage.setItem("ra_current_user_id", currentUserId);
+      return;
+    }
+    window.localStorage.removeItem("ra_current_user_id");
+  }, [currentUserId]);
 
   useEffect(() => {
     const loadData = async () => {
