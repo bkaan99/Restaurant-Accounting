@@ -363,7 +363,7 @@ export default function Home() {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4">
         <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
-          <h1 className="mb-2 text-2xl font-semibold tracking-tight">Restaurant Takip Sistemi</h1>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight">Restoran Takip Sistemi</h1>
           <p className="mb-4 text-sm text-slate-500">Rol bazli giris ile siparis, gider ve analiz yonetimi</p>
           <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             Supabase baglantisi: {hasSupabaseConfig ? "Hazir" : "Yok (simdilik demo veri ile calisiyor)"}
@@ -390,16 +390,16 @@ export default function Home() {
         <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-white/80 px-0 py-5 shadow-lg shadow-slate-900/5 backdrop-blur">
           <div className="border-b border-slate-200/80 px-6 pb-4">
             <p className="text-xl font-bold tracking-tight text-slate-900">LUMINOX</p>
-            <p className="mt-1 text-xs text-slate-400">Restaurant Analytics</p>
+            <p className="mt-1 text-xs text-slate-400">Restoran Analitiği</p>
           </div>
-          <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Main Menu</p>
+          <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Ana Menü</p>
           <nav className="space-y-1 px-3">
             {[
-              { key: "dashboard" as TabType, label: "Dashboard", icon: "◻︎" },
-              { key: "menu" as TabType, label: "Product", icon: "⌂" },
-              { key: "sales" as TabType, label: "Statistic", icon: "↗" },
-              { key: "expenses" as TabType, label: "Analytics", icon: "◔" },
-              { key: "settings" as TabType, label: "Customers", icon: "◌" },
+              { key: "dashboard" as TabType, label: "Gösterge", icon: "◻︎" },
+              { key: "menu" as TabType, label: "Menü", icon: "⌂" },
+              { key: "sales" as TabType, label: "Satış", icon: "↗" },
+              { key: "expenses" as TabType, label: "Gider", icon: "◔" },
+              { key: "settings" as TabType, label: "Ayarlar", icon: "◌" },
             ].map((item) => (
               <button
                 key={item.key}
@@ -418,22 +418,22 @@ export default function Home() {
             ))}
           </nav>
           <div className="mx-3 mt-5 border-t border-slate-200/80 px-3 pt-4">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Help Center</p>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Yardım</p>
             <button
               onClick={() => setTab("settings")}
               className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">⚙</span>
-              <span>Setting</span>
+              <span>Ayarlar</span>
             </button>
             <button className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">ⓘ</span>
-              <span>Help Center</span>
+              <span>Yardım Merkezi</span>
             </button>
             <div className="mt-1 flex items-center justify-between rounded-2xl px-2 py-3 text-[15px] font-semibold text-slate-700">
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
-                <span>Dark Mode</span>
+                <span>Karanlık Mod</span>
               </div>
               <button
                 onClick={() => setDarkMode((d) => !d)}
@@ -453,11 +453,11 @@ export default function Home() {
 
         <section className="space-y-4">
           <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
+            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">Restaurant Yönetim Sistemi</h1>
             <div className="ml-auto flex items-center gap-3">
               <div className="flex h-11 min-w-[280px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3">
                 <span className="text-sm text-slate-500">⌕</span>
-                <input readOnly value="Search" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
+                <input readOnly value="Ara" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
                 <span className="text-xs text-slate-400">⌘+K</span>
               </div>
               <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>

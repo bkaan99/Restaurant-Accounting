@@ -293,7 +293,7 @@ export function SettingsTab({
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-sm text-slate-600">Veri Kaynağı</span>
                   <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {hasSupabaseConfig ? "Supabase" : "Mock Data"}
+                    {hasSupabaseConfig ? "Supabase" : "Örnek Veri"}
                   </p>
                 </div>
               </div>
