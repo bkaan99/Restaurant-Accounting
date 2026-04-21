@@ -34,29 +34,45 @@ export function DashboardTab({
   return (
     <section className="grid gap-4 xl:grid-cols-[2fr_1fr]">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Toplam Ciro</p>
+        <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/40 to-indigo-50/50 p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">Finans</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">Toplam Ciro</p>
+            </div>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+              +10%
+            </span>
+          </div>
           <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">{tl.format(stats.totalSales)}</p>
-          <p className="mt-3 text-sm text-emerald-600">+10% <span className="text-slate-400">geçen aya göre</span></p>
+          <p className="mt-1 text-sm text-slate-500">Geçen aya göre büyüme devam ediyor</p>
           <div className="mt-5 flex h-12 items-end gap-2">
             {salesChartData.slice(-6).map((item) => (
               <div
                 key={item.date}
-                className="w-3 rounded-full bg-violet-500/75"
+                className="w-3 rounded-full bg-gradient-to-t from-violet-600 to-indigo-400"
                 style={{ height: `${Math.max((item.total / maxRevenue) * 100, 16)}%` }}
               />
             ))}
           </div>
         </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Toplam Sipariş</p>
+        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50 p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-500">Operasyon</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">Toplam Sipariş</p>
+            </div>
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+              {stats.orderCount} adet
+            </span>
+          </div>
           <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-900">{stats.orderCount}</p>
-          <p className="mt-3 text-sm text-rose-600">-15% <span className="text-slate-400">geçen aya göre</span></p>
+          <p className="mt-1 text-sm text-slate-500">Sipariş hacmi günlük olarak takip ediliyor</p>
           <div className="mt-5 flex h-12 items-end gap-2">
             {salesChartData.slice(-6).map((item, index) => (
               <div
                 key={`${item.date}-${index}`}
-                className="w-3 rounded-full bg-indigo-400/80"
+                className="w-3 rounded-full bg-gradient-to-t from-indigo-500 to-sky-400"
                 style={{ height: `${Math.max(((index + 2) / 8) * 100, 16)}%` }}
               />
             ))}
