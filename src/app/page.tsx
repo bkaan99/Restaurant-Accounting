@@ -393,6 +393,24 @@ export default function Home() {
     setMenuItems((prev) => prev.map((m) => (m.id === item.id ? { ...m, active: nextActive } : m)));
   };
 
+  const deleteMenuItem = async (item: MenuItem) => {
+    const hasSaleDependency = sales.some((sale) => sale.items.some((saleItem) => saleItem.menuItemId === item.id));
+    if (hasSaleDependency) {
+      setSyncError("Bu ürün geçmiş satışlarda kullanıldığı için silinemez.");
+      return;
+    }
+
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("menu_items").delete().eq("id", item.id);
+      if (error) {
+        setSyncError("Menü ürünü Supabase'den silinemedi.");
+        return;
+      }
+    }
+
+    setMenuItems((prev) => prev.filter((menuItem) => menuItem.id !== item.id));
+  };
+
   const saveRestaurantSettings = async (settings: RestaurantSettings) => {
     setRestaurantSettings(settings);
     setRestaurantName(settings.restaurantName);
@@ -587,6 +605,7 @@ export default function Home() {
               menuItems={menuItems}
               tl={tl}
               toggleMenuItem={toggleMenuItem}
+              deleteMenuItem={deleteMenuItem}
             />
           ) : null}
 

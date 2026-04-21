@@ -11,6 +11,7 @@ export function MenuTab({
   menuItems,
   tl,
   toggleMenuItem,
+  deleteMenuItem,
 }: {
   panelClass: string;
   inputClass: string;
@@ -20,7 +21,11 @@ export function MenuTab({
   menuItems: MenuItem[];
   tl: Intl.NumberFormat;
   toggleMenuItem: (item: MenuItem) => Promise<void>;
+  deleteMenuItem: (item: MenuItem) => Promise<void>;
 }) {
+  const activeCount = menuItems.filter((item) => item.active).length;
+  const passiveCount = menuItems.length - activeCount;
+
   return (
     <section className="grid gap-4 lg:grid-cols-3">
       <div className={`${panelClass} border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40`}>
@@ -48,6 +53,21 @@ export function MenuTab({
         </div>
       </div>
       <div className={`${panelClass} lg:col-span-2`}>
+        <div className="mb-4 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Toplam</p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">{menuItems.length}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Aktif</p>
+            <p className="mt-1 text-xl font-semibold text-emerald-700">{activeCount}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-300 bg-white px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Pasif</p>
+            <p className="mt-1 text-xl font-semibold text-slate-700">{passiveCount}</p>
+          </div>
+        </div>
+
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Menü</p>
@@ -64,13 +84,14 @@ export function MenuTab({
                 <th className="rounded-l-xl px-3 py-3">Ürün</th>
                 <th className="px-3 py-3">Kategori</th>
                 <th className="px-3 py-3">Fiyat</th>
-                <th className="rounded-r-xl px-3 py-3">Durum</th>
+                <th className="px-3 py-3">Durum</th>
+                <th className="rounded-r-xl px-3 py-3 text-right">İşlem</th>
               </tr>
             </thead>
             <tbody>
               {menuItems.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-3 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={5} className="px-3 py-10 text-center text-sm text-slate-500">
                     Menüde henüz ürün yok. Soldaki form ile ilk ürününüzü ekleyin.
                   </td>
                 </tr>
@@ -88,6 +109,17 @@ export function MenuTab({
                         }`}
                       >
                         {item.active ? "Aktif" : "Pasif"}
+                      </button>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <button
+                        onClick={() => {
+                          const ok = window.confirm(`"${item.name}" ürününü silmek istiyor musunuz?`);
+                          if (ok) void deleteMenuItem(item);
+                        }}
+                        className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                      >
+                        Sil
                       </button>
                     </td>
                   </tr>
