@@ -36,11 +36,11 @@ npm run dev
 
 `http://localhost:3000`
 
-## Demo Giris Bilgileri
+## Demo Giris Bilgileri (Supabase yoksa)
 
-- admin / 123456
-- manager / 123456
-- staff / 123456
+- admin@restaurant.local / 123456
+- manager@restaurant.local / 123456
+- staff@restaurant.local / 123456
 
 ## Supabase Notu
 
@@ -54,3 +54,10 @@ Supabase bilgileri tanimli degilse uygulama demo veri ile calisir.
 4. Uygulamayi yeniden baslatin (`npm run dev`).
 
 Bu adimlardan sonra menu, satis ve gider kayitlari Supabase uzerinden okunur ve kaydedilir.
+
+## Supabase Auth Kurulumu
+
+1. Supabase panelde Authentication > Users altindan kullanicilari olusturun.
+2. E-posta/sifre ile acilan her auth kullanicisinin `id` degerini alin.
+3. `public.users` tablosunda ilgili kaydin `auth_user_id` alanini bu `id` ile esleyin.
+4. Giris ekrani artik e-posta/sifre ile Supabase Auth uzerinden calisir.

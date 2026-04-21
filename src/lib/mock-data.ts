@@ -5,22 +5,22 @@ export const users: AppUser[] = [
     id: "u1",
     name: "Ahmet Yildiz",
     role: "admin",
-    username: "admin",
-    password: "123456",
+    email: "admin@restaurant.local",
+    authUserId: null,
   },
   {
     id: "u2",
     name: "Zeynep Kaya",
     role: "manager",
-    username: "manager",
-    password: "123456",
+    email: "manager@restaurant.local",
+    authUserId: null,
   },
   {
     id: "u3",
     name: "Can Demir",
     role: "staff",
-    username: "staff",
-    password: "123456",
+    email: "staff@restaurant.local",
+    authUserId: null,
   },
 ];
 

@@ -16,7 +16,7 @@ const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 export default function Home() {
-  const [username, setUsername] = useState("admin");
+  const [email, setEmail] = useState("admin@restaurant.local");
   const [password, setPassword] = useState("123456");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [appUsers, setAppUsers] = useState<AppUser[]>(users);
@@ -44,12 +44,13 @@ export default function Home() {
       setLoading(true);
       setSyncError("");
 
-      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
-        supabase.from("users").select("id, name, role, username, password"),
+      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes, sessionRes] = await Promise.all([
+        supabase.from("users").select("id, name, role, email, auth_user_id"),
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
+        supabase.auth.getSession(),
       ]);
 
       const hasError = usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error;
@@ -63,8 +64,8 @@ export default function Home() {
         id: u.id,
         name: u.name,
         role: u.role,
-        username: u.username,
-        password: u.password,
+        email: u.email,
+        authUserId: u.auth_user_id,
       }));
       const mappedMenu: MenuItem[] = (menuRes.data ?? []).map((m) => ({
         id: m.id,
@@ -108,6 +109,11 @@ export default function Home() {
       setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
       setSales(mappedSales.length > 0 ? mappedSales : []);
       setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
+      const authUser = sessionRes.data.session?.user;
+      if (authUser) {
+        const found = mappedUsers.find((u) => u.authUserId === authUser.id || u.email === authUser.email);
+        if (found) setCurrentUserId(found.id);
+      }
       setLoading(false);
     };
 
@@ -134,14 +140,42 @@ export default function Home() {
     return Object.entries(grouped).map(([date, total]) => ({ date, total }));
   }, [sales]);
 
-  const handleLogin = () => {
-    const found = appUsers.find((u) => u.username === username && u.password === password);
-    if (!found) {
-      setLoginError("Kullanici adi veya sifre hatali.");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setLoginError("E-posta ve sifre gerekli.");
+      return;
+    }
+
+    if (hasSupabaseConfig && supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) {
+        setLoginError("Giris basarisiz. E-posta veya sifre hatali.");
+        return;
+      }
+      const found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
+      if (!found) {
+        setLoginError("Kullanici profili bulunamadi. users tablosunu kontrol edin.");
+        return;
+      }
+      setLoginError("");
+      setCurrentUserId(found.id);
+      return;
+    }
+
+    const fallbackUser = appUsers.find((u) => u.email === email);
+    if (!fallbackUser || password !== "123456") {
+      setLoginError("Demo giris: e-posta veya sifre hatali.");
       return;
     }
     setLoginError("");
-    setCurrentUserId(found.id);
+    setCurrentUserId(fallbackUser.id);
+  };
+
+  const handleLogout = async () => {
+    if (hasSupabaseConfig && supabase) {
+      await supabase.auth.signOut();
+    }
+    setCurrentUserId(null);
   };
 
   const addToCart = (menuItemId: string) => {
@@ -301,14 +335,14 @@ export default function Home() {
           {loading ? <p className="mb-3 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
           {syncError ? <p className="mb-3 text-xs text-red-600">{syncError}</p> : null}
           <div className="space-y-3">
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Kullanici adi" className={inputClass} />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className={inputClass} />
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Sifre" className={inputClass} />
             {loginError ? <p className="text-sm text-red-600">{loginError}</p> : null}
             <button onClick={handleLogin} className="w-full rounded-xl bg-blue-600 px-3 py-2 font-medium text-white transition hover:bg-blue-700">
               Giris Yap
             </button>
           </div>
-          <p className="mt-4 text-xs text-gray-500">Demo hesaplar: admin / manager / staff (sifre: 123456)</p>
+          <p className="mt-4 text-xs text-gray-500">Supabase Auth ile e-posta/sifre girisi kullanilir.</p>
         </div>
       </main>
     );
@@ -372,7 +406,7 @@ export default function Home() {
                   <p className="text-xs capitalize text-slate-500">{user.role}</p>
                 </div>
                 <button
-                  onClick={() => setCurrentUserId(null)}
+                  onClick={handleLogout}
                   className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                 >
                   Çıkış

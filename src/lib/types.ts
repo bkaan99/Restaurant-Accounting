@@ -4,8 +4,8 @@ export type AppUser = {
   id: string;
   name: string;
   role: UserRole;
-  username: string;
-  password: string;
+  email: string;
+  authUserId?: string | null;
 };
 
 export type MenuItem = {

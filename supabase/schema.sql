@@ -4,10 +4,10 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
+  auth_user_id uuid unique references auth.users(id) on delete set null,
   name text not null,
   role text not null check (role in ('admin', 'manager', 'staff')),
-  username text unique not null,
-  password text not null,
+  email text unique not null,
   created_at timestamptz not null default now()
 );
 
@@ -49,12 +49,12 @@ create table if not exists public.expenses (
   created_at timestamptz not null default now()
 );
 
-insert into public.users (name, role, username, password)
+insert into public.users (name, role, email)
 values
-  ('Ahmet Yildiz', 'admin', 'admin', '123456'),
-  ('Zeynep Kaya', 'manager', 'manager', '123456'),
-  ('Can Demir', 'staff', 'staff', '123456')
-on conflict (username) do nothing;
+  ('Ahmet Yildiz', 'admin', 'admin@restaurant.local'),
+  ('Zeynep Kaya', 'manager', 'manager@restaurant.local'),
+  ('Can Demir', 'staff', 'staff@restaurant.local')
+on conflict (email) do nothing;
 
 insert into public.menu_items (name, category, price, active)
 values
