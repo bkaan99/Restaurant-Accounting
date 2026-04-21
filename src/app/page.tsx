@@ -11,6 +11,7 @@ import { MenuTab } from "@/components/dashboard/MenuTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
 
 type TabType = "dashboard" | "sales" | "expenses" | "menu" | "settings";
+type RestaurantSettings = { restaurantName: string; currency: string; timezone: string; taxRate: string };
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
@@ -37,12 +38,22 @@ export default function Home() {
     if (typeof window === "undefined") return "LUMINOX";
     return localStorage.getItem(RESTAURANT_NAME_STORAGE_KEY) || "LUMINOX";
   });
+  const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
+    restaurantName: restaurantName || "LUMINOX",
+    currency: "TRY",
+    timezone: "Europe/Istanbul",
+    taxRate: "10",
+  });
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
 
   useEffect(() => {
     localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
+  }, [restaurantName]);
+
+  useEffect(() => {
+    setRestaurantSettings((prev) => ({ ...prev, restaurantName }));
   }, [restaurantName]);
 
   useEffect(() => {
@@ -159,6 +170,26 @@ export default function Home() {
       setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
       setSales(mappedSales.length > 0 ? mappedSales : []);
       setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
+
+      const settingsRes = await supabase
+        .from("app_settings")
+        .select("ayar_anahtari, ayar_degeri");
+
+      if (!settingsRes.error && settingsRes.data) {
+        const settingsByKey = settingsRes.data.reduce<Record<string, string>>((acc, row) => {
+          acc[row.ayar_anahtari] = row.ayar_degeri;
+          return acc;
+        }, {});
+        const nextRestaurantSettings: RestaurantSettings = {
+          restaurantName: settingsByKey.restaurant_name || restaurantName || "LUMINOX",
+          currency: settingsByKey.currency || "TRY",
+          timezone: settingsByKey.timezone || "Europe/Istanbul",
+          taxRate: settingsByKey.tax_rate || "10",
+        };
+        setRestaurantSettings(nextRestaurantSettings);
+        setRestaurantName(nextRestaurantSettings.restaurantName);
+      }
+
       setLoading(false);
     };
 
@@ -362,6 +393,26 @@ export default function Home() {
     setMenuItems((prev) => prev.map((m) => (m.id === item.id ? { ...m, active: nextActive } : m)));
   };
 
+  const saveRestaurantSettings = async (settings: RestaurantSettings) => {
+    setRestaurantSettings(settings);
+    setRestaurantName(settings.restaurantName);
+
+    if (!hasSupabaseConfig || !supabase) return;
+    const payload = [
+      { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: user?.id ?? null },
+      { ayar_anahtari: "currency", ayar_degeri: settings.currency, guncelleyen_kullanici: user?.id ?? null },
+      { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: user?.id ?? null },
+      { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: user?.id ?? null },
+    ];
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(payload, { onConflict: "ayar_anahtari" });
+
+    if (error) {
+      setSyncError("Uygulama ayarlari Supabase'e kaydedilemedi.");
+    }
+  };
+
   const orderTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
     const item = menuItems.find((m) => m.id === id);
     if (!item) return sum;
@@ -542,8 +593,8 @@ export default function Home() {
               inputClass={inputClass}
               darkMode={darkMode}
               onToggleDarkMode={() => setDarkMode((d) => !d)}
-              restaurantName={restaurantName}
-              onRestaurantNameChange={setRestaurantName}
+              restaurantSettings={restaurantSettings}
+              onSaveRestaurantSettings={saveRestaurantSettings}
             />
           ) : null}
         </section>

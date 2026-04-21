@@ -17,36 +17,34 @@ export function SettingsTab({
   inputClass,
   darkMode,
   onToggleDarkMode,
-  restaurantName,
-  onRestaurantNameChange,
+  restaurantSettings,
+  onSaveRestaurantSettings,
 }: {
   user: AppUser;
   panelClass: string;
   inputClass: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
-  restaurantName: string;
-  onRestaurantNameChange: (name: string) => void;
+  restaurantSettings: RestaurantSettings;
+  onSaveRestaurantSettings: (settings: RestaurantSettings) => Promise<void>;
 }) {
   const defaultRestaurantSettings: RestaurantSettings = {
-    restaurantName: "LUMINOX Restaurant",
+    restaurantName: "LUMINOX",
     currency: "TRY",
     timezone: "Europe/Istanbul",
     taxRate: "10",
   };
 
-  const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
-    ...defaultRestaurantSettings,
-    restaurantName,
-  });
+  const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
   const [saved, setSaved] = useState(false);
   const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "appearance" | "system">("profile");
 
   useEffect(() => {
-    setRestaurantSettings((prev) => ({ ...prev, restaurantName }));
-  }, [restaurantName]);
+    setLocalRestaurantSettings(restaurantSettings);
+  }, [restaurantSettings]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    await onSaveRestaurantSettings(localRestaurantSettings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -169,11 +167,10 @@ export function SettingsTab({
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Restoran Adı</label>
                 <input
                   className={inputClass}
-                  value={restaurantSettings.restaurantName}
+                  value={localRestaurantSettings.restaurantName}
                   onChange={(e) => {
                     const nextName = e.target.value;
-                    setRestaurantSettings((p) => ({ ...p, restaurantName: nextName }));
-                    onRestaurantNameChange(nextName);
+                    setLocalRestaurantSettings((p) => ({ ...p, restaurantName: nextName }));
                   }}
                 />
               </div>
@@ -181,8 +178,8 @@ export function SettingsTab({
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Para Birimi</label>
                 <select
                   className={inputClass}
-                  value={restaurantSettings.currency}
-                  onChange={(e) => setRestaurantSettings((p) => ({ ...p, currency: e.target.value }))}
+                  value={localRestaurantSettings.currency}
+                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, currency: e.target.value }))}
                 >
                   <option value="TRY">Türk Lirası (₺)</option>
                   <option value="USD">Amerikan Doları ($)</option>
@@ -193,8 +190,8 @@ export function SettingsTab({
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Saat Dilimi</label>
                 <select
                   className={inputClass}
-                  value={restaurantSettings.timezone}
-                  onChange={(e) => setRestaurantSettings((p) => ({ ...p, timezone: e.target.value }))}
+                  value={localRestaurantSettings.timezone}
+                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, timezone: e.target.value }))}
                 >
                   <option value="Europe/Istanbul">İstanbul (UTC+3)</option>
                   <option value="Europe/London">Londra (UTC+0)</option>
@@ -208,8 +205,8 @@ export function SettingsTab({
                   type="number"
                   min="0"
                   max="100"
-                  value={restaurantSettings.taxRate}
-                  onChange={(e) => setRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
+                  value={localRestaurantSettings.taxRate}
+                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
                 />
               </div>
             </div>
@@ -223,8 +220,7 @@ export function SettingsTab({
               </button>
               <button
                 onClick={() => {
-                  setRestaurantSettings({ ...defaultRestaurantSettings });
-                  onRestaurantNameChange(defaultRestaurantSettings.restaurantName);
+                  setLocalRestaurantSettings({ ...defaultRestaurantSettings });
                 }}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
               >

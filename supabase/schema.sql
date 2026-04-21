@@ -49,6 +49,15 @@ create table if not exists public.expenses (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.app_settings (
+  id uuid primary key default gen_random_uuid(),
+  ayar_anahtari text not null unique,
+  ayar_degeri text not null,
+  aciklama text,
+  guncelleyen_kullanici uuid references public.users(id),
+  guncellenme_tarihi timestamptz not null default now()
+);
+
 insert into public.users (name, role, email)
 values
   ('Ahmet Yildiz', 'admin', 'admin@restaurant.local'),
@@ -65,12 +74,21 @@ values
   ('Kunefe', 'Tatli', 95, true)
 on conflict do nothing;
 
+insert into public.app_settings (ayar_anahtari, ayar_degeri, aciklama)
+values
+  ('restaurant_name', 'LUMINOX', 'Restoran gorunen adi'),
+  ('currency', 'TRY', 'Para birimi'),
+  ('timezone', 'Europe/Istanbul', 'Saat dilimi'),
+  ('tax_rate', '10', 'Varsayilan KDV orani')
+on conflict (ayar_anahtari) do nothing;
+
 -- RLS (production-safe)
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
+alter table public.app_settings enable row level security;
 
 -- Yardimci fonksiyonlar
 create or replace function public.get_current_profile_id()
@@ -174,3 +192,18 @@ create policy "expenses_insert_authenticated"
   for insert
   to authenticated
   with check (created_by = public.get_current_profile_id());
+
+-- app_settings: tum authenticated okuyabilir, sadece manager/admin yazabilir
+drop policy if exists "ayarlar_select_authenticated" on public.app_settings;
+drop policy if exists "ayarlar_write_admin_manager" on public.app_settings;
+create policy "ayarlar_select_authenticated"
+  on public.app_settings
+  for select
+  to authenticated
+  using (true);
+create policy "ayarlar_write_admin_manager"
+  on public.app_settings
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
