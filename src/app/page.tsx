@@ -349,7 +349,7 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[1600px] bg-slate-100 px-3 py-4 md:px-6 md:py-6">
+    <main className="min-h-screen w-full bg-slate-100 p-4">
       <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
         <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="mb-5 text-2xl font-bold tracking-wide text-slate-800">LUMINOX</p>
