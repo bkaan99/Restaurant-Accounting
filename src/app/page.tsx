@@ -19,10 +19,7 @@ const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2
 export default function Home() {
   const [email, setEmail] = useState("admin@restaurant.local");
   const [password, setPassword] = useState("123456");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem("ra_current_user_id");
-  });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [appUsers, setAppUsers] = useState<AppUser[]>(users);
   const [tab, setTab] = useState<TabType>("dashboard");
   const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
@@ -40,12 +37,44 @@ export default function Home() {
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
 
   useEffect(() => {
-    if (currentUserId) {
-      window.localStorage.setItem("ra_current_user_id", currentUserId);
-      return;
-    }
-    window.localStorage.removeItem("ra_current_user_id");
-  }, [currentUserId]);
+    if (!hasSupabaseConfig || !supabase) return;
+    const supabaseClient = supabase;
+
+    let isMounted = true;
+    const mapAuthUserToAppUser = (authUser: { id: string; email?: string | null }) => {
+      return appUsers.find((u) => u.authUserId === authUser.id || u.email === authUser.email) ?? null;
+    };
+
+    const syncSessionToAppUser = async () => {
+      const { data } = await supabaseClient.auth.getSession();
+      if (!isMounted) return;
+      const authUser = data.session?.user;
+      if (!authUser) {
+        setCurrentUserId(null);
+        return;
+      }
+      const found = mapAuthUserToAppUser(authUser);
+      setCurrentUserId(found?.id ?? null);
+    };
+
+    syncSessionToAppUser();
+
+    const { data: authSubscription } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      const authUser = session?.user;
+      if (!authUser) {
+        setCurrentUserId(null);
+        return;
+      }
+      const found = mapAuthUserToAppUser(authUser);
+      setCurrentUserId(found?.id ?? null);
+    });
+
+    return () => {
+      isMounted = false;
+      authSubscription.subscription.unsubscribe();
+    };
+  }, [appUsers]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,13 +86,12 @@ export default function Home() {
       setLoading(true);
       setSyncError("");
 
-      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes, sessionRes] = await Promise.all([
+      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
         supabase.from("users").select("id, name, role, email, auth_user_id"),
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
-        supabase.auth.getSession(),
       ]);
 
       const hasError = usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error;
@@ -122,11 +150,6 @@ export default function Home() {
       setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
       setSales(mappedSales.length > 0 ? mappedSales : []);
       setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
-      const authUser = sessionRes.data.session?.user;
-      if (authUser) {
-        const found = mappedUsers.find((u) => u.authUserId === authUser.id || u.email === authUser.email);
-        if (found) setCurrentUserId(found.id);
-      }
       setLoading(false);
     };
 
