@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Expense, MenuItem, Sale } from "@/lib/types";
 
 export function TransactionsTab({
@@ -20,17 +20,20 @@ export function TransactionsTab({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const incomeRows = sales.map((sale) => ({
       id: `income-${sale.id}`,
       type: "income" as const,
-      title: sale.items[0]?.name ?? menuItems[0]?.name ?? "Bilinmiyor",
+      title: `Sipariş (${sale.items.length} kalem)`,
       reference: sale.id.slice(0, 12).toUpperCase(),
       dateText: new Date(sale.createdAt).toLocaleString("tr-TR"),
       owner: sale.createdBy,
       amount: sale.totalAmount,
       createdAtMs: new Date(sale.createdAt).getTime(),
+      items: sale.items,
+      note: "",
     }));
 
     const expenseRows = expenses.map((expense) => ({
@@ -42,6 +45,8 @@ export function TransactionsTab({
       owner: expense.supplier || "Bilinmiyor",
       amount: expense.amount,
       createdAtMs: new Date(expense.expenseDate).getTime(),
+      items: [],
+      note: expense.note || "",
     }));
 
     return [...incomeRows, ...expenseRows].sort((a, b) => b.createdAtMs - a.createdAtMs);
@@ -186,19 +191,48 @@ export function TransactionsTab({
               </tr>
             ) : (
               filteredRows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100 transition hover:bg-indigo-50/40">
-                  <td className="px-3 py-2 text-slate-700">{row.title}</td>
-                  <td className="px-3 py-2 text-slate-500">{row.reference}</td>
-                  <td className="px-3 py-2 text-slate-500">{row.dateText}</td>
-                  <td className="px-3 py-2">
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                      {row.owner}
-                    </span>
-                  </td>
-                  <td className={`px-3 py-2 text-right font-semibold ${row.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
-                    {row.type === "income" ? "+" : "-"}{tl.format(row.amount)}
-                  </td>
-                </tr>
+                <Fragment key={row.id}>
+                  <tr
+                    onClick={() => setExpandedRowId((prev) => (prev === row.id ? null : row.id))}
+                    className="cursor-pointer border-b border-slate-100 transition hover:bg-indigo-50/40"
+                  >
+                    <td className="px-3 py-2 text-slate-700">{row.title}</td>
+                    <td className="px-3 py-2 text-slate-500">{row.reference}</td>
+                    <td className="px-3 py-2 text-slate-500">{row.dateText}</td>
+                    <td className="px-3 py-2">
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                        {row.owner}
+                      </span>
+                    </td>
+                    <td className={`px-3 py-2 text-right font-semibold ${row.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
+                      {row.type === "income" ? "+" : "-"}{tl.format(row.amount)}
+                    </td>
+                  </tr>
+                  {expandedRowId === row.id ? (
+                    <tr className="border-b border-slate-100 bg-slate-50/70">
+                      <td colSpan={5} className="px-3 py-3">
+                        {row.type === "income" ? (
+                          <div>
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Sipariş İçeriği</p>
+                            <div className="space-y-1.5">
+                              {row.items.map((item) => (
+                                <div key={`${row.id}-${item.menuItemId}-${item.name}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs">
+                                  <span className="text-slate-700">{item.name} x {item.qty}</span>
+                                  <span className="font-semibold text-slate-800">{tl.format(item.lineTotal)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Gider Detayı</p>
+                            <p className="text-xs text-slate-600">{row.note || "Bu gider için not bulunmuyor."}</p>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
               ))
             )}
           </tbody>
