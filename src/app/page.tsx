@@ -13,6 +13,8 @@ import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
 
 type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "settings";
 type RestaurantSettings = { restaurantName: string; currency: string; timezone: string; taxRate: string };
+type ToastType = "error" | "warning" | "success";
+type Toast = { id: number; message: string; type: ToastType; title: string };
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
@@ -31,10 +33,9 @@ export default function Home() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [expenseForm, setExpenseForm] = useState({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
   const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
-  const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(hasSupabaseConfig);
-  const [syncError, setSyncError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [restaurantName, setRestaurantName] = useState(() => {
     if (typeof window === "undefined") return "LUMINOX";
     return localStorage.getItem(RESTAURANT_NAME_STORAGE_KEY) || "LUMINOX";
@@ -48,6 +49,19 @@ export default function Home() {
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+
+  const pushToast = (message: string, type: ToastType = "error") => {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    const titleByType: Record<ToastType, string> = {
+      success: "Başarılı",
+      warning: "Uyarı",
+      error: "Hata",
+    };
+    setToasts((prev) => [...prev, { id, message, type, title: titleByType[type] }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, 3500);
+  };
 
   useEffect(() => {
     localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
@@ -105,8 +119,6 @@ export default function Home() {
       }
 
       setLoading(true);
-      setSyncError("");
-
       const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
         supabase.from("users").select("id, name, role, email, auth_user_id"),
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
@@ -117,7 +129,7 @@ export default function Home() {
 
       const hasError = usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error;
       if (hasError) {
-        setSyncError("Supabase verileri alinamadi. Demo veriler gosteriliyor.");
+        pushToast("Supabase verileri alinamadi. Demo veriler gosteriliyor.", "warning");
         setLoading(false);
         return;
       }
@@ -219,32 +231,30 @@ export default function Home() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setLoginError("E-posta ve sifre gerekli.");
+      pushToast("E-posta ve sifre gerekli.", "warning");
       return;
     }
 
     if (hasSupabaseConfig && supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) {
-        setLoginError("Giris basarisiz. E-posta veya sifre hatali.");
+        pushToast("Giris basarisiz. E-posta veya sifre hatali.");
         return;
       }
       const found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
       if (!found) {
-        setLoginError("Kullanici profili bulunamadi. users tablosunu kontrol edin.");
+        pushToast("Kullanici profili bulunamadi. users tablosunu kontrol edin.");
         return;
       }
-      setLoginError("");
       setCurrentUserId(found.id);
       return;
     }
 
     const fallbackUser = appUsers.find((u) => u.email === email);
     if (!fallbackUser || password !== "123456") {
-      setLoginError("Demo giris: e-posta veya sifre hatali.");
+      pushToast("Demo giris: e-posta veya sifre hatali.");
       return;
     }
-    setLoginError("");
     setCurrentUserId(fallbackUser.id);
   };
 
@@ -292,7 +302,7 @@ export default function Home() {
         .select("id, created_at")
         .single();
       if (saleError || !saleInsert) {
-        setSyncError("Satis Supabase'e kaydedilemedi.");
+        pushToast("Satis Supabase'e kaydedilemedi.");
         return;
       }
 
@@ -306,7 +316,7 @@ export default function Home() {
       }));
       const { error: itemError } = await supabase.from("sale_items").insert(saleItemsPayload);
       if (itemError) {
-        setSyncError("Satis kalemleri Supabase'e kaydedilemedi.");
+        pushToast("Satis kalemleri Supabase'e kaydedilemedi.");
         return;
       }
       newSale.id = saleInsert.id;
@@ -315,6 +325,7 @@ export default function Home() {
 
     setSales((prev) => [newSale, ...prev]);
     setCart({});
+    pushToast("Sipariş başarıyla kaydedildi.", "success");
   };
 
   const createExpense = async () => {
@@ -344,7 +355,7 @@ export default function Home() {
         .select("id")
         .single();
       if (error || !data) {
-        setSyncError("Gider Supabase'e kaydedilemedi.");
+        pushToast("Gider Supabase'e kaydedilemedi.");
         return;
       }
       newExpense.id = data.id;
@@ -372,7 +383,7 @@ export default function Home() {
         .select("id")
         .single();
       if (error || !data) {
-        setSyncError("Menu urunu Supabase'e kaydedilemedi.");
+        pushToast("Menu urunu Supabase'e kaydedilemedi.");
         return;
       }
       newItem.id = data.id;
@@ -387,7 +398,7 @@ export default function Home() {
     if (hasSupabaseConfig && supabase) {
       const { error } = await supabase.from("menu_items").update({ active: nextActive }).eq("id", item.id);
       if (error) {
-        setSyncError("Menu durumu Supabase'de guncellenemedi.");
+        pushToast("Menu durumu Supabase'de guncellenemedi.");
         return;
       }
     }
@@ -397,14 +408,14 @@ export default function Home() {
   const deleteMenuItem = async (item: MenuItem) => {
     const hasSaleDependency = sales.some((sale) => sale.items.some((saleItem) => saleItem.menuItemId === item.id));
     if (hasSaleDependency) {
-      setSyncError("Bu ürün geçmiş satışlarda kullanıldığı için silinemez.");
+      pushToast("Bu ürün geçmiş satışlarda kullanıldığı için silinemez.", "warning");
       return;
     }
 
     if (hasSupabaseConfig && supabase) {
       const { error } = await supabase.from("menu_items").delete().eq("id", item.id);
       if (error) {
-        setSyncError("Menü ürünü Supabase'den silinemedi.");
+        pushToast("Menü ürünü Supabase'den silinemedi.");
         return;
       }
     }
@@ -428,7 +439,7 @@ export default function Home() {
       .upsert(payload, { onConflict: "ayar_anahtari" });
 
     if (error) {
-      setSyncError("Uygulama ayarlari Supabase'e kaydedilemedi.");
+      pushToast("Uygulama ayarlari Supabase'e kaydedilemedi.");
     }
   };
 
@@ -448,11 +459,9 @@ export default function Home() {
             Supabase baglantisi: {hasSupabaseConfig ? "Hazir" : "Yok (simdilik demo veri ile calisiyor)"}
           </div>
           {loading ? <p className="mb-3 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
-          {syncError ? <p className="mb-3 text-xs text-red-600">{syncError}</p> : null}
           <div className="space-y-3">
             <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className={inputClass} />
             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Sifre" className={inputClass} />
-            {loginError ? <p className="text-sm text-red-600">{loginError}</p> : null}
             <button onClick={handleLogin} className="w-full rounded-xl bg-blue-600 px-3 py-2 font-medium text-white transition hover:bg-blue-700">
               Giris Yap
             </button>
@@ -557,7 +566,6 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            {syncError ? <p className="w-full text-xs text-red-600">{syncError}</p> : null}
           </header>
 
           {tab === "dashboard" ? (
@@ -634,6 +642,63 @@ export default function Home() {
           ) : null}
         </section>
       </div>
+      <div className="pointer-events-none fixed right-4 top-4 z-[60] space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto relative w-[340px] overflow-hidden rounded-2xl border p-3 shadow-xl backdrop-blur animate-[toast-in_220ms_ease-out] ${
+              toast.type === "success"
+                ? "border-emerald-200 bg-emerald-50/95 text-emerald-800"
+                : toast.type === "warning"
+                ? "border-amber-200 bg-amber-50/95 text-amber-900"
+                : "border-rose-200 bg-rose-50/95 text-rose-800"
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              <span className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
+                toast.type === "success"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : toast.type === "warning"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-rose-100 text-rose-700"
+              }`}>
+                {toast.type === "success" ? "✓" : toast.type === "warning" ? "!" : "×"}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{toast.title}</p>
+                <p className="mt-0.5 text-sm leading-snug">{toast.message}</p>
+              </div>
+            </div>
+            <div className={`mt-2 h-1 w-full origin-left animate-[toast-progress_3500ms_linear] rounded-full ${
+              toast.type === "success"
+                ? "bg-emerald-300"
+                : toast.type === "warning"
+                ? "bg-amber-300"
+                : "bg-rose-300"
+            }`} />
+          </div>
+        ))}
+      </div>
+      <style jsx global>{`
+        @keyframes toast-in {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        @keyframes toast-progress {
+          from {
+            transform: scaleX(1);
+          }
+          to {
+            transform: scaleX(0);
+          }
+        }
+      `}</style>
     </main>
   );
 }
