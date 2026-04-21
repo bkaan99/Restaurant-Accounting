@@ -24,11 +24,15 @@ export function SettingsTab({
   darkMode: boolean;
   onToggleDarkMode: () => void;
 }) {
-  const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
+  const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX Restaurant",
     currency: "TRY",
     timezone: "Europe/Istanbul",
     taxRate: "10",
+  };
+
+  const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
+    ...defaultRestaurantSettings,
   });
   const [saved, setSaved] = useState(false);
   const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "appearance" | "system">("profile");
@@ -45,20 +49,30 @@ export function SettingsTab({
     { id: "system", label: "Sistem", icon: "⚙️" },
   ] as const;
 
+  const getSectionDescription = () => {
+    if (activeSection === "profile") return "Hesap bilgilerinizi görüntüleyin";
+    if (activeSection === "restaurant") return "İşletme bilgilerini ve tercihlerini yönetin";
+    if (activeSection === "appearance") return "Arayüz tercihlerinizi özelleştirin";
+    return "Uygulama sağlığı ve altyapı durumu";
+  };
+
   return (
     <section className="grid gap-4 lg:grid-cols-[220px_1fr]">
       {/* Sol menü */}
-      <div className={panelClass}>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Ayarlar</p>
+      <div className={`${panelClass} h-max lg:sticky lg:top-4`}>
+        <div className="mb-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">Ayarlar</p>
+          <p className="mt-1 text-sm font-medium text-slate-700">Sisteminizi özelleştirin</p>
+        </div>
         <nav className="space-y-1">
           {sections.map((s) => (
             <button
               key={s.id}
               onClick={() => setActiveSection(s.id)}
-              className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+              className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${
                 activeSection === s.id
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-slate-600 hover:bg-slate-50"
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm"
+                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50"
               }`}
             >
               <span>{s.icon}</span>
@@ -70,13 +84,21 @@ export function SettingsTab({
 
       {/* İçerik */}
       <div className="space-y-4">
+        <div className={`${panelClass} border border-slate-100 bg-gradient-to-r from-white via-slate-50 to-indigo-50/40`}>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Ayar Merkezi</p>
+          <h1 className="mt-2 text-xl font-bold text-slate-900">
+            {sections.find((section) => section.id === activeSection)?.label} Ayarları
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">{getSectionDescription()}</p>
+        </div>
+
         {/* Profil */}
         {activeSection === "profile" && (
           <div className={panelClass}>
             <h2 className="mb-1 text-lg font-semibold text-slate-900">Profil Bilgileri</h2>
             <p className="mb-5 text-sm text-slate-400">Hesap bilgilerinizi görüntüleyin</p>
 
-            <div className="mb-6 flex items-center gap-4">
+            <div className="mb-6 flex items-center gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-2xl font-bold text-indigo-700">
                 {user.name.charAt(0).toUpperCase()}
               </div>
@@ -179,15 +201,15 @@ export function SettingsTab({
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-5">
               <button
                 onClick={handleSave}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
               >
                 {saved ? "✓ Kaydedildi" : "Kaydet"}
               </button>
               <button
-                onClick={() => setRestaurantSettings({ restaurantName: "LUMINOX Restaurant", currency: "TRY", timezone: "Europe/Istanbul", taxRate: "10" })}
+                onClick={() => setRestaurantSettings({ ...defaultRestaurantSettings })}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
               >
                 Sıfırla
@@ -203,7 +225,7 @@ export function SettingsTab({
             <p className="mb-5 text-sm text-slate-400">Arayüz tercihlerinizi özelleştirin</p>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3.5">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
                 <div>
                   <p className="text-sm font-medium text-slate-800">Karanlık Mod</p>
                   <p className="text-xs text-slate-400">Koyu renk temasına geç</p>
@@ -222,7 +244,7 @@ export function SettingsTab({
                 </button>
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3.5">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
                 <div>
                   <p className="text-sm font-medium text-slate-800">Kompakt Görünüm</p>
                   <p className="text-xs text-slate-400">Daha az boşluk, daha fazla içerik</p>
@@ -232,7 +254,7 @@ export function SettingsTab({
                 </button>
               </div>
 
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3.5">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
                 <div>
                   <p className="text-sm font-medium text-slate-800">Animasyonlar</p>
                   <p className="text-xs text-slate-400">Geçiş animasyonlarını etkinleştir</p>
@@ -252,27 +274,27 @@ export function SettingsTab({
               <h2 className="mb-1 text-lg font-semibold text-slate-900">Sistem Bilgisi</h2>
               <p className="mb-5 text-sm text-slate-400">Uygulama ve bağlantı durumu</p>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-sm text-slate-600">Uygulama Versiyonu</span>
-                  <span className="text-sm font-medium text-slate-800">v0.1.0</span>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">v0.1.0</p>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-sm text-slate-600">Framework</span>
-                  <span className="text-sm font-medium text-slate-800">Next.js 16</span>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">Next.js 16</p>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-sm text-slate-600">Supabase Bağlantısı</span>
-                  <span className={`flex items-center gap-1.5 text-sm font-medium ${hasSupabaseConfig ? "text-emerald-600" : "text-amber-600"}`}>
+                  <span className={`mt-1 flex items-center gap-1.5 text-sm font-semibold ${hasSupabaseConfig ? "text-emerald-600" : "text-amber-600"}`}>
                     <span className={`h-2 w-2 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-400"}`} />
                     {hasSupabaseConfig ? "Bağlı" : "Demo Mod"}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-sm text-slate-600">Veri Kaynağı</span>
-                  <span className="text-sm font-medium text-slate-800">
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
                     {hasSupabaseConfig ? "Supabase" : "Mock Data"}
-                  </span>
+                  </p>
                 </div>
               </div>
             </div>

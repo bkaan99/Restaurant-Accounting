@@ -387,7 +387,7 @@ export default function Home() {
   return (
     <main className="min-h-screen w-full bg-slate-100 p-4">
       <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
-        <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="mb-5 text-2xl font-bold tracking-wide text-slate-800">LUMINOX</p>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Ana Menü</p>
           <nav className="space-y-1.5">
