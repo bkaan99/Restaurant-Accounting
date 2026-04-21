@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { expensesSeed, menuItemsSeed, salesSeed, users } from "@/lib/mock-data";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
-import { AppUser, Expense, MenuItem, Sale, SaleItem } from "@/lib/types";
+import { AppUser, Expense, MenuItem, Sale, SaleItem, UserRole } from "@/lib/types";
 import { DashboardTab } from "@/components/dashboard/DashboardTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
@@ -50,6 +50,23 @@ export default function Home() {
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+  const canManageMenu = user?.role === "admin" || user?.role === "manager";
+  const canManageSettings = user?.role === "admin" || user?.role === "manager";
+  const canManageUsers = user?.role === "admin";
+
+  const navItems: Array<{ key: TabType; label: string; icon: string; roles: Array<"admin" | "manager" | "staff"> }> = [
+    { key: "dashboard", label: "Gösterge", icon: "◻︎", roles: ["admin", "manager", "staff"] },
+    { key: "sales", label: "Satış", icon: "↗", roles: ["admin", "manager", "staff"] },
+    { key: "menu", label: "Menü", icon: "⌂", roles: ["admin", "manager"] },
+    { key: "transactions", label: "İşlemler", icon: "◫", roles: ["admin", "manager", "staff"] },
+    { key: "expenses", label: "Gider", icon: "◔", roles: ["admin", "manager", "staff"] },
+    { key: "settings", label: "Ayarlar", icon: "◌", roles: ["admin", "manager"] },
+  ];
+  const canAccessTab = (tabKey: TabType) => {
+    if (!user) return false;
+    const item = navItems.find((nav) => nav.key === tabKey);
+    return item ? item.roles.includes(user.role) : false;
+  };
 
   const pushToast = (message: string, type: ToastType = "error") => {
     const id = Date.now() + Math.floor(Math.random() * 1000);
@@ -66,10 +83,6 @@ export default function Home() {
 
   useEffect(() => {
     localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
-  }, [restaurantName]);
-
-  useEffect(() => {
-    setRestaurantSettings((prev) => ({ ...prev, restaurantName }));
   }, [restaurantName]);
 
   useEffect(() => {
@@ -381,6 +394,10 @@ export default function Home() {
   };
 
   const createMenuItem = async () => {
+    if (!canManageMenu) {
+      pushToast("Bu işlem için yetkiniz yok.", "warning");
+      return;
+    }
     if (!menuForm.name || !menuForm.category || !menuForm.price) return;
     const price = Number(menuForm.price);
     if (Number.isNaN(price) || price <= 0) return;
@@ -409,6 +426,10 @@ export default function Home() {
   };
 
   const toggleMenuItem = async (item: MenuItem) => {
+    if (!canManageMenu) {
+      pushToast("Bu işlem için yetkiniz yok.", "warning");
+      return;
+    }
     const nextActive = !item.active;
     if (hasSupabaseConfig && supabase) {
       const { error } = await supabase.from("menu_items").update({ active: nextActive }).eq("id", item.id);
@@ -421,6 +442,10 @@ export default function Home() {
   };
 
   const deleteMenuItem = async (item: MenuItem) => {
+    if (!canManageMenu) {
+      pushToast("Bu işlem için yetkiniz yok.", "warning");
+      return;
+    }
     const hasSaleDependency = sales.some((sale) => sale.items.some((saleItem) => saleItem.menuItemId === item.id));
     if (hasSaleDependency) {
       pushToast("Bu ürün geçmiş satışlarda kullanıldığı için silinemez.", "warning");
@@ -439,6 +464,10 @@ export default function Home() {
   };
 
   const saveRestaurantSettings = async (settings: RestaurantSettings) => {
+    if (!canManageSettings) {
+      pushToast("Ayarları değiştirme yetkiniz yok.", "warning");
+      return;
+    }
     setRestaurantSettings(settings);
     setRestaurantName(settings.restaurantName);
 
@@ -458,11 +487,66 @@ export default function Home() {
     }
   };
 
+  const updateUserRole = async (targetUserId: string, nextRole: UserRole) => {
+    if (!canManageUsers) {
+      pushToast("Kullanıcı rolü güncelleme yetkiniz yok.", "warning");
+      return;
+    }
+
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("users").update({ role: nextRole }).eq("id", targetUserId);
+      if (error) {
+        pushToast("Kullanıcı rolü Supabase'de güncellenemedi.");
+        return;
+      }
+    }
+
+    setAppUsers((prev) => prev.map((appUser) => (appUser.id === targetUserId ? { ...appUser, role: nextRole } : appUser)));
+    pushToast("Kullanıcı rolü güncellendi.", "success");
+  };
+
+  const createUserByAdmin = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
+    if (!canManageUsers) {
+      pushToast("Kullanıcı oluşturma yetkiniz yok.", "warning");
+      return;
+    }
+    if (!supabase) {
+      pushToast("Supabase baglantisi gerekli.");
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      pushToast("Oturum bulunamadi. Tekrar giris yapin.");
+      return;
+    }
+
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const responseBody = await response.json();
+    if (!response.ok) {
+      pushToast(responseBody.error ?? "Kullanıcı oluşturulamadı.");
+      return;
+    }
+
+    setAppUsers((prev) => [responseBody.user, ...prev]);
+    pushToast("Kullanıcı başarıyla oluşturuldu.", "success");
+  };
+
   const orderTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
     const item = menuItems.find((m) => m.id === id);
     if (!item) return sum;
     return sum + item.price * qty;
   }, 0);
+
+  const activeTab = canAccessTab(tab) ? tab : "dashboard";
 
   if (!user) {
     return (
@@ -498,21 +582,25 @@ export default function Home() {
           </div>
           <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Ana Menü</p>
           <nav className="space-y-1 px-3">
-            {[
-              { key: "dashboard" as TabType, label: "Gösterge", icon: "◻︎" },
-              { key: "sales" as TabType, label: "Satış", icon: "↗" },
-              { key: "menu" as TabType, label: "Menü", icon: "⌂" },
-              { key: "transactions" as TabType, label: "İşlemler", icon: "◫" },
-              { key: "expenses" as TabType, label: "Gider", icon: "◔" },
-              { key: "settings" as TabType, label: "Ayarlar", icon: "◌" },
-            ].map((item) => (
+            {navItems.map((item) => {
+              const isAllowed = user ? item.roles.includes(user.role) : false;
+              return (
               <button
                 key={item.key}
-                onClick={() => setTab(item.key)}
+                onClick={() => {
+                  if (!isAllowed) {
+                    pushToast("Bu menü için yetkiniz yok.", "warning");
+                    return;
+                  }
+                  setTab(item.key);
+                }}
+                disabled={!isAllowed}
                 className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition ${
-                  tab === item.key
+                  activeTab === item.key
                     ? "border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
-                    : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
+                    : isAllowed
+                    ? "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
+                    : "cursor-not-allowed border-transparent text-slate-300"
                 }`}
               >
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500 transition group-hover:bg-slate-200 group-hover:text-slate-700 group-data-[active=true]:bg-white">
@@ -520,12 +608,18 @@ export default function Home() {
                 </span>
                 <span className="text-[15px] font-semibold">{item.label}</span>
               </button>
-            ))}
+            )})}
           </nav>
           <div className="mx-3 mt-5 rounded-2xl border border-slate-200/80 bg-white/70 px-3 py-3">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Yardım</p>
             <button
-              onClick={() => setTab("settings")}
+              onClick={() => {
+                if (!canManageSettings) {
+                  pushToast("Ayarlar sayfası için yetkiniz yok.", "warning");
+                  return;
+                }
+                setTab("settings");
+              }}
               className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">⚙</span>
@@ -570,7 +664,18 @@ export default function Home() {
               </div>
               <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>
               <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">◔</button>
-              <button onClick={() => setTab("settings")} className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">⚙</button>
+              <button
+                onClick={() => {
+                  if (!canManageSettings) {
+                    pushToast("Ayarlar sayfası için yetkiniz yok.", "warning");
+                    return;
+                  }
+                  setTab("settings");
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm"
+              >
+                ⚙
+              </button>
               <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-1.5">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
                 <button
@@ -583,7 +688,7 @@ export default function Home() {
             </div>
           </header>
 
-          {tab === "dashboard" ? (
+          {activeTab === "dashboard" ? (
             <DashboardTab
               tl={tl}
               stats={stats}
@@ -593,7 +698,7 @@ export default function Home() {
             />
           ) : null}
 
-          {tab === "sales" ? (
+          {activeTab === "sales" ? (
             <SalesTab
               panelClass={panelClass}
               activeMenu={activeMenu}
@@ -608,7 +713,7 @@ export default function Home() {
             />
           ) : null}
 
-          {tab === "transactions" ? (
+          {activeTab === "transactions" ? (
             <TransactionsTab
               panelClass={panelClass}
               sales={sales}
@@ -618,7 +723,7 @@ export default function Home() {
             />
           ) : null}
 
-          {tab === "expenses" ? (
+          {activeTab === "expenses" ? (
             <ExpensesTab
               panelClass={panelClass}
               inputClass={inputClass}
@@ -630,7 +735,7 @@ export default function Home() {
             />
           ) : null}
 
-          {tab === "menu" ? (
+          {activeTab === "menu" ? (
             <MenuTab
               panelClass={panelClass}
               inputClass={inputClass}
@@ -641,10 +746,11 @@ export default function Home() {
               tl={tl}
               toggleMenuItem={toggleMenuItem}
               deleteMenuItem={deleteMenuItem}
+              canManageMenu={canManageMenu}
             />
           ) : null}
 
-          {tab === "settings" ? (
+          {activeTab === "settings" ? (
             <SettingsTab
               user={user}
               panelClass={panelClass}
@@ -653,6 +759,11 @@ export default function Home() {
               onToggleDarkMode={() => setDarkMode((d) => !d)}
               restaurantSettings={restaurantSettings}
               onSaveRestaurantSettings={saveRestaurantSettings}
+              canManageSettings={canManageSettings}
+              appUsers={appUsers}
+              canManageUsers={canManageUsers}
+              onUpdateUserRole={updateUserRole}
+              onCreateUser={createUserByAdmin}
             />
           ) : null}
         </section>

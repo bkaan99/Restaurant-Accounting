@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AppUser } from "@/lib/types";
+import { useState } from "react";
+import { AppUser, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
 type RestaurantSettings = {
@@ -19,6 +19,11 @@ export function SettingsTab({
   onToggleDarkMode,
   restaurantSettings,
   onSaveRestaurantSettings,
+  canManageSettings,
+  appUsers,
+  canManageUsers,
+  onUpdateUserRole,
+  onCreateUser,
 }: {
   user: AppUser;
   panelClass: string;
@@ -27,6 +32,11 @@ export function SettingsTab({
   onToggleDarkMode: () => void;
   restaurantSettings: RestaurantSettings;
   onSaveRestaurantSettings: (settings: RestaurantSettings) => Promise<void>;
+  canManageSettings: boolean;
+  appUsers: AppUser[];
+  canManageUsers: boolean;
+  onUpdateUserRole: (targetUserId: string, nextRole: UserRole) => Promise<void>;
+  onCreateUser: (payload: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
 }) {
   const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX",
@@ -37,11 +47,14 @@ export function SettingsTab({
 
   const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
   const [saved, setSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "appearance" | "system">("profile");
-
-  useEffect(() => {
-    setLocalRestaurantSettings(restaurantSettings);
-  }, [restaurantSettings]);
+  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "appearance" | "system">("profile");
+  const [roleDrafts, setRoleDrafts] = useState<Record<string, UserRole>>({});
+  const [newUserForm, setNewUserForm] = useState<{ name: string; email: string; password: string; role: UserRole }>({
+    name: "",
+    email: "",
+    password: "",
+    role: "staff",
+  });
 
   const handleSave = async () => {
     await onSaveRestaurantSettings(localRestaurantSettings);
@@ -52,6 +65,7 @@ export function SettingsTab({
   const sections = [
     { id: "profile", label: "Profil", icon: "👤" },
     { id: "restaurant", label: "Restoran", icon: "🍽️" },
+    { id: "users", label: "Kullanıcılar", icon: "🧑‍💼" },
     { id: "appearance", label: "Görünüm", icon: "🎨" },
     { id: "system", label: "Sistem", icon: "⚙️" },
   ] as const;
@@ -59,6 +73,7 @@ export function SettingsTab({
   const getSectionDescription = () => {
     if (activeSection === "profile") return "Hesap bilgilerinizi görüntüleyin";
     if (activeSection === "restaurant") return "İşletme bilgilerini ve tercihlerini yönetin";
+    if (activeSection === "users") return "Kullanıcıları ve rollerini yönetin";
     if (activeSection === "appearance") return "Arayüz tercihlerinizi özelleştirin";
     return "Uygulama sağlığı ve altyapı durumu";
   };
@@ -156,6 +171,123 @@ export function SettingsTab({
           </div>
         )}
 
+        {/* Kullanıcı Yönetimi */}
+        {activeSection === "users" && (
+          <div className={panelClass}>
+            <h2 className="mb-1 text-lg font-semibold text-slate-900">Kullanıcı Yönetimi</h2>
+            <p className="mb-5 text-sm text-slate-400">Admin kullanıcılar rol ataması yapabilir.</p>
+
+            {!canManageUsers ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                Bu alan sadece admin rolü için düzenlenebilir.
+              </div>
+            ) : null}
+
+            <div className="mb-4 mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+              <p className="mb-3 text-sm font-semibold text-indigo-800">Yeni Kullanıcı Oluştur</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <input
+                  className={inputClass}
+                  placeholder="Ad Soyad"
+                  value={newUserForm.name}
+                  disabled={!canManageUsers}
+                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, name: e.target.value }))}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="E-posta"
+                  type="email"
+                  value={newUserForm.email}
+                  disabled={!canManageUsers}
+                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, email: e.target.value }))}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="Geçici şifre (min 6)"
+                  type="password"
+                  value={newUserForm.password}
+                  disabled={!canManageUsers}
+                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, password: e.target.value }))}
+                />
+                <select
+                  className={inputClass}
+                  value={newUserForm.role}
+                  disabled={!canManageUsers}
+                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, role: e.target.value as UserRole }))}
+                >
+                  <option value="admin">admin</option>
+                  <option value="manager">manager</option>
+                  <option value="staff">staff</option>
+                </select>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  disabled={!canManageUsers}
+                  onClick={async () => {
+                    if (!newUserForm.name || !newUserForm.email || !newUserForm.password) return;
+                    await onCreateUser(newUserForm);
+                    setNewUserForm({ name: "", email: "", password: "", role: "staff" });
+                  }}
+                  className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  Kullanıcı Oluştur
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-auto">
+              <table className="w-full min-w-[620px] text-sm">
+                <thead className="bg-slate-50">
+                  <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th className="rounded-l-xl px-3 py-2.5">Ad Soyad</th>
+                    <th className="px-3 py-2.5">E-posta</th>
+                    <th className="px-3 py-2.5">Mevcut Rol</th>
+                    <th className="px-3 py-2.5">Yeni Rol</th>
+                    <th className="rounded-r-xl px-3 py-2.5 text-right">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appUsers.map((appUser) => {
+                    const draftRole = roleDrafts[appUser.id] ?? appUser.role;
+                    return (
+                      <tr key={appUser.id} className="border-b border-slate-100">
+                        <td className="px-3 py-2.5 font-medium text-slate-800">{appUser.name}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{appUser.email}</td>
+                        <td className="px-3 py-2.5">
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
+                            {appUser.role}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <select
+                            className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs"
+                            value={draftRole}
+                            disabled={!canManageUsers}
+                            onChange={(e) => setRoleDrafts((prev) => ({ ...prev, [appUser.id]: e.target.value as UserRole }))}
+                          >
+                            <option value="admin">admin</option>
+                            <option value="manager">manager</option>
+                            <option value="staff">staff</option>
+                          </select>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <button
+                            disabled={!canManageUsers || draftRole === appUser.role}
+                            onClick={() => onUpdateUserRole(appUser.id, draftRole)}
+                            className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          >
+                            Rolü Güncelle
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Restoran */}
         {activeSection === "restaurant" && (
           <div className={panelClass}>
@@ -168,6 +300,7 @@ export function SettingsTab({
                 <input
                   className={inputClass}
                   value={localRestaurantSettings.restaurantName}
+                  disabled={!canManageSettings}
                   onChange={(e) => {
                     const nextName = e.target.value;
                     setLocalRestaurantSettings((p) => ({ ...p, restaurantName: nextName }));
@@ -179,6 +312,7 @@ export function SettingsTab({
                 <select
                   className={inputClass}
                   value={localRestaurantSettings.currency}
+                  disabled={!canManageSettings}
                   onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, currency: e.target.value }))}
                 >
                   <option value="TRY">Türk Lirası (₺)</option>
@@ -191,6 +325,7 @@ export function SettingsTab({
                 <select
                   className={inputClass}
                   value={localRestaurantSettings.timezone}
+                  disabled={!canManageSettings}
                   onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, timezone: e.target.value }))}
                 >
                   <option value="Europe/Istanbul">İstanbul (UTC+3)</option>
@@ -206,6 +341,7 @@ export function SettingsTab({
                   min="0"
                   max="100"
                   value={localRestaurantSettings.taxRate}
+                  disabled={!canManageSettings}
                   onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
                 />
               </div>
@@ -214,6 +350,7 @@ export function SettingsTab({
             <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-5">
               <button
                 onClick={handleSave}
+                disabled={!canManageSettings}
                 className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
               >
                 {saved ? "✓ Kaydedildi" : "Kaydet"}
@@ -222,11 +359,15 @@ export function SettingsTab({
                 onClick={() => {
                   setLocalRestaurantSettings({ ...defaultRestaurantSettings });
                 }}
+                disabled={!canManageSettings}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
               >
                 Sıfırla
               </button>
             </div>
+            {!canManageSettings ? (
+              <p className="mt-3 text-xs text-amber-700">Ayarları sadece admin ve manager rolleri güncelleyebilir.</p>
+            ) : null}
           </div>
         )}
 

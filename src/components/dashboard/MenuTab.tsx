@@ -13,6 +13,7 @@ export function MenuTab({
   tl,
   toggleMenuItem,
   deleteMenuItem,
+  canManageMenu,
 }: {
   panelClass: string;
   inputClass: string;
@@ -23,6 +24,7 @@ export function MenuTab({
   tl: Intl.NumberFormat;
   toggleMenuItem: (item: MenuItem) => Promise<void>;
   deleteMenuItem: (item: MenuItem) => Promise<void>;
+  canManageMenu: boolean;
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const activeCount = menuItems.filter((item) => item.active).length;
@@ -55,12 +57,18 @@ export function MenuTab({
             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
               Toplam {menuItems.length} ürün
             </span>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-            >
-              + Ürün Ekle
-            </button>
+            {canManageMenu ? (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+              >
+                + Ürün Ekle
+              </button>
+            ) : (
+              <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                Sadece görüntüleme
+              </span>
+            )}
           </div>
         </div>
         <div className="overflow-auto">
@@ -88,25 +96,35 @@ export function MenuTab({
                     <td className="px-3 py-3 text-slate-600">{item.category}</td>
                     <td className="px-3 py-3 font-semibold text-slate-800">{tl.format(item.price)}</td>
                     <td className="px-3 py-3">
-                      <button
-                        onClick={() => toggleMenuItem(item)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                          item.active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                        }`}
-                      >
-                        {item.active ? "Aktif" : "Pasif"}
-                      </button>
+                      {canManageMenu ? (
+                        <button
+                          onClick={() => toggleMenuItem(item)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                            item.active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                          }`}
+                        >
+                          {item.active ? "Aktif" : "Pasif"}
+                        </button>
+                      ) : (
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
+                          {item.active ? "Aktif" : "Pasif"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <button
-                        onClick={() => {
-                          const ok = window.confirm(`"${item.name}" ürününü silmek istiyor musunuz?`);
-                          if (ok) void deleteMenuItem(item);
-                        }}
-                        className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-                      >
-                        Sil
-                      </button>
+                      {canManageMenu ? (
+                        <button
+                          onClick={() => {
+                            const ok = window.confirm(`"${item.name}" ürününü silmek istiyor musunuz?`);
+                            if (ok) void deleteMenuItem(item);
+                          }}
+                          className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                        >
+                          Sil
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">Yetki yok</span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -116,7 +134,7 @@ export function MenuTab({
         </div>
       </div>
 
-      {showAddModal ? (
+      {showAddModal && canManageMenu ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4">
           <div className="w-full max-w-md rounded-3xl border border-indigo-100 bg-white p-5 shadow-xl">
             <div className="mb-4 flex items-start justify-between">

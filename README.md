@@ -24,6 +24,7 @@ npm install
 # .env.local dosyasina asagidaki degerleri ekleyin
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
 3. Uygulamayi baslatin:
@@ -61,3 +62,4 @@ Bu adimlardan sonra menu, satis ve gider kayitlari Supabase uzerinden okunur ve 
 2. E-posta/sifre ile acilan her auth kullanicisinin `id` degerini alin.
 3. `public.users` tablosunda ilgili kaydin `auth_user_id` alanini bu `id` ile esleyin.
 4. Giris ekrani artik e-posta/sifre ile Supabase Auth uzerinden calisir.
+5. Admin panelinden kullanici olusturmak icin `SUPABASE_SERVICE_ROLE_KEY` degeri gereklidir.

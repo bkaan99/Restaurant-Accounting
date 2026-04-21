@@ -138,26 +138,21 @@ as $$
 $$;
 
 -- users: tum authenticated kullanicilar profilleri gorebilir.
--- admin ve manager profilleri guncelleyebilir, staff sadece kendi profilini.
+-- sadece admin rol guncelleme/yonetim yapabilir.
 drop policy if exists "users_select_authenticated" on public.users;
 drop policy if exists "users_update_admin_manager_or_self" on public.users;
+drop policy if exists "users_update_admin_only" on public.users;
 create policy "users_select_authenticated"
   on public.users
   for select
   to authenticated
   using (true);
-create policy "users_update_admin_manager_or_self"
+create policy "users_update_admin_only"
   on public.users
   for update
   to authenticated
-  using (
-    public.get_current_user_role() in ('admin', 'manager')
-    or auth_user_id = auth.uid()
-  )
-  with check (
-    public.get_current_user_role() in ('admin', 'manager')
-    or auth_user_id = auth.uid()
-  );
+  using (public.get_current_user_role() = 'admin')
+  with check (public.get_current_user_role() = 'admin');
 
 -- menu_items: herkes okuyabilir, sadece manager/admin degistirebilir
 drop policy if exists "menu_select_authenticated" on public.menu_items;
