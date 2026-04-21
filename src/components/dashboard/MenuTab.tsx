@@ -24,13 +24,13 @@ export function MenuTab({
   return (
     <section className="grid gap-4 lg:grid-cols-3">
       <div className={panelClass}>
-        <h2 className="mb-3 text-lg font-semibold">Menuye Urun Ekle</h2>
+        <h2 className="mb-3 text-lg font-semibold">Menüye Ürün Ekle</h2>
         <div className="space-y-2">
-          <input className={inputClass} placeholder="Urun Adi" value={menuForm.name} onChange={(e) => setMenuForm((prev) => ({ ...prev, name: e.target.value }))} />
+          <input className={inputClass} placeholder="Ürün Adı" value={menuForm.name} onChange={(e) => setMenuForm((prev) => ({ ...prev, name: e.target.value }))} />
           <input className={inputClass} placeholder="Kategori" value={menuForm.category} onChange={(e) => setMenuForm((prev) => ({ ...prev, category: e.target.value }))} />
-          <input className={inputClass} placeholder="Satis Fiyati" type="number" value={menuForm.price} onChange={(e) => setMenuForm((prev) => ({ ...prev, price: e.target.value }))} />
+          <input className={inputClass} placeholder="Satış Fiyatı" type="number" value={menuForm.price} onChange={(e) => setMenuForm((prev) => ({ ...prev, price: e.target.value }))} />
           <button onClick={createMenuItem} className="w-full rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
-            Urun Ekle
+            Ürün Ekle
           </button>
         </div>
       </div>
