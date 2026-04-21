@@ -550,22 +550,71 @@ export default function Home() {
 
   if (!user) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
-          <h1 className="mb-2 text-2xl font-semibold tracking-tight">Restoran Takip Sistemi</h1>
-          <p className="mb-4 text-sm text-slate-500">Rol bazli giris ile siparis, gider ve analiz yonetimi</p>
-          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            Supabase baglantisi: {hasSupabaseConfig ? "Hazir" : "Yok (simdilik demo veri ile calisiyor)"}
+      <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8">
+        <div className="pointer-events-none absolute -left-28 top-10 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 bottom-8 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+        <div className="mx-auto grid min-h-[90vh] w-full max-w-6xl items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <section className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/20 via-slate-900/50 to-cyan-500/10 p-8 shadow-2xl backdrop-blur lg:block">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Panel</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Restoran operasyonunu tek ekranda yonet.</h1>
+            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
+              Satis, gider, menu ve raporlari ayni panelde takip edin. Rol bazli guvenli girisle ekibinizin yetkilerini kontrol edin.
+            </p>
+            <div className="mt-6 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Anlik gelir/gider ozetleri</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Rol bazli erisim yonetimi</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Supabase ile guvenli veri akisi</div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Detayli islem ve raporlar</div>
+            </div>
+          </section>
+
+          <div className="relative w-full overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/20 via-white/10 to-indigo-200/10 p-6 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-8">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-indigo-400/20 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-cyan-400/20 blur-2xl" />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-100">Hosgeldiniz</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">Giris Yap</h2>
+            <p className="mt-2 text-sm text-slate-200">Hesabinizla giris yapip yonetim paneline devam edin.</p>
+
+            <div
+              className={`mt-5 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${
+                hasSupabaseConfig
+                  ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-800"
+                  : "border-amber-200/70 bg-amber-50/90 text-amber-900"
+              }`}
+            >
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-500"}`} />
+              <span>
+                Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi (simdilik demo veri ile calisiyor)"}
+              </span>
+            </div>
+            {loading ? <p className="mt-2 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
+
+            <div className="mt-5 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-200">E-posta</label>
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ornek@restaurant.com"
+                  className="w-full rounded-xl border border-white/30 bg-white/85 px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-200">Sifre</label>
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Sifrenizi girin"
+                  className="w-full rounded-xl border border-white/30 bg-white/85 px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+                />
+              </div>
+              <button onClick={handleLogin} className="mt-1 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2.5 font-semibold text-white transition hover:from-indigo-700 hover:to-violet-700">
+                Giris Yap
+              </button>
+            </div>
+            <p className="mt-4 text-xs text-slate-200/90">Supabase Auth ile e-posta/sifre girisi kullanilir.</p>
           </div>
-          {loading ? <p className="mb-3 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
-          <div className="space-y-3">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta" className={inputClass} />
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Sifre" className={inputClass} />
-            <button onClick={handleLogin} className="w-full rounded-xl bg-blue-600 px-3 py-2 font-medium text-white transition hover:bg-blue-700">
-              Giris Yap
-            </button>
-          </div>
-          <p className="mt-4 text-xs text-gray-500">Supabase Auth ile e-posta/sifre girisi kullanilir.</p>
         </div>
       </main>
     );
