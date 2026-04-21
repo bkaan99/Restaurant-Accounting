@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { expensesSeed, menuItemsSeed, salesSeed, users } from "@/lib/mock-data";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
 import { AppUser, Expense, MenuItem, Sale, SaleItem } from "@/lib/types";
+import { DashboardTab } from "@/components/dashboard/DashboardTab";
+import { SalesTab } from "@/components/dashboard/SalesTab";
+import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
+import { MenuTab } from "@/components/dashboard/MenuTab";
 
 type TabType = "dashboard" | "sales" | "expenses" | "menu";
 
@@ -276,6 +279,18 @@ export default function Home() {
     setMenuForm({ name: "", category: "", price: "" });
   };
 
+  const toggleMenuItem = async (item: MenuItem) => {
+    const nextActive = !item.active;
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("menu_items").update({ active: nextActive }).eq("id", item.id);
+      if (error) {
+        setSyncError("Menu durumu Supabase'de guncellenemedi.");
+        return;
+      }
+    }
+    setMenuItems((prev) => prev.map((m) => (m.id === item.id ? { ...m, active: nextActive } : m)));
+  };
+
   const orderTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
     const item = menuItems.find((m) => m.id === id);
     if (!item) return sum;
@@ -309,36 +324,54 @@ export default function Home() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[1500px] p-3 md:p-5">
-      <div className="grid gap-4 lg:grid-cols-[230px_1fr]">
-        <aside className="rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-sm">
-          <p className="mb-5 text-xl font-bold tracking-tight text-blue-700">Restaurant OS</p>
-          <nav className="space-y-1">
+      <div className="grid gap-4 lg:grid-cols-[250px_1fr]">
+        <aside className="rounded-3xl bg-gradient-to-b from-indigo-400 via-blue-600 to-indigo-700 p-4 text-white shadow-xl shadow-blue-900/20">
+          <div className="mb-6 flex items-center gap-3 rounded-2xl bg-white/15 p-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-lg font-bold text-indigo-700">.D</div>
+            <div>
+              <p className="text-sm font-semibold">Dashboard</p>
+              <p className="text-xs text-blue-100 capitalize">{user.role}</p>
+            </div>
+          </div>
+          <button className="mb-6 w-full rounded-xl bg-orange-400 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500">
+            + Yeni Islem
+          </button>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-100/80">Menu</p>
+          <nav className="space-y-1.5">
             {(["dashboard", "sales", "expenses", "menu"] as TabType[]).map((item) => (
               <button
                 key={item}
                 onClick={() => setTab(item)}
                 className={`flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium capitalize transition ${
-                  tab === item ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+                  tab === item ? "bg-white text-indigo-700 shadow-md" : "text-white/90 hover:bg-white/15"
                 }`}
               >
                 {item}
               </button>
             ))}
           </nav>
-          <div className="mt-6 rounded-2xl bg-blue-50 p-3 text-xs text-blue-900">
+          <div className="mt-8 rounded-2xl bg-white/15 p-3 text-xs text-white">
             <p className="font-semibold">Aktif Kullanici</p>
             <p className="mt-1">{user.name}</p>
-            <p className="capitalize text-blue-700">{user.role}</p>
+            <p className="capitalize text-blue-100">{user.role}</p>
           </div>
         </aside>
 
         <section className="space-y-4">
-          <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3`}>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Dashboard</p>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-800">Restaurant Takip Sistemi</h1>
+          <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3 rounded-3xl`}>
+            <div className="min-w-[260px] flex-1">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                <span className="text-slate-400">🔎</span>
+                <input
+                  readOnly
+                  value="Dashboard icinde ara..."
+                  className="w-full bg-transparent text-sm text-slate-400 outline-none"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2">
+              <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">🔔</button>
+              <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">⚙️</button>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
                 {loading ? "Veriler yukleniyor..." : "Canli"}
               </div>
@@ -350,268 +383,59 @@ export default function Home() {
           </header>
 
           {tab === "dashboard" ? (
-            <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Card title="Toplam Satis" value={tl.format(stats.totalSales)} tone="blue" />
-                <Card title="Toplam Gider" value={tl.format(stats.totalExpenses)} tone="orange" />
-                <Card title="Net Fark" value={tl.format(stats.net)} tone={stats.net >= 0 ? "green" : "orange"} />
-                <Card title="Toplam Siparis" value={String(stats.orderCount)} tone="slate" />
-              </div>
-              <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-                <ChartCard title="Gunluk Satis Trendi">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <LineChart data={salesChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip formatter={(value) => tl.format(Number(value))} />
-                      <Line dataKey="total" stroke="#2563eb" strokeWidth={2.8} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-                <div className={`${panelClass} space-y-3`}>
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Son Siparisler</h3>
-                    <span className="text-xs text-slate-500">{sales.length} kayit</span>
-                  </div>
-                  <div className="space-y-2">
-                    {sales.slice(0, 6).map((sale) => (
-                      <div key={sale.id} className="rounded-xl border border-slate-200 p-2.5">
-                        <p className="text-sm font-medium text-slate-800">{tl.format(sale.totalAmount)}</p>
-                        <p className="text-xs text-slate-500">{sale.createdBy}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-                <ChartCard title="Tedarikci Bazli Gider">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={expenseChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="supplier" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip formatter={(value) => tl.format(Number(value))} />
-                      <Bar dataKey="amount" fill="#f97316" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-                <div className={panelClass}>
-                  <h3 className="mb-3 text-lg font-semibold">Hizli Ozet</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
-                      <span>Aktif Urun</span>
-                      <span className="font-semibold">{activeMenu.length}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
-                      <span>Toplam Kalem</span>
-                      <span className="font-semibold">{menuItems.length}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
-                      <span>Toplam Gider Kaydi</span>
-                      <span className="font-semibold">{expenses.length}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
+            <DashboardTab
+              tl={tl}
+              stats={stats}
+              sales={sales}
+              salesChartData={salesChartData}
+              expenseChartData={expenseChartData}
+              activeMenu={activeMenu}
+              menuItems={menuItems}
+              expenses={expenses}
+            />
           ) : null}
 
           {tab === "sales" ? (
-            <section className="grid gap-4 lg:grid-cols-3">
-              <div className={`${panelClass} lg:col-span-2`}>
-                <h2 className="mb-3 text-lg font-semibold">Menu Sec ve Siparis Olustur</h2>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {activeMenu.map((item) => (
-                    <button key={item.id} onClick={() => addToCart(item.id)} className="rounded-xl border border-slate-200 p-3 text-left transition hover:-translate-y-0.5 hover:bg-slate-50">
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.category}</p>
-                      <p className="text-sm text-blue-700">{tl.format(item.price)}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className={panelClass}>
-                <h2 className="mb-3 text-lg font-semibold">Siparis Ozeti</h2>
-                <div className="space-y-2">
-                  {Object.entries(cart).length === 0 ? <p className="text-sm text-gray-500">Sepet bos.</p> : null}
-                  {Object.entries(cart).map(([id, qty]) => {
-                    const item = menuItems.find((m) => m.id === id);
-                    if (!item) return null;
-                    return (
-                      <div key={id} className="flex items-center justify-between rounded-xl border border-slate-200 p-2 text-sm">
-                        <span>{item.name} x {qty}</span>
-                        <span>{tl.format(item.price * qty)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="mt-3 text-lg font-semibold">Toplam: {tl.format(orderTotal)}</p>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={createSale} className="flex-1 rounded-xl bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700">
-                    Siparisi Kaydet
-                  </button>
-                  <button onClick={clearCart} className="rounded-xl border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100">
-                    Temizle
-                  </button>
-                </div>
-              </div>
-              <div className={`${panelClass} lg:col-span-3`}>
-                <h2 className="mb-3 text-lg font-semibold">Son Siparisler</h2>
-                <div className="overflow-auto">
-                  <table className="w-full min-w-[680px] text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left">
-                        <th className="py-2">Tarih</th>
-                        <th>Personel</th>
-                        <th>Kalem</th>
-                        <th>Toplam</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sales.map((sale) => (
-                        <tr key={sale.id} className="border-b border-gray-100">
-                          <td className="py-2">{new Date(sale.createdAt).toLocaleString("tr-TR")}</td>
-                          <td>{sale.createdBy}</td>
-                          <td>{sale.items.map((item) => `${item.name} (${item.qty})`).join(", ")}</td>
-                          <td>{tl.format(sale.totalAmount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
+            <SalesTab
+              panelClass={panelClass}
+              activeMenu={activeMenu}
+              menuItems={menuItems}
+              cart={cart}
+              tl={tl}
+              orderTotal={orderTotal}
+              addToCart={addToCart}
+              createSale={createSale}
+              clearCart={clearCart}
+              sales={sales}
+            />
           ) : null}
 
           {tab === "expenses" ? (
-            <section className="grid gap-4 lg:grid-cols-3">
-              <div className={panelClass}>
-                <h2 className="mb-3 text-lg font-semibold">Gider Ekle</h2>
-                <div className="space-y-2">
-                  <input className={inputClass} placeholder="Baslik" value={expenseForm.title} onChange={(e) => setExpenseForm((prev) => ({ ...prev, title: e.target.value }))} />
-                  <input className={inputClass} placeholder="Tedarikci" value={expenseForm.supplier} onChange={(e) => setExpenseForm((prev) => ({ ...prev, supplier: e.target.value }))} />
-                  <input className={inputClass} placeholder="Tutar" type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm((prev) => ({ ...prev, amount: e.target.value }))} />
-                  <input className={inputClass} type="date" value={expenseForm.expenseDate} onChange={(e) => setExpenseForm((prev) => ({ ...prev, expenseDate: e.target.value }))} />
-                  <textarea className={inputClass} placeholder="Not" value={expenseForm.note} onChange={(e) => setExpenseForm((prev) => ({ ...prev, note: e.target.value }))} />
-                  <button onClick={createExpense} className="w-full rounded-xl bg-orange-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-orange-700">
-                    Gider Kaydet
-                  </button>
-                </div>
-              </div>
-              <div className={`${panelClass} lg:col-span-2`}>
-                <h2 className="mb-3 text-lg font-semibold">Gider Listesi</h2>
-                <div className="overflow-auto">
-                  <table className="w-full min-w-[640px] text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left">
-                        <th className="py-2">Tarih</th>
-                        <th>Baslik</th>
-                        <th>Tedarikci</th>
-                        <th>Not</th>
-                        <th>Tutar</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenses.map((expense) => (
-                        <tr key={expense.id} className="border-b border-gray-100">
-                          <td className="py-2">{expense.expenseDate}</td>
-                          <td>{expense.title}</td>
-                          <td>{expense.supplier}</td>
-                          <td>{expense.note || "-"}</td>
-                          <td>{tl.format(expense.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
+            <ExpensesTab
+              panelClass={panelClass}
+              inputClass={inputClass}
+              expenseForm={expenseForm}
+              setExpenseForm={setExpenseForm}
+              createExpense={createExpense}
+              expenses={expenses}
+              tl={tl}
+            />
           ) : null}
 
           {tab === "menu" ? (
-            <section className="grid gap-4 lg:grid-cols-3">
-              <div className={panelClass}>
-                <h2 className="mb-3 text-lg font-semibold">Menuye Urun Ekle</h2>
-                <div className="space-y-2">
-                  <input className={inputClass} placeholder="Urun Adi" value={menuForm.name} onChange={(e) => setMenuForm((prev) => ({ ...prev, name: e.target.value }))} />
-                  <input className={inputClass} placeholder="Kategori" value={menuForm.category} onChange={(e) => setMenuForm((prev) => ({ ...prev, category: e.target.value }))} />
-                  <input className={inputClass} placeholder="Satis Fiyati" type="number" value={menuForm.price} onChange={(e) => setMenuForm((prev) => ({ ...prev, price: e.target.value }))} />
-                  <button onClick={createMenuItem} className="w-full rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
-                    Urun Ekle
-                  </button>
-                </div>
-              </div>
-              <div className={`${panelClass} lg:col-span-2`}>
-                <h2 className="mb-3 text-lg font-semibold">Menu Listesi</h2>
-                <div className="overflow-auto">
-                  <table className="w-full min-w-[500px] text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left">
-                        <th className="py-2">Urun</th>
-                        <th>Kategori</th>
-                        <th>Fiyat</th>
-                        <th>Durum</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {menuItems.map((item) => (
-                        <tr key={item.id} className="border-b border-gray-100">
-                          <td className="py-2">{item.name}</td>
-                          <td>{item.category}</td>
-                          <td>{tl.format(item.price)}</td>
-                          <td>
-                            <button
-                              onClick={async () => {
-                                const nextActive = !item.active;
-                                if (hasSupabaseConfig && supabase) {
-                                  const { error } = await supabase.from("menu_items").update({ active: nextActive }).eq("id", item.id);
-                                  if (error) {
-                                    setSyncError("Menu durumu Supabase'de guncellenemedi.");
-                                    return;
-                                  }
-                                }
-                                setMenuItems((prev) => prev.map((m) => (m.id === item.id ? { ...m, active: nextActive } : m)));
-                              }}
-                              className={`rounded-md px-2 py-1 text-xs ${item.active ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-700"}`}
-                            >
-                              {item.active ? "Aktif" : "Pasif"}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
+            <MenuTab
+              panelClass={panelClass}
+              inputClass={inputClass}
+              menuForm={menuForm}
+              setMenuForm={setMenuForm}
+              createMenuItem={createMenuItem}
+              menuItems={menuItems}
+              tl={tl}
+              toggleMenuItem={toggleMenuItem}
+            />
           ) : null}
         </section>
       </div>
     </main>
-  );
-}
-
-function Card({ title, value, tone = "blue" }: { title: string; value: string; tone?: "blue" | "orange" | "green" | "slate" }) {
-  const toneMap = {
-    blue: "border-blue-200 bg-blue-50/70 text-blue-900",
-    orange: "border-orange-200 bg-orange-50/70 text-orange-900",
-    green: "border-emerald-200 bg-emerald-50/70 text-emerald-900",
-    slate: "border-slate-200 bg-slate-50 text-slate-900",
-  };
-  return (
-    <div className={`rounded-2xl border p-4 shadow-sm ${toneMap[tone]}`}>
-      <p className="text-sm opacity-80">{title}</p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
-    </div>
-  );
-}
-
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur">
-      <h3 className="mb-2 text-lg font-semibold text-slate-800">{title}</h3>
-      {children}
-    </div>
   );
 }
