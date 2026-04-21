@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Expense } from "@/lib/types";
 
 export function ExpensesTab({
@@ -19,52 +20,43 @@ export function ExpensesTab({
   expenses: Expense[];
   tl: Intl.NumberFormat;
 }) {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
   return (
-    <section className="grid gap-4 lg:grid-cols-3">
-      <div className={`${panelClass} border border-orange-100 bg-gradient-to-b from-white to-orange-50/40`}>
-        <div className="mb-4 rounded-2xl border border-orange-100 bg-orange-50/80 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Yeni Kayıt</p>
-          <h2 className="mt-1 text-lg font-semibold text-slate-900">Gider Ekle</h2>
-          <p className="mt-1 text-sm text-slate-500">Tedarik, operasyon ve sabit giderlerinizi tek yerden kaydedin.</p>
+    <section className="space-y-4">
+      <div className={panelClass}>
+        <div className="mb-4 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Toplam</p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">{expenses.length}</p>
+          </div>
+          <div className="rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-700">Gider Tutarı</p>
+            <p className="mt-1 text-xl font-semibold text-orange-700">{tl.format(totalAmount)}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-300 bg-white px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Bu Ay</p>
+            <p className="mt-1 text-xl font-semibold text-slate-700">{new Date().toLocaleDateString("tr-TR", { month: "long" })}</p>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Başlık</label>
-            <input className={inputClass} placeholder="Örn: Sebze Alımı" value={expenseForm.title} onChange={(e) => setExpenseForm((prev) => ({ ...prev, title: e.target.value }))} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Tedarikçi</label>
-            <input className={inputClass} placeholder="Örn: Marmara Gıda" value={expenseForm.supplier} onChange={(e) => setExpenseForm((prev) => ({ ...prev, supplier: e.target.value }))} />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Tutar</label>
-              <input className={inputClass} placeholder="0" type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm((prev) => ({ ...prev, amount: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Tarih</label>
-              <input className={inputClass} type="date" value={expenseForm.expenseDate} onChange={(e) => setExpenseForm((prev) => ({ ...prev, expenseDate: e.target.value }))} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Not</label>
-            <textarea className={`${inputClass} min-h-[96px] resize-none`} placeholder="İsteğe bağlı açıklama..." value={expenseForm.note} onChange={(e) => setExpenseForm((prev) => ({ ...prev, note: e.target.value }))} />
-          </div>
-          <button onClick={createExpense} className="w-full rounded-xl bg-orange-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700">
-            Gider Kaydet
-          </button>
-        </div>
-      </div>
-      <div className={`${panelClass} lg:col-span-2`}>
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Kayıtlar</p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Gider Listesi</h2>
           </div>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            Toplam {expenses.length} kayıt
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              Toplam {expenses.length} kayıt
+            </span>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="rounded-xl bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-700"
+            >
+              + Gider Ekle
+            </button>
+          </div>
         </div>
         <div className="overflow-auto">
           <table className="w-full min-w-[640px] text-sm">
@@ -99,6 +91,69 @@ export function ExpensesTab({
           </table>
         </div>
       </div>
+
+      {showAddModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-orange-100 bg-white p-5 shadow-xl">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Yeni Kayıt</p>
+                <h3 className="mt-1 text-lg font-semibold text-slate-900">Gider Ekle</h3>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="rounded-lg px-2 py-1 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Başlık</label>
+                <input className={inputClass} placeholder="Örn: Sebze Alımı" value={expenseForm.title} onChange={(e) => setExpenseForm((prev) => ({ ...prev, title: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Tedarikçi</label>
+                <input className={inputClass} placeholder="Örn: Marmara Gıda" value={expenseForm.supplier} onChange={(e) => setExpenseForm((prev) => ({ ...prev, supplier: e.target.value }))} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Tutar</label>
+                  <input className={inputClass} placeholder="0" type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm((prev) => ({ ...prev, amount: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Tarih</label>
+                  <input className={inputClass} type="date" value={expenseForm.expenseDate} onChange={(e) => setExpenseForm((prev) => ({ ...prev, expenseDate: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Not</label>
+                <textarea className={`${inputClass} min-h-[96px] resize-none`} placeholder="İsteğe bağlı açıklama..." value={expenseForm.note} onChange={(e) => setExpenseForm((prev) => ({ ...prev, note: e.target.value }))} />
+              </div>
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!expenseForm.title || !expenseForm.amount || !expenseForm.expenseDate) return;
+                    await createExpense();
+                    setShowAddModal(false);
+                  }}
+                  className="rounded-xl bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+                >
+                  Gider Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
