@@ -476,8 +476,8 @@ export default function Home() {
           <nav className="space-y-1 px-3">
             {[
               { key: "dashboard" as TabType, label: "Gösterge", icon: "◻︎" },
-              { key: "menu" as TabType, label: "Menü", icon: "⌂" },
               { key: "sales" as TabType, label: "Satış", icon: "↗" },
+              { key: "menu" as TabType, label: "Menü", icon: "⌂" },
               { key: "transactions" as TabType, label: "İşlemler", icon: "◫" },
               { key: "expenses" as TabType, label: "Gider", icon: "◔" },
               { key: "settings" as TabType, label: "Ayarlar", icon: "◌" },
