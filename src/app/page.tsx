@@ -21,6 +21,7 @@ const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 const RESTAURANT_NAME_STORAGE_KEY = "restaurant_name";
 const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(seq).padStart(3, "0")}`;
+const heroTitle = "Restoran operasyonunu tek ekranda yonet.";
 
 export default function Home() {
   const [email, setEmail] = useState("admin@restaurant.local");
@@ -47,6 +48,7 @@ export default function Home() {
     timezone: "Europe/Istanbul",
     taxRate: "10",
   });
+  const [typedHeroTitle, setTypedHeroTitle] = useState("");
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
@@ -84,6 +86,18 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
   }, [restaurantName]);
+
+  useEffect(() => {
+    let charIndex = 0;
+    const intervalId = setInterval(() => {
+      charIndex += 1;
+      setTypedHeroTitle(heroTitle.slice(0, charIndex));
+      if (charIndex >= heroTitle.length) {
+        clearInterval(intervalId);
+      }
+    }, 55);
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (!hasSupabaseConfig || !supabase) return;
@@ -556,7 +570,10 @@ export default function Home() {
         <div className="mx-auto grid min-h-[90vh] w-full max-w-6xl items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/20 via-slate-900/50 to-cyan-500/10 p-8 shadow-2xl backdrop-blur lg:block">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Panel</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Restoran operasyonunu tek ekranda yonet.</h1>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">
+              {typedHeroTitle}
+              <span className="ml-0.5 inline-block h-8 w-[2px] animate-pulse bg-indigo-200 align-middle" />
+            </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
               Satis, gider, menu ve raporlari ayni panelde takip edin. Rol bazli guvenli girisle ekibinizin yetkilerini kontrol edin.
             </p>
