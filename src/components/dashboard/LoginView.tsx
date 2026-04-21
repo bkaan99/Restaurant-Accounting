@@ -26,6 +26,7 @@ export function LoginView({
   isSubmitting?: boolean;
 }) {
   const [typedHeroTitle, setTypedHeroTitle] = useState("");
+  const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false, false]);
 
   useEffect(() => {
     let charIndex = 0;
@@ -35,6 +36,20 @@ export function LoginView({
       if (charIndex >= heroTitle.length) clearInterval(intervalId);
     }, 55);
     return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const delays = [200, 400, 600, 800];
+    const timers = delays.map((delay, i) =>
+      setTimeout(() => {
+        setVisibleCards((prev) => {
+          const next = [...prev];
+          next[i] = true;
+          return next;
+        });
+      }, delay)
+    );
+    return () => timers.forEach(clearTimeout);
   }, []);
 
   return (
@@ -52,10 +67,23 @@ export function LoginView({
             Satis, gider, menu ve raporlari ayni panelde takip edin. Rol bazli guvenli girisle ekibinizin yetkilerini kontrol edin.
           </p>
           <div className="mt-6 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Anlik gelir/gider ozetleri</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Rol bazli erisim yonetimi</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Supabase ile guvenli veri akisi</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Detayli islem ve raporlar</div>
+            {[
+              "Anlik gelir/gider ozetleri",
+              "Rol bazli erisim yonetimi",
+              "Supabase ile guvenli veri akisi",
+              "Detayli islem ve raporlar",
+            ].map((text, i) => (
+              <div
+                key={text}
+                className={`rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition-all duration-500 ${
+                  visibleCards[i]
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-4 opacity-0"
+                }`}
+              >
+                {text}
+              </div>
+            ))}
           </div>
         </section>
 
