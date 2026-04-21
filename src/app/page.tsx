@@ -447,10 +447,11 @@ export default function Home() {
   return (
     <main className="min-h-screen w-full bg-slate-100 p-4">
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-white/80 px-0 py-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-          <div className="border-b border-slate-200/80 px-6 pb-4">
-            <p className="text-xl font-bold tracking-tight text-slate-900">{restaurantName || "LUMINOX"}</p>
-            <p className="mt-1 text-xs text-slate-400">Restoran Analitiği</p>
+        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 px-0 py-5 shadow-lg shadow-slate-900/5">
+          <div className="mx-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500">Marka</p>
+            <p className="mt-1 text-lg font-bold tracking-tight text-slate-900">{restaurantName || "LUMINOX"}</p>
+            <p className="mt-1 text-xs text-slate-500">Restoran Analitiği</p>
           </div>
           <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Ana Menü</p>
           <nav className="space-y-1 px-3">
@@ -464,33 +465,33 @@ export default function Home() {
               <button
                 key={item.key}
                 onClick={() => setTab(item.key)}
-                className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
+                className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition ${
                   tab === item.key
-                    ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
-                    : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
+                    ? "border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
+                    : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
                 }`}
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500 transition group-hover:bg-slate-200 group-hover:text-slate-700">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500 transition group-hover:bg-slate-200 group-hover:text-slate-700 group-data-[active=true]:bg-white">
                   {item.icon}
                 </span>
                 <span className="text-[15px] font-semibold">{item.label}</span>
               </button>
             ))}
           </nav>
-          <div className="mx-3 mt-5 border-t border-slate-200/80 px-3 pt-4">
+          <div className="mx-3 mt-5 rounded-2xl border border-slate-200/80 bg-white/70 px-3 py-3">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Yardım</p>
             <button
               onClick={() => setTab("settings")}
-              className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
+              className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">⚙</span>
               <span>Ayarlar</span>
             </button>
-            <button className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900">
+            <button className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">ⓘ</span>
               <span>Yardım Merkezi</span>
             </button>
-            <div className="mt-1 flex items-center justify-between rounded-2xl px-2 py-3 text-[15px] font-semibold text-slate-700">
+            <div className="mt-1 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-2 py-2.5 text-[15px] font-semibold text-slate-700">
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
                 <span>Karanlık Mod</span>
@@ -512,19 +513,22 @@ export default function Home() {
         </aside>
 
         <section className="space-y-4">
-          <header className="flex min-h-[78px] flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <h1 className="text-[30px] font-semibold tracking-tight text-slate-900">{restaurantName || "Restaurant Yönetim Sistemi"}</h1>
+          <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200/70 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-2.5 shadow-md shadow-slate-900/5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-500">Panel</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Restorant Yönetim Sistemi</h1>
+            </div>
             <div className="ml-auto flex items-center gap-3">
-              <div className="flex h-11 min-w-[280px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3">
+              <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3">
                 <span className="text-sm text-slate-500">⌕</span>
                 <input readOnly value="Ara" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
                 <span className="text-xs text-slate-400">⌘+K</span>
               </div>
-              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>
-              <button className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">◔</button>
-              <button onClick={() => setTab("settings")} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">⚙</button>
-              <div className="flex items-center gap-2 pl-1">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
+              <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>
+              <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">◔</button>
+              <button onClick={() => setTab("settings")} className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">⚙</button>
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-1.5">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
                 <button
                   onClick={handleLogout}
                   className="rounded-xl border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
