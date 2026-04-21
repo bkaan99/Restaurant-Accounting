@@ -16,9 +16,9 @@ export function DashboardTab({
   salesChartData: { date: string; total: number }[];
   menuItems: MenuItem[];
 }) {
-  const productSales = sales.reduce<Record<string, { name: string; qty: number; total: number }>>((acc, sale) => {
+  const productSales = sales.reduce<Record<string, { id: string; name: string; qty: number; total: number }>>((acc, sale) => {
     sale.items.forEach((item) => {
-      if (!acc[item.menuItemId]) acc[item.menuItemId] = { name: item.name, qty: 0, total: 0 };
+      if (!acc[item.menuItemId]) acc[item.menuItemId] = { id: item.menuItemId, name: item.name, qty: 0, total: 0 };
       acc[item.menuItemId].qty += item.qty;
       acc[item.menuItemId].total += item.lineTotal;
     });
@@ -34,7 +34,7 @@ export function DashboardTab({
   return (
     <section className="grid items-start gap-4 xl:grid-cols-[2fr_1fr]">
       <div className="grid self-start gap-4 sm:grid-cols-2">
-        <div className="h-fit rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/40 to-indigo-50/50 p-4 shadow-sm">
+        <div className="h-[250px] rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/40 to-indigo-50/50 p-4 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-500">Finans</p>
@@ -56,7 +56,7 @@ export function DashboardTab({
             ))}
           </div>
         </div>
-        <div className="h-fit rounded-3xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50 p-4 shadow-sm">
+        <div className="h-[250px] rounded-3xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/50 p-4 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-500">Operasyon</p>
@@ -79,7 +79,7 @@ export function DashboardTab({
           </div>
         </div>
       </div>
-      <div className="rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/30 to-white p-3.5 shadow-sm">
+      <div className="h-[250px] rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/30 to-white p-3.5 shadow-sm">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-500">Özet</p>
@@ -132,7 +132,7 @@ export function DashboardTab({
             <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">Henüz ürün satışı yok.</p>
           ) : (
             topProducts.map((product) => (
-              <div key={product.name} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-white px-2.5 py-1.5">
+              <div key={product.id} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-white px-2.5 py-1.5">
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium text-slate-800">{product.name}</p>
                   <p className="text-xs text-emerald-600">{tl.format(product.total)}</p>
