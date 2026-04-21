@@ -12,7 +12,7 @@ import { MenuTab } from "@/components/dashboard/MenuTab";
 type TabType = "dashboard" | "sales" | "expenses" | "menu";
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
-const panelClass = "rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm backdrop-blur";
+const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
 const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 export default function Home() {
@@ -133,14 +133,6 @@ export default function Home() {
     }, {});
     return Object.entries(grouped).map(([date, total]) => ({ date, total }));
   }, [sales]);
-
-  const expenseChartData = useMemo(() => {
-    const grouped = expenses.reduce<Record<string, number>>((acc, expense) => {
-      acc[expense.supplier] = (acc[expense.supplier] ?? 0) + expense.amount;
-      return acc;
-    }, {});
-    return Object.entries(grouped).map(([supplier, amount]) => ({ supplier, amount }));
-  }, [expenses]);
 
   const handleLogin = () => {
     const found = appUsers.find((u) => u.username === username && u.password === password);
@@ -323,48 +315,44 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[1500px] p-3 md:p-5">
-      <div className="grid gap-4 lg:grid-cols-[250px_1fr]">
-        <aside className="rounded-3xl bg-gradient-to-b from-indigo-400 via-blue-600 to-indigo-700 p-4 text-white shadow-xl shadow-blue-900/20">
-          <div className="mb-6 flex items-center gap-3 rounded-2xl bg-white/15 p-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-lg font-bold text-indigo-700">.D</div>
-            <div>
-              <p className="text-sm font-semibold">Dashboard</p>
-              <p className="text-xs text-blue-100 capitalize">{user.role}</p>
-            </div>
-          </div>
-          <button className="mb-6 w-full rounded-xl bg-orange-400 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500">
-            + Yeni Islem
-          </button>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-100/80">Menu</p>
+    <main className="mx-auto min-h-screen w-full max-w-[1600px] bg-slate-100 px-3 py-4 md:px-6 md:py-6">
+      <div className="grid gap-4 xl:grid-cols-[260px_1fr]">
+        <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="mb-5 text-2xl font-bold tracking-wide text-slate-800">LUMINOX</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Main Menu</p>
           <nav className="space-y-1.5">
             {(["dashboard", "sales", "expenses", "menu"] as TabType[]).map((item) => (
               <button
                 key={item}
                 onClick={() => setTab(item)}
-                className={`flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium capitalize transition ${
-                  tab === item ? "bg-white text-indigo-700 shadow-md" : "text-white/90 hover:bg-white/15"
+                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${
+                  tab === item ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {item}
               </button>
             ))}
           </nav>
-          <div className="mt-8 rounded-2xl bg-white/15 p-3 text-xs text-white">
-            <p className="font-semibold">Aktif Kullanici</p>
-            <p className="mt-1">{user.name}</p>
-            <p className="capitalize text-blue-100">{user.role}</p>
+          <div className="mt-6 border-t border-slate-100 pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Help Center</p>
+            <button className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Setting</button>
+            <button className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50">Help Center</button>
+            <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-600">
+              <span>Dark Mode</span>
+              <span className="h-5 w-10 rounded-full bg-slate-200" />
+            </div>
           </div>
         </aside>
 
         <section className="space-y-4">
-          <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3 rounded-3xl`}>
+          <header className={`${panelClass} flex flex-wrap items-center justify-between gap-3`}>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Sales Dashboard</h1>
             <div className="min-w-[260px] flex-1">
               <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <span className="text-slate-400">🔎</span>
                 <input
                   readOnly
-                  value="Dashboard icinde ara..."
+                  value="Search"
                   className="w-full bg-transparent text-sm text-slate-400 outline-none"
                 />
               </div>
@@ -375,9 +363,21 @@ export default function Home() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
                 {loading ? "Veriler yukleniyor..." : "Canli"}
               </div>
-              <button onClick={() => setCurrentUserId(null)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100">
-                Cikis
-              </button>
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-semibold leading-tight text-slate-800">{user.name}</p>
+                  <p className="text-xs capitalize text-slate-500">{user.role}</p>
+                </div>
+                <button
+                  onClick={() => setCurrentUserId(null)}
+                  className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  Çıkış
+                </button>
+              </div>
             </div>
             {syncError ? <p className="w-full text-xs text-red-600">{syncError}</p> : null}
           </header>
@@ -388,10 +388,7 @@ export default function Home() {
               stats={stats}
               sales={sales}
               salesChartData={salesChartData}
-              expenseChartData={expenseChartData}
-              activeMenu={activeMenu}
               menuItems={menuItems}
-              expenses={expenses}
             />
           ) : null}
 
