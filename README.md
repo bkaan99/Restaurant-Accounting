@@ -21,7 +21,9 @@ npm install
 2. Ortam degiskenlerini tanimlayin:
 
 ```bash
-cp .env.example .env.local
+# .env.local dosyasina asagidaki degerleri ekleyin
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
 3. Uygulamayi baslatin:
@@ -43,3 +45,12 @@ npm run dev
 ## Supabase Notu
 
 Supabase bilgileri tanimli degilse uygulama demo veri ile calisir.
+
+## Supabase Baslangic Kurulumu
+
+1. Supabase'de yeni bir proje olusturun.
+2. `supabase/schema.sql` dosyasini Supabase SQL Editor'e yapistirip calistirin.
+3. Proje URL ve anon key bilgilerini `.env.local` dosyasina ekleyin.
+4. Uygulamayi yeniden baslatin (`npm run dev`).
+
+Bu adimlardan sonra menu, satis ve gider kayitlari Supabase uzerinden okunur ve kaydedilir.
