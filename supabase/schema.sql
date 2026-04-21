@@ -22,6 +22,7 @@ create table if not exists public.menu_items (
 
 create table if not exists public.sales (
   id uuid primary key default gen_random_uuid(),
+  receipt_no text unique,
   created_by uuid references public.users(id),
   created_at timestamptz not null default now(),
   total_amount numeric(10,2) not null check (total_amount >= 0),
@@ -40,6 +41,7 @@ create table if not exists public.sale_items (
 
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
+  receipt_no text unique,
   title text not null,
   supplier text,
   amount numeric(10,2) not null check (amount > 0),
@@ -48,6 +50,17 @@ create table if not exists public.expenses (
   created_by uuid references public.users(id),
   created_at timestamptz not null default now()
 );
+
+alter table public.sales add column if not exists receipt_no text;
+alter table public.expenses add column if not exists receipt_no text;
+update public.sales
+set receipt_no = concat('SAT-', upper(substr(replace(id::text, '-', ''), 1, 10)))
+where receipt_no is null;
+update public.expenses
+set receipt_no = concat('GDR-', upper(substr(replace(id::text, '-', ''), 1, 10)))
+where receipt_no is null;
+create unique index if not exists sales_receipt_no_unique_idx on public.sales(receipt_no);
+create unique index if not exists expenses_receipt_no_unique_idx on public.expenses(receipt_no);
 
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
