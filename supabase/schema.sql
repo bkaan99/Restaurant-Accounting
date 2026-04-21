@@ -65,77 +65,112 @@ values
   ('Kunefe', 'Tatli', 95, true)
 on conflict do nothing;
 
--- RLS (gelistirme asamasi)
--- Not: Bu policyler anon/authenticated rolleri icin genis izin verir.
--- Uretimde rol bazli, auth.uid() kontrollu policylere gecilmelidir.
+-- RLS (production-safe)
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
 
-drop policy if exists "users_all_select" on public.users;
-create policy "users_all_select"
+-- Yardimci fonksiyonlar
+create or replace function public.get_current_profile_id()
+returns uuid
+language sql
+stable
+as $$
+  select id from public.users where auth_user_id = auth.uid() limit 1;
+$$;
+
+create or replace function public.get_current_user_role()
+returns text
+language sql
+stable
+as $$
+  select role from public.users where auth_user_id = auth.uid() limit 1;
+$$;
+
+-- users: tum authenticated kullanicilar profilleri gorebilir.
+-- admin ve manager profilleri guncelleyebilir, staff sadece kendi profilini.
+drop policy if exists "users_select_authenticated" on public.users;
+drop policy if exists "users_update_admin_manager_or_self" on public.users;
+create policy "users_select_authenticated"
   on public.users
   for select
-  to anon, authenticated
+  to authenticated
   using (true);
-
-drop policy if exists "menu_all_select" on public.menu_items;
-drop policy if exists "menu_all_insert" on public.menu_items;
-drop policy if exists "menu_all_update" on public.menu_items;
-create policy "menu_all_select"
-  on public.menu_items
-  for select
-  to anon, authenticated
-  using (true);
-create policy "menu_all_insert"
-  on public.menu_items
-  for insert
-  to anon, authenticated
-  with check (true);
-create policy "menu_all_update"
-  on public.menu_items
+create policy "users_update_admin_manager_or_self"
+  on public.users
   for update
-  to anon, authenticated
-  using (true)
-  with check (true);
+  to authenticated
+  using (
+    public.get_current_user_role() in ('admin', 'manager')
+    or auth_user_id = auth.uid()
+  )
+  with check (
+    public.get_current_user_role() in ('admin', 'manager')
+    or auth_user_id = auth.uid()
+  );
 
-drop policy if exists "sales_all_select" on public.sales;
-drop policy if exists "sales_all_insert" on public.sales;
-create policy "sales_all_select"
+-- menu_items: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "menu_select_authenticated" on public.menu_items;
+drop policy if exists "menu_write_admin_manager" on public.menu_items;
+create policy "menu_select_authenticated"
+  on public.menu_items
+  for select
+  to authenticated
+  using (true);
+create policy "menu_write_admin_manager"
+  on public.menu_items
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- sales: tum authenticated okuyabilir, herkes kendi profile id'si ile insert yapar
+drop policy if exists "sales_select_authenticated" on public.sales;
+drop policy if exists "sales_insert_authenticated" on public.sales;
+create policy "sales_select_authenticated"
   on public.sales
   for select
-  to anon, authenticated
+  to authenticated
   using (true);
-create policy "sales_all_insert"
+create policy "sales_insert_authenticated"
   on public.sales
   for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (created_by = public.get_current_profile_id());
 
-drop policy if exists "sale_items_all_select" on public.sale_items;
-drop policy if exists "sale_items_all_insert" on public.sale_items;
-create policy "sale_items_all_select"
+-- sale_items: tum authenticated okuyabilir, insert sadece kendi olusturdugu sale icin
+drop policy if exists "sale_items_select_authenticated" on public.sale_items;
+drop policy if exists "sale_items_insert_own_sale" on public.sale_items;
+create policy "sale_items_select_authenticated"
   on public.sale_items
   for select
-  to anon, authenticated
+  to authenticated
   using (true);
-create policy "sale_items_all_insert"
+create policy "sale_items_insert_own_sale"
   on public.sale_items
   for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (
+    exists (
+      select 1
+      from public.sales s
+      where s.id = sale_items.sale_id
+      and s.created_by = public.get_current_profile_id()
+    )
+  );
 
-drop policy if exists "expenses_all_select" on public.expenses;
-drop policy if exists "expenses_all_insert" on public.expenses;
-create policy "expenses_all_select"
+-- expenses: tum authenticated okuyabilir, insert sadece kendi profile id'si ile
+drop policy if exists "expenses_select_authenticated" on public.expenses;
+drop policy if exists "expenses_insert_authenticated" on public.expenses;
+create policy "expenses_select_authenticated"
   on public.expenses
   for select
-  to anon, authenticated
+  to authenticated
   using (true);
-create policy "expenses_all_insert"
+create policy "expenses_insert_authenticated"
   on public.expenses
   for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (created_by = public.get_current_profile_id());
