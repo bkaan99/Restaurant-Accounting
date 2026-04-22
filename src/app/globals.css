@@ -26,3 +26,48 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Dashboard dark theme overrides */
+.theme-dark {
+  color: #e2e8f0;
+}
+
+.theme-dark .bg-white,
+.theme-dark .bg-white\/90,
+.theme-dark .bg-white\/95,
+.theme-dark .bg-slate-50,
+.theme-dark .bg-slate-50\/70,
+.theme-dark .bg-slate-50\/90 {
+  background-color: rgba(15, 23, 42, 0.55) !important;
+}
+
+.theme-dark .border-slate-200,
+.theme-dark .border-slate-200\/70,
+.theme-dark .border-slate-200\/80,
+.theme-dark .border-slate-300 {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+.theme-dark .text-slate-900,
+.theme-dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+.theme-dark .text-slate-700,
+.theme-dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.theme-dark .text-slate-500,
+.theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.theme-dark thead.bg-slate-50,
+.theme-dark thead.bg-slate-50\/90 {
+  background-color: rgba(30, 41, 59, 0.75) !important;
+}
+
+.theme-dark tr:hover {
+  background-color: rgba(148, 163, 184, 0.08);
+}

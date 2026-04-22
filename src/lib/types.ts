@@ -1,11 +1,73 @@
 export type UserRole = "admin" | "manager" | "staff";
 
+export type PermissionKey =
+  | "dashboard_view"
+  | "sales_manage"
+  | "transactions_view"
+  | "expenses_manage"
+  | "menu_manage"
+  | "settings_manage"
+  | "users_manage"
+  | "permissions_manage"
+  | "audit_view";
+
+export const ALL_PERMISSIONS: PermissionKey[] = [
+  "dashboard_view",
+  "sales_manage",
+  "transactions_view",
+  "expenses_manage",
+  "menu_manage",
+  "settings_manage",
+  "users_manage",
+  "permissions_manage",
+  "audit_view",
+];
+
+export const ROLE_PERMISSION_DEFAULTS: Record<UserRole, PermissionKey[]> = {
+  admin: ALL_PERMISSIONS,
+  manager: [
+    "dashboard_view",
+    "sales_manage",
+    "transactions_view",
+    "expenses_manage",
+    "menu_manage",
+    "settings_manage",
+    "audit_view",
+  ],
+  staff: ["dashboard_view", "sales_manage", "transactions_view", "expenses_manage"],
+};
+
+export type RolePermissionConfig = {
+  admin: PermissionKey[];
+  manager: PermissionKey[];
+  staff: PermissionKey[];
+};
+
+export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
+
+export type RestaurantSettings = {
+  restaurantName: string;
+  currency: string;
+  timezone: string;
+  taxRate: string;
+};
+
+export type ToastType = "error" | "warning" | "success";
+
+export type Toast = {
+  id: number;
+  message: string;
+  type: ToastType;
+  title: string;
+};
+
 export type AppUser = {
   id: string;
   name: string;
   role: UserRole;
   email: string;
   authUserId?: string | null;
+  permissions?: PermissionKey[] | null;
 };
 
 export type MenuItem = {
@@ -41,4 +103,17 @@ export type Expense = {
   amount: number;
   expenseDate: string;
   note?: string;
+};
+
+export type AuditLog = {
+  id: number;
+  eventType: "record_created" | "record_updated" | "record_deleted" | "role_changed";
+  tableName: string;
+  recordId: string;
+  changedByRole: string | null;
+  changedAt: string;
+  oldData: Record<string, unknown> | null;
+  newData: Record<string, unknown> | null;
+  metadata: Record<string, unknown>;
+  actorName: string;
 };

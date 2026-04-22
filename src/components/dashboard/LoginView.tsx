@@ -94,7 +94,7 @@ export function LoginView({
         </section>
 
         <div className={`relative w-full overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/20 via-white/10 to-indigo-200/10 p-6 shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-700 md:p-8 ${
-          formVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
+          formVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"
         }`}>
           <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-indigo-400/20 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-cyan-400/20 blur-2xl" />
@@ -110,7 +110,7 @@ export function LoginView({
             }`}
           >
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-500"}`} />
-            <span>Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi (simdilik demo veri ile calisiyor)"}</span>
+            <span>Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi"}</span>
           </div>
           {loading ? <p className="mt-2 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
 
@@ -120,6 +120,7 @@ export function LoginView({
               <input
                 value={email}
                 onChange={(e) => onEmailChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isSubmitting && onLogin()}
                 placeholder="ornek@restaurant.com"
                 className="w-full rounded-xl border border-white/30 bg-white/85 px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
               />
@@ -129,6 +130,7 @@ export function LoginView({
               <input
                 value={password}
                 onChange={(e) => onPasswordChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isSubmitting && onLogin()}
                 type="password"
                 placeholder="Sifrenizi girin"
                 className="w-full rounded-xl border border-white/30 bg-white/85 px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
