@@ -1,6 +1,6 @@
 export type UserRole = "admin" | "manager" | "staff";
 
-export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "settings";
+export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
 
 export type RestaurantSettings = {
   restaurantName: string;
@@ -59,4 +59,17 @@ export type Expense = {
   amount: number;
   expenseDate: string;
   note?: string;
+};
+
+export type AuditLog = {
+  id: number;
+  eventType: "record_created" | "record_updated" | "record_deleted" | "role_changed";
+  tableName: string;
+  recordId: string;
+  changedByRole: string | null;
+  changedAt: string;
+  oldData: Record<string, unknown> | null;
+  newData: Record<string, unknown> | null;
+  metadata: Record<string, unknown>;
+  actorName: string;
 };

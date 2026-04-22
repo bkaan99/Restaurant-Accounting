@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AppUser, UserRole } from "@/lib/types";
+import { AppUser, AuditLog, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
 type RestaurantSettings = {
@@ -24,6 +24,7 @@ export function SettingsTab({
   canManageUsers,
   onUpdateUserRole,
   onCreateUser,
+  auditLogs,
 }: {
   user: AppUser;
   panelClass: string;
@@ -37,6 +38,7 @@ export function SettingsTab({
   canManageUsers: boolean;
   onUpdateUserRole: (targetUserId: string, nextRole: UserRole) => Promise<void>;
   onCreateUser: (payload: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
+  auditLogs: AuditLog[];
 }) {
   const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX",
@@ -47,14 +49,17 @@ export function SettingsTab({
 
   const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
   const [saved, setSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "appearance" | "system">("profile");
+  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "audit" | "appearance" | "system">("profile");
   const [roleDrafts, setRoleDrafts] = useState<Record<string, UserRole>>({});
+  const [selectedAuditLogId, setSelectedAuditLogId] = useState<number | null>(null);
   const [newUserForm, setNewUserForm] = useState<{ name: string; email: string; password: string; role: UserRole }>({
     name: "",
     email: "",
     password: "",
     role: "staff",
   });
+
+  const selectedAuditLog = auditLogs.find((log) => log.id === selectedAuditLogId) ?? null;
 
   const handleSave = async () => {
     await onSaveRestaurantSettings(localRestaurantSettings);
@@ -90,6 +95,15 @@ export function SettingsTab({
         </svg>
       )
     },
+    {
+      id: "audit",
+      label: "Audit Log",
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M9 8h6m-9 12h12a2 2 0 002-2V6a2 2 0 00-2-2h-3.5a1.5 1.5 0 01-3 0H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
     { 
       id: "appearance", 
       label: "Görünüm", 
@@ -118,6 +132,7 @@ export function SettingsTab({
     if (activeSection === "profile") return "Hesap bilgilerinizi ve profil detaylarınızı buradan yönetebilirsiniz.";
     if (activeSection === "restaurant") return "İşletme bilgilerini, para birimini ve vergi oranlarını güncelleyin.";
     if (activeSection === "users") return "Ekip üyelerini ekleyin, rollerini ve yetkilerini düzenleyin.";
+    if (activeSection === "audit") return "Kim, ne zaman, hangi kaydı değiştirdi veya sildi geçmişini inceleyin.";
     if (activeSection === "appearance") return "Uygulamanın görünümünü ve kullanıcı arayüzünü özelleştirin.";
     return "Sistem bağlantı durumunu ve altyapı detaylarını inceleyin.";
   };
@@ -359,6 +374,157 @@ export function SettingsTab({
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* Audit Log */}
+          {activeSection === "audit" && (
+            <div className="space-y-4">
+              <div className={`rounded-2xl border overflow-hidden ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-white"}`}>
+                <table className="w-full text-left">
+                  <thead className={`text-[10px] font-black uppercase tracking-widest text-slate-500 border-b ${darkMode ? "border-white/5" : "border-slate-100"}`}>
+                    <tr>
+                      <th className="px-6 py-4">Zaman</th>
+                      <th className="px-6 py-4">İşlem</th>
+                      <th className="px-6 py-4">Kullanıcı</th>
+                      <th className="px-6 py-4">Hedef</th>
+                      <th className="px-6 py-4">Detay</th>
+                      <th className="px-6 py-4 text-right">İncele</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {auditLogs.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-sm font-medium text-slate-500">
+                          Audit kaydı bulunamadı.
+                        </td>
+                      </tr>
+                    )}
+                    {auditLogs.map((log) => {
+                      const isRoleChange = log.eventType === "role_changed";
+                      const isCreate = log.eventType === "record_created";
+                      const isDelete = log.eventType === "record_deleted";
+                      const detailText = isRoleChange
+                        ? `${String(log.oldData?.role ?? "-")} → ${String(log.newData?.role ?? "-")}`
+                        : isCreate
+                        ? "Yeni kayıt oluşturuldu"
+                        : isDelete
+                        ? "Kayıt silindi"
+                        : "Kayıt güncellendi";
+                      return (
+                        <tr key={log.id} className={`transition-colors hover:bg-indigo-500/[0.02] ${selectedAuditLogId === log.id ? "bg-indigo-500/[0.05]" : ""}`}>
+                          <td className="px-6 py-4 text-xs font-bold text-slate-500 whitespace-nowrap">
+                            {new Date(log.changedAt).toLocaleString("tr-TR")}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                              isRoleChange
+                                ? "bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20"
+                                : isCreate
+                                ? "bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20"
+                                : isDelete
+                                ? "bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20"
+                                : "bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20"
+                            }`}>
+                              {isRoleChange ? "Rol Değişikliği" : isCreate ? "Oluşturma" : isDelete ? "Silme" : "Güncelleme"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold">{log.actorName}</td>
+                          <td className="px-6 py-4 text-xs font-bold text-slate-500">
+                            {log.tableName} / {log.recordId}
+                          </td>
+                          <td className="px-6 py-4 text-xs font-medium text-slate-500">
+                            {detailText}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => setSelectedAuditLogId((prev) => (prev === log.id ? null : log.id))}
+                              className={`h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                selectedAuditLogId === log.id
+                                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                                  : darkMode
+                                  ? "bg-white/10 text-slate-200 hover:bg-white/15"
+                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                              }`}
+                            >
+                              {selectedAuditLogId === log.id ? "Kapat" : "Detay"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {selectedAuditLog && (
+                <div className={`rounded-2xl border p-5 space-y-5 ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white"}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className={`text-sm font-black tracking-tight ${darkMode ? "text-slate-100" : "text-slate-900"}`}>Audit Detayı</h4>
+                      <p className="text-xs font-medium text-slate-500">
+                        #{selectedAuditLog.id} · {new Date(selectedAuditLog.changedAt).toLocaleString("tr-TR")}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">
+                      {selectedAuditLog.tableName} / {selectedAuditLog.recordId}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className={`rounded-xl border p-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">İşlem Türü</p>
+                      <p className="mt-1 text-xs font-bold">{selectedAuditLog.eventType}</p>
+                    </div>
+                    <div className={`rounded-xl border p-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Yapan Kullanıcı</p>
+                      <p className="mt-1 text-xs font-bold">{selectedAuditLog.actorName}</p>
+                    </div>
+                    <div className={`rounded-xl border p-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Yetki</p>
+                      <p className="mt-1 text-xs font-bold">{selectedAuditLog.changedByRole ?? "Bilinmiyor"}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className={`rounded-xl border p-3 md:col-span-1 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">Değişen Alanlar</p>
+                      {Array.isArray(selectedAuditLog.metadata.changed_fields) && selectedAuditLog.metadata.changed_fields.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {(selectedAuditLog.metadata.changed_fields as string[]).map((field) => (
+                            <span key={field} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
+                              {field}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs font-medium text-slate-500">Alan değişikliği yok veya işlem update değil.</p>
+                      )}
+                    </div>
+
+                    <div className={`rounded-xl border p-3 md:col-span-1 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">Eski Veri</p>
+                      <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all text-slate-500">
+                        {selectedAuditLog.oldData ? JSON.stringify(selectedAuditLog.oldData, null, 2) : "null"}
+                      </pre>
+                    </div>
+
+                    <div className={`rounded-xl border p-3 md:col-span-1 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">Yeni Veri</p>
+                      <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all text-slate-500">
+                        {selectedAuditLog.newData ? JSON.stringify(selectedAuditLog.newData, null, 2) : "null"}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className={`rounded-xl border p-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">Metadata</p>
+                    <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all text-slate-500">
+                      {JSON.stringify(selectedAuditLog.metadata, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

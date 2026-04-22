@@ -11,6 +11,7 @@ import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
 import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
+import { AuditLogsTab } from "@/components/dashboard/AuditLogsTab";
 import { LoginView } from "@/components/dashboard/LoginView";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ToastContainer } from "@/components/ui/ToastContainer";
@@ -62,6 +63,7 @@ export default function Home() {
     menuItems, 
     sales, 
     expenses, 
+    auditLogs,
     loading, 
     restaurantSettings, 
     stats, 
@@ -134,6 +136,10 @@ export default function Home() {
     { 
       key: "settings", label: "Ayarlar", roles: ["admin", "manager"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    },
+    {
+      key: "audit", label: "Audit Log", roles: ["admin", "manager"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M9 8h6m-9 12h12a2 2 0 002-2V6a2 2 0 00-2-2h-3.5a1.5 1.5 0 01-3 0H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
     },
   ];
 
@@ -323,7 +329,8 @@ export default function Home() {
             {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
             {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo, user?.id ?? null)} tl={tl} />}
             {activeTab === "menu" && <MenuTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} onCreateMenuItem={createMenuItem} onToggleMenuItem={toggleMenuItem} onDeleteMenuItem={deleteMenuItem} tl={tl} />}
-            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} />}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} auditLogs={auditLogs} />}
+            {activeTab === "audit" && <AuditLogsTab panelClass={panelClass} darkMode={darkMode} auditLogs={auditLogs} />}
           </section>
         </div>
       </div>

@@ -232,3 +232,180 @@ create policy "ayarlar_write_admin_manager"
   to authenticated
   using (public.get_current_user_role() in ('admin', 'manager'))
   with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- Audit log: tum degisiklikleri (insert/update/delete) takip et
+create table if not exists public.audit_logs (
+  id bigint generated always as identity primary key,
+  event_type text not null,
+  table_name text not null,
+  record_id text not null,
+  changed_by_auth_user_id uuid,
+  changed_by_profile_id uuid references public.users(id) on delete set null,
+  changed_by_role text,
+  changed_at timestamptz not null default now(),
+  old_data jsonb,
+  new_data jsonb,
+  metadata jsonb not null default '{}'::jsonb
+);
+
+alter table public.audit_logs
+  drop constraint if exists audit_logs_event_type_check;
+alter table public.audit_logs
+  add constraint audit_logs_event_type_check
+  check (event_type in ('record_created', 'record_updated', 'record_deleted', 'role_changed'));
+
+alter table public.audit_logs enable row level security;
+
+drop policy if exists "audit_logs_select_admin_manager" on public.audit_logs;
+create policy "audit_logs_select_admin_manager"
+  on public.audit_logs
+  for select
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'));
+
+create or replace function public.audit_log_data_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor_profile_id uuid;
+  actor_role text;
+  target_record_id text;
+  event_name text;
+  changed_fields jsonb;
+begin
+  if tg_op = 'UPDATE' and to_jsonb(old) = to_jsonb(new) then
+    return new;
+  end if;
+
+  actor_profile_id := public.get_current_profile_id();
+  actor_role := public.get_current_user_role();
+  target_record_id := coalesce(to_jsonb(new)->>'id', to_jsonb(old)->>'id', '[no-id]');
+
+  if tg_op = 'INSERT' then
+    event_name := 'record_created';
+  elsif tg_op = 'DELETE' then
+    event_name := 'record_deleted';
+  else
+    if tg_table_name = 'users' and old.role is distinct from new.role then
+      event_name := 'role_changed';
+    else
+      event_name := 'record_updated';
+    end if;
+  end if;
+
+  if tg_op = 'UPDATE' then
+    select coalesce(jsonb_agg(new_row.key), '[]'::jsonb)
+    into changed_fields
+    from jsonb_each(to_jsonb(new)) as new_row
+    where (to_jsonb(old)->new_row.key) is distinct from new_row.value;
+  else
+    changed_fields := '[]'::jsonb;
+  end if;
+
+  insert into public.audit_logs (
+    event_type,
+    table_name,
+    record_id,
+    changed_by_auth_user_id,
+    changed_by_profile_id,
+    changed_by_role,
+    old_data,
+    new_data,
+    metadata
+  )
+  values (
+    event_name,
+    tg_table_name,
+    target_record_id,
+    auth.uid(),
+    actor_profile_id,
+    actor_role,
+    case
+      when tg_op = 'INSERT' then null
+      else to_jsonb(old)
+    end,
+    case
+      when tg_op = 'DELETE' then null
+      else to_jsonb(new)
+    end,
+    jsonb_build_object(
+      'operation', tg_op,
+      'changed_fields', changed_fields
+    )
+  );
+
+  if tg_op = 'INSERT' then
+    return new;
+  elsif tg_op = 'DELETE' then
+    return old;
+  else
+    return new;
+  end if;
+end;
+$$;
+
+drop trigger if exists trg_audit_users_iud on public.users;
+drop trigger if exists trg_audit_menu_items_iud on public.menu_items;
+drop trigger if exists trg_audit_sales_iud on public.sales;
+drop trigger if exists trg_audit_sale_items_iud on public.sale_items;
+drop trigger if exists trg_audit_expenses_iud on public.expenses;
+drop trigger if exists trg_audit_app_settings_iud on public.app_settings;
+
+drop trigger if exists trg_audit_users_role_change on public.users;
+drop trigger if exists trg_audit_menu_items_delete on public.menu_items;
+drop trigger if exists trg_audit_sales_delete on public.sales;
+drop trigger if exists trg_audit_sale_items_delete on public.sale_items;
+drop trigger if exists trg_audit_expenses_delete on public.expenses;
+
+create trigger trg_audit_users_iud
+after insert or update or delete on public.users
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_menu_items_iud
+after insert or update or delete on public.menu_items
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_sales_iud
+after insert or update or delete on public.sales
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_sale_items_iud
+after insert or update or delete on public.sale_items
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_expenses_iud
+after insert or update or delete on public.expenses
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_app_settings_iud
+after insert or update or delete on public.app_settings
+for each row
+execute function public.audit_log_data_change();
+
+-- Audit log retention: yalnizca son 1 ay tutulur
+create or replace function public.audit_logs_enforce_retention()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.audit_logs
+  where changed_at < now() - interval '1 month';
+  return null;
+end;
+$$;
+
+drop trigger if exists trg_audit_logs_retention on public.audit_logs;
+create trigger trg_audit_logs_retention
+after insert on public.audit_logs
+for each statement
+execute function public.audit_logs_enforce_retention();

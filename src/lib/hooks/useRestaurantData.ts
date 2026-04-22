@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
-import { AppUser, Expense, MenuItem, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
+import { AppUser, AuditLog, Expense, MenuItem, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 import { expensesSeed, menuItemsSeed, salesSeed, users as initialUsers } from "@/lib/mock-data";
 
 export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void) {
@@ -10,6 +10,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
   const [sales, setSales] = useState<Sale[]>(salesSeed);
   const [expenses, setExpenses] = useState<Expense[]>(expensesSeed);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(hasSupabaseConfig);
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
     restaurantName: "LUMINOX",
@@ -27,12 +28,16 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
     setLoading(true);
     try {
-      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
+      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("users").select("id, name, role, email, auth_user_id"),
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
+        supabase
+          .from("audit_logs")
+          .select("id, event_type, table_name, record_id, changed_by_role, changed_at, old_data, new_data, metadata, changed_by_profile_id, users!audit_logs_changed_by_profile_id_fkey(name)")
+          .order("changed_at", { ascending: false }),
       ]);
 
       if (usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error) {
@@ -92,10 +97,27 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         note: e.note ?? "",
       }));
 
+      const mappedAuditLogs: AuditLog[] = (auditLogsRes.data ?? []).map((row) => {
+        const actorRelation = Array.isArray(row.users) ? row.users[0] : row.users;
+        return {
+        id: row.id,
+        eventType: row.event_type,
+        tableName: row.table_name,
+        recordId: row.record_id,
+        changedByRole: row.changed_by_role ?? null,
+        changedAt: row.changed_at,
+        oldData: (row.old_data as Record<string, unknown> | null) ?? null,
+        newData: (row.new_data as Record<string, unknown> | null) ?? null,
+        metadata: (row.metadata as Record<string, unknown> | null) ?? {},
+        actorName: actorRelation?.name ?? "Bilinmiyor",
+        };
+      });
+
       if (mappedUsers.length > 0) setAppUsers(mappedUsers);
       setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
       setSales(mappedSales.length > 0 ? mappedSales : []);
       setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
+      setAuditLogs(mappedAuditLogs);
 
       const settingsRes = await supabase.from("app_settings").select("ayar_anahtari, ayar_degeri");
       if (!settingsRes.error && settingsRes.data) {
@@ -303,6 +325,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     menuItems,
     sales,
     expenses,
+    auditLogs,
     loading,
     restaurantSettings,
     stats,
