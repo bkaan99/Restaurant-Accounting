@@ -84,36 +84,61 @@ export function DashboardTab({
       </div>
 
       {/* Satış Raporu gauge */}
-      <div className={`h-[250px] ${card} ${dm ? "" : "border-violet-100 bg-gradient-to-br from-white via-violet-50/30 to-white"}`}>
+      <div className={`h-[250px] relative overflow-hidden ${card} ${dm ? "" : "border-violet-100 bg-gradient-to-br from-white via-violet-50/30 to-white"}`}>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-400">Özet</p>
-            <p className={`mt-1 text-xs font-semibold ${dm ? "text-slate-300" : "text-slate-600"}`}>Satış Raporu</p>
-          </div>
-          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${dm ? "border-violet-400/30 bg-violet-500/10 text-violet-300" : "border-violet-200 bg-violet-50 text-violet-700"}`}>
-            %{Math.round(gaugePercent)}
-          </span>
-        </div>
-        <p className={`mt-1 text-[11px] ${dm ? "text-slate-400" : "text-slate-500"}`}>Çeyreklik satış performansı analizi</p>
-        <div
-          className="mx-auto mt-3 h-36 w-36 rounded-full p-3"
-          style={{ background: `conic-gradient(${dm ? "#7c3aed" : "#6d28d9"} ${gaugePercent}%, ${dm ? "#3b1f6e" : "#e9d5ff"} 0)` }}
-        >
-          <div className={`flex h-full w-full items-center justify-center rounded-full ${dm ? "bg-slate-900" : "bg-white"}`}>
-            <div className="text-center">
-              <p className={`text-xl font-semibold ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(Math.max(stats.net, 0))}</p>
-              <p className={`text-[11px] ${dm ? "text-slate-400" : "text-slate-400"}`}>Özet</p>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-500">Canlı Özet</p>
             </div>
+            <p className={`mt-1 text-sm font-bold tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>Performans Analizi</p>
+          </div>
+          <div className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${dm ? "border-violet-400/30 bg-violet-500/10 text-violet-300" : "border-violet-200 bg-violet-50 text-violet-700"}`}>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            %{Math.round(gaugePercent)}
           </div>
         </div>
-        <div className={`mt-2.5 grid grid-cols-2 gap-2 border-t pt-2.5 text-sm ${dm ? "border-white/10" : "border-slate-100"}`}>
-          <div>
-            <p className={`text-xs ${dm ? "text-slate-400" : "text-slate-400"}`}>Aylık</p>
-            <p className={`text-base font-semibold ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(stats.totalSales * 0.32)}</p>
+        
+        <div className="relative mx-auto mt-2 h-32 w-32">
+          {/* Background Ring */}
+          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+            <circle
+              className={dm ? "text-slate-800" : "text-slate-100"}
+              strokeWidth="8"
+              stroke="currentColor"
+              fill="transparent"
+              r="40"
+              cx="50"
+              cy="50"
+            />
+            {/* Progress Ring */}
+            <circle
+              className="text-violet-600 transition-all duration-1000 ease-out"
+              strokeWidth="8"
+              strokeDasharray={2 * Math.PI * 40}
+              strokeDashoffset={2 * Math.PI * 40 * (1 - gaugePercent / 100)}
+              strokeLinecap="round"
+              stroke="currentColor"
+              fill="transparent"
+              r="40"
+              cx="50"
+              cy="50"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className={`text-lg font-black tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(Math.max(stats.net, 0))}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Net Kâr</p>
           </div>
-          <div>
-            <p className={`text-xs ${dm ? "text-slate-400" : "text-slate-400"}`}>Yıllık</p>
-            <p className={`text-base font-semibold ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(stats.totalSales * 0.96)}</p>
+        </div>
+
+        <div className={`mt-2 grid grid-cols-2 gap-4 border-t pt-2 ${dm ? "border-white/5" : "border-slate-100"}`}>
+          <div className="text-center">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Aylık Beklenti</p>
+            <p className={`text-sm font-bold ${dm ? "text-slate-200" : "text-slate-800"}`}>{tl.format(stats.totalSales * 0.32)}</p>
+          </div>
+          <div className={`text-center border-l ${dm ? "border-white/5" : "border-slate-100"}`}>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Yıllık Tahmin</p>
+            <p className={`text-sm font-bold ${dm ? "text-slate-200" : "text-slate-800"}`}>{tl.format(stats.totalSales * 0.96)}</p>
           </div>
         </div>
       </div>
