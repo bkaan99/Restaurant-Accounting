@@ -385,13 +385,13 @@ export function SettingsTab({
                 </div>
                 <button
                   onClick={onToggleDarkMode}
-                  className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
-                    darkMode ? "bg-indigo-600" : "bg-slate-200"
+                  className={`relative h-6 w-11 rounded-full border transition-all duration-300 ${
+                    darkMode ? "border-indigo-500 bg-indigo-600" : "border-slate-300 bg-slate-200"
                   }`}
                 >
-                  <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                      darkMode ? "translate-x-5" : "translate-x-0.5"
+                  <div
+                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${
+                      darkMode ? "translate-x-[24px]" : "translate-x-[4px]"
                     }`}
                   />
                 </button>

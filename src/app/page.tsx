@@ -709,19 +709,19 @@ export default function Home() {
             <div className={`mt-1 flex items-center justify-between rounded-2xl border px-2 py-2.5 text-[15px] font-semibold ${
               darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-slate-50/70 text-slate-700"
             }`}>
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
-                <span>Karanlık Mod</span>
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
+                <span className="truncate">Karanlık Mod</span>
               </div>
               <button
                 onClick={() => setDarkMode((d) => !d)}
-                className={`relative h-7 w-12 rounded-full border transition-colors duration-200 ${
-                  darkMode ? "border-indigo-500 bg-indigo-600" : "border-slate-300 bg-white"
+                className={`relative h-6 w-11 shrink-0 rounded-full border transition-all duration-300 ${
+                  darkMode ? "border-indigo-500 bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]" : "border-slate-300 bg-slate-100"
                 }`}
               >
-                <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                    darkMode ? "translate-x-6" : "translate-x-0.5"
+                <div
+                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${
+                    darkMode ? "translate-x-[24px]" : "translate-x-[4px]"
                   }`}
                 />
               </button>
