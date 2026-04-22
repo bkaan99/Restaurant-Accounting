@@ -45,10 +45,12 @@ export function useAuth(appUsers: AppUser[]) {
     };
 
     const syncSessionToAppUser = async () => {
+      if (!supabase) return;
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
       const authUser = data.session?.user;
       if (!authUser) {
+        setLocalUser(null);
         setCurrentUserId(null);
         setIsCheckingAuth(false);
         return;
@@ -65,6 +67,7 @@ export function useAuth(appUsers: AppUser[]) {
       if (!isMounted) return;
       const authUser = session?.user;
       if (!authUser) {
+        setLocalUser(null);
         setCurrentUserId(null);
       } else {
         const found = mapAuthUserToAppUser(authUser);
@@ -76,7 +79,7 @@ export function useAuth(appUsers: AppUser[]) {
 
     return () => {
       isMounted = false;
-      authSubscription.subscription.unsubscribe();
+      if (authSubscription) authSubscription.subscription.unsubscribe();
     };
   }, [appUsers]);
 
