@@ -47,11 +47,10 @@ export default function Home() {
     return localStorage.getItem(RESTAURANT_NAME_STORAGE_KEY) || "LUMINOX";
   });
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
-    restaurantName: restaurantName || "LUMINOX",
-    currency: "TRY",
-    timezone: "Europe/Istanbul",
     taxRate: "10",
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
@@ -196,12 +195,45 @@ export default function Home() {
       const found = mapAuthUserToAppUser(authUser);
       setCurrentUserId(found?.id ?? null);
     });
-
     return () => {
       isMounted = false;
       authSubscription.subscription.unsubscribe();
     };
   }, [appUsers]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return { sales: [], expenses: [], menu: [] };
+    const q = searchQuery.toLowerCase();
+    
+    return {
+      sales: sales.filter(s => 
+        s.receiptNo.toLowerCase().includes(q) || 
+        s.items.some(item => item.name.toLowerCase().includes(q))
+      ).slice(0, 5),
+      expenses: expenses.filter(e => 
+        e.title.toLowerCase().includes(q) || 
+        e.supplier.toLowerCase().includes(q) || 
+        e.receiptNo.toLowerCase().includes(q)
+      ).slice(0, 5),
+      menu: menuItems.filter(m => 
+        m.name.toLowerCase().includes(q)
+      ).slice(0, 5)
+    };
+  }, [searchQuery, sales, expenses, menuItems]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -812,12 +844,19 @@ export default function Home() {
               <h1 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Restorant Yönetim Sistemi</h1>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              <div className={`flex h-10 min-w-[240px] items-center gap-2 rounded-2xl border px-3 ${
-                darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-white"
-              }`}>
-                <span className={`text-sm ${darkMode ? "text-slate-300" : "text-slate-500"}`}>⌕</span>
-                <input readOnly value="Ara" className={`w-full bg-transparent text-sm outline-none ${darkMode ? "text-slate-300" : "text-slate-500"}`} />
-                <span className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-400"}`}>⌘+K</span>
+              <div 
+                onClick={() => setIsSearchOpen(true)}
+                className={`flex h-10 min-w-[280px] cursor-pointer items-center gap-3 rounded-2xl border px-4 transition-all hover:shadow-lg ${
+                  darkMode ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-slate-200 bg-white hover:shadow-indigo-100"
+                }`}
+              >
+                <svg className={`w-4 h-4 ${darkMode ? "text-slate-400" : "text-slate-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className={`flex-1 text-sm ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Hızlı arama yapın...</span>
+                <span className={`rounded-lg border px-1.5 py-0.5 text-[10px] font-bold ${
+                  darkMode ? "border-white/10 bg-white/5 text-slate-500" : "border-slate-200 bg-slate-50 text-slate-400"
+                }`}>⌘+K</span>
               </div>
               <button className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${
                 darkMode ? "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-600 hover:shadow-indigo-100"
@@ -1009,6 +1048,122 @@ export default function Home() {
           }
         }
       `}</style>
+      {/* Arama Overlay */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] backdrop-blur-sm bg-slate-900/40 p-4">
+          <div 
+            className={`w-full max-w-2xl overflow-hidden rounded-[2.5rem] border shadow-2xl transition-all ${
+              darkMode ? "border-white/10 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"
+            }`}
+          >
+            <div className={`flex items-center gap-4 border-b p-6 ${darkMode ? "border-white/10" : "border-slate-100"}`}>
+              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                autoFocus
+                placeholder="Satış, gider veya ürün ara..."
+                className="flex-1 bg-transparent text-xl font-medium outline-none placeholder:text-slate-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button 
+                onClick={() => setIsSearchOpen(false)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-widest ${darkMode ? "bg-white/5 hover:bg-white/10" : "bg-slate-100 hover:bg-slate-200"}`}
+              >
+                Kapat
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+              {!searchQuery.trim() ? (
+                <div className="py-12 text-center">
+                  <p className="text-slate-500 font-medium italic">Bir şeyler yazarak aramaya başlayın...</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Satışlar */}
+                  {searchResults.sales.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">Satış Fişleri</h3>
+                      <div className="grid gap-2">
+                        {searchResults.sales.map(s => (
+                          <button 
+                            key={s.id}
+                            onClick={() => { setTab("transactions"); setIsSearchOpen(false); }}
+                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
+                          >
+                            <div>
+                              <p className="text-sm font-bold">{s.receiptNo}</p>
+                              <p className="text-xs text-slate-500">{s.items.map(i => i.name).join(", ").slice(0, 50)}...</p>
+                            </div>
+                            <span className="text-sm font-black text-emerald-500">{tl.format(s.totalAmount)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Giderler */}
+                  {searchResults.expenses.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-amber-500">Giderler</h3>
+                      <div className="grid gap-2">
+                        {searchResults.expenses.map(e => (
+                          <button 
+                            key={e.id}
+                            onClick={() => { setTab("expenses"); setIsSearchOpen(false); }}
+                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
+                          >
+                            <div>
+                              <p className="text-sm font-bold">{e.title}</p>
+                              <p className="text-xs text-slate-500">{e.supplier} - {e.receiptNo}</p>
+                            </div>
+                            <span className="text-sm font-black text-rose-500">{tl.format(e.amount)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Menü */}
+                  {searchResults.menu.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">Menü Ürünleri</h3>
+                      <div className="grid gap-2">
+                        {searchResults.menu.map(m => (
+                          <button 
+                            key={m.id}
+                            onClick={() => { setTab("menu"); setIsSearchOpen(false); }}
+                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
+                          >
+                            <div>
+                              <p className="text-sm font-bold">{m.name}</p>
+                              <p className="text-xs text-slate-500">{m.category}</p>
+                            </div>
+                            <span className="text-sm font-black text-slate-400">{tl.format(m.price)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {searchResults.sales.length === 0 && searchResults.expenses.length === 0 && searchResults.menu.length === 0 && (
+                    <div className="py-12 text-center">
+                      <p className="text-slate-500">Sonuç bulunamadı.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className={`border-t p-4 flex justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+              <div className="flex items-center gap-1.5"><span className="px-1 rounded bg-slate-200 dark:bg-slate-700">ESC</span> Kapat</div>
+              <div className="flex items-center gap-1.5"><span className="px-1 rounded bg-slate-200 dark:bg-slate-700">ENTER</span> Seç</div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
