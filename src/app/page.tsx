@@ -18,8 +18,8 @@ type ToastType = "error" | "warning" | "success";
 type Toast = { id: number; message: string; type: ToastType; title: string };
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
-const panelClass = "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm";
-const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const basePanelClass = "rounded-3xl border p-5 shadow-xl backdrop-blur";
+const baseInputClass = "w-full rounded-xl border px-3 py-2 text-sm outline-none transition";
 const RESTAURANT_NAME_STORAGE_KEY = "restaurant_name";
 const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(seq).padStart(3, "0")}`;
 
@@ -40,7 +40,7 @@ export default function Home() {
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [dashboardVisible, setDashboardVisible] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [restaurantName, setRestaurantName] = useState(() => {
     if (typeof window === "undefined") return "LUMINOX";
@@ -55,6 +55,16 @@ export default function Home() {
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
   const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+  const panelClass = `${basePanelClass} ${
+    darkMode
+      ? "border-white/10 bg-white/5 text-slate-100 shadow-slate-950/40 [&_.bg-white]:!bg-white/5 [&_.bg-slate-50]:!bg-white/5 [&_.border-slate-200]:!border-white/10 [&_.border-slate-300]:!border-white/15 [&_.text-slate-900]:!text-slate-100 [&_.text-slate-800]:!text-slate-100 [&_.text-slate-700]:!text-slate-200 [&_.text-slate-600]:!text-slate-300 [&_.text-slate-500]:!text-slate-400 [&_.text-slate-400]:!text-slate-500 [&_thead]:!bg-white/5"
+      : "border-slate-200/80 bg-white/95 text-slate-900 shadow-slate-900/5"
+  }`;
+  const inputClass = `${baseInputClass} ${
+    darkMode
+      ? "border-white/15 bg-white/10 text-slate-100 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30"
+      : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  }`;
   const canManageMenu = user?.role === "admin" || user?.role === "manager";
   const canManageSettings = user?.role === "admin" || user?.role === "manager";
   const canManageUsers = user?.role === "admin";
@@ -89,6 +99,14 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
   }, [restaurantName]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      const timer = setTimeout(() => setDashboardVisible(true), 50);
+      return () => clearTimeout(timer);
+    }
+    setDashboardVisible(false);
+  }, [currentUserId]);
 
   useEffect(() => {
     if (!hasSupabaseConfig || !supabase) return;
@@ -602,18 +620,30 @@ export default function Home() {
 
   return (
     <main
-      className={`min-h-screen w-full bg-slate-100 p-4 transition-opacity duration-700 ${
+      className={`relative min-h-screen w-full overflow-hidden p-4 transition-opacity duration-700 ${
+        darkMode
+          ? "theme-dark bg-slate-950 text-slate-100"
+          : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
+      } ${
         dashboardVisible ? "opacity-100" : "opacity-0"
       }`}
     >
+      {!darkMode ? <div className="pointer-events-none absolute -left-24 top-8 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl" /> : null}
+      {!darkMode ? <div className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" /> : null}
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-        <aside className="sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 px-0 py-5 shadow-lg shadow-slate-900/5">
-          <div className="mx-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500">Marka</p>
-            <p className="mt-1 text-lg font-bold tracking-tight text-slate-900">{restaurantName || "LUMINOX"}</p>
-            <p className="mt-1 text-xs text-slate-500">Restoran Analitiği</p>
+        <aside className={`sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border px-0 py-5 shadow-xl shadow-slate-900/20 backdrop-blur ${
+          darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/90"
+        }`}>
+          <div className={`mx-4 rounded-2xl border px-4 py-4 ${
+            darkMode
+              ? "border-white/10 bg-slate-900/60"
+              : "border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50"
+          }`}>
+            <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-indigo-200" : "text-indigo-500"}`}>Marka</p>
+            <p className={`mt-1 text-lg font-bold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{restaurantName || "LUMINOX"}</p>
+            <p className={`mt-1 text-xs ${darkMode ? "text-slate-300" : "text-slate-500"}`}>Restoran Analitiği</p>
           </div>
-          <p className="px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Ana Menü</p>
+          <p className={`px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-slate-400" : "text-slate-400"}`}>Ana Menü</p>
           <nav className="space-y-1 px-3">
             {navItems.map((item) => {
               const isAllowed = user ? item.roles.includes(user.role) : false;
@@ -630,21 +660,31 @@ export default function Home() {
                 disabled={!isAllowed}
                 className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition ${
                   activeTab === item.key
-                    ? "border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
+                    ? darkMode
+                      ? "border-white/20 bg-white/10 text-indigo-100 shadow-sm"
+                      : "border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
                     : isAllowed
-                    ? "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
-                    : "cursor-not-allowed border-transparent text-slate-300"
+                    ? darkMode
+                      ? "border-transparent text-slate-200 hover:border-white/10 hover:bg-white/10 hover:text-white"
+                      : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
+                    : "cursor-not-allowed border-transparent text-slate-400/60"
                 }`}
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500 transition group-hover:bg-slate-200 group-hover:text-slate-700 group-data-[active=true]:bg-white">
+                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm leading-none transition ${
+                  darkMode
+                    ? "bg-white/10 text-slate-300 group-hover:bg-white/20 group-hover:text-white"
+                    : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700"
+                }`}>
                   {item.icon}
                 </span>
                 <span className="text-[15px] font-semibold">{item.label}</span>
               </button>
             )})}
           </nav>
-          <div className="mx-3 mt-5 rounded-2xl border border-slate-200/80 bg-white/70 px-3 py-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Yardım</p>
+          <div className={`mx-3 mt-5 rounded-2xl border px-3 py-3 ${
+            darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/70"
+          }`}>
+            <p className={`mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-slate-400" : "text-slate-400"}`}>Yardım</p>
             <button
               onClick={() => {
                 if (!canManageSettings) {
@@ -653,16 +693,22 @@ export default function Home() {
                 }
                 setTab("settings");
               }}
-              className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900"
+              className={`mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold transition ${
+                darkMode ? "text-slate-200 hover:bg-white/10 hover:text-white" : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
+              }`}
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">⚙</span>
               <span>Ayarlar</span>
             </button>
-            <button className="mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900">
+            <button className={`mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold transition ${
+              darkMode ? "text-slate-200 hover:bg-white/10 hover:text-white" : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
+            }`}>
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">ⓘ</span>
               <span>Yardım Merkezi</span>
             </button>
-            <div className="mt-1 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-2 py-2.5 text-[15px] font-semibold text-slate-700">
+            <div className={`mt-1 flex items-center justify-between rounded-2xl border px-2 py-2.5 text-[15px] font-semibold ${
+              darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-slate-50/70 text-slate-700"
+            }`}>
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-sm leading-none text-slate-500">◔</span>
                 <span>Karanlık Mod</span>
@@ -670,7 +716,7 @@ export default function Home() {
               <button
                 onClick={() => setDarkMode((d) => !d)}
                 className={`relative h-7 w-12 rounded-full border transition-colors duration-200 ${
-                  darkMode ? "border-indigo-600 bg-indigo-600" : "border-slate-300 bg-white"
+                  darkMode ? "border-indigo-500 bg-indigo-600" : "border-slate-300 bg-white"
                 }`}
               >
                 <span
@@ -684,19 +730,27 @@ export default function Home() {
         </aside>
 
         <section className="space-y-4">
-          <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200/70 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-2.5 shadow-md shadow-slate-900/5">
+          <header className={`flex min-h-[68px] flex-wrap items-center justify-between gap-3 rounded-3xl border px-4 py-2.5 shadow-xl shadow-slate-900/10 backdrop-blur ${
+            darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/90"
+          }`}>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-500">Panel</p>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Restorant Yönetim Sistemi</h1>
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${darkMode ? "text-indigo-200" : "text-indigo-500"}`}>Panel</p>
+              <h1 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Restorant Yönetim Sistemi</h1>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3">
-                <span className="text-sm text-slate-500">⌕</span>
-                <input readOnly value="Ara" className="w-full bg-transparent text-sm text-slate-500 outline-none" />
-                <span className="text-xs text-slate-400">⌘+K</span>
+              <div className={`flex h-10 min-w-[240px] items-center gap-2 rounded-2xl border px-3 ${
+                darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-white"
+              }`}>
+                <span className={`text-sm ${darkMode ? "text-slate-300" : "text-slate-500"}`}>⌕</span>
+                <input readOnly value="Ara" className={`w-full bg-transparent text-sm outline-none ${darkMode ? "text-slate-300" : "text-slate-500"}`} />
+                <span className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-400"}`}>⌘+K</span>
               </div>
-              <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">✉</button>
-              <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm">◔</button>
+              <button className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-sm ${
+                darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-white text-slate-600"
+              }`}>✉</button>
+              <button className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-sm ${
+                darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-white text-slate-600"
+              }`}>◔</button>
               <button
                 onClick={() => {
                   if (!canManageSettings) {
@@ -705,15 +759,23 @@ export default function Home() {
                   }
                   setTab("settings");
                 }}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:-translate-y-0.5 hover:shadow-sm"
+                className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-sm ${
+                  darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-white text-slate-600"
+                }`}
               >
                 ⚙
               </button>
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-1.5">
+              <div className={`flex items-center gap-2 rounded-2xl border px-2 py-1.5 ${
+                darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-white"
+              }`}>
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
                 <button
                   onClick={handleLogout}
-                  className="rounded-xl border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                  className={`rounded-xl border px-2.5 py-1.5 text-xs font-medium transition ${
+                    darkMode
+                      ? "border-white/20 text-slate-200 hover:bg-white/10"
+                      : "border-slate-300 text-slate-600 hover:bg-slate-100"
+                  }`}
                 >
                   Çıkış
                 </button>
@@ -728,12 +790,14 @@ export default function Home() {
               sales={sales}
               salesChartData={salesChartData}
               menuItems={menuItems}
+              darkMode={darkMode}
             />
           ) : null}
 
           {activeTab === "sales" ? (
             <SalesTab
               panelClass={panelClass}
+              darkMode={darkMode}
               activeMenu={activeMenu}
               menuItems={menuItems}
               cart={cart}
@@ -749,6 +813,7 @@ export default function Home() {
           {activeTab === "transactions" ? (
             <TransactionsTab
               panelClass={panelClass}
+              darkMode={darkMode}
               sales={sales}
               expenses={expenses}
               tl={tl}
@@ -759,6 +824,7 @@ export default function Home() {
             <ExpensesTab
               panelClass={panelClass}
               inputClass={inputClass}
+              darkMode={darkMode}
               expenseForm={expenseForm}
               setExpenseForm={setExpenseForm}
               createExpense={createExpense}
@@ -771,6 +837,7 @@ export default function Home() {
             <MenuTab
               panelClass={panelClass}
               inputClass={inputClass}
+              darkMode={darkMode}
               menuForm={menuForm}
               setMenuForm={setMenuForm}
               createMenuItem={createMenuItem}
