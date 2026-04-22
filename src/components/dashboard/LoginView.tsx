@@ -27,6 +27,7 @@ export function LoginView({
 }) {
   const [typedHeroTitle, setTypedHeroTitle] = useState("");
   const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false, false]);
+  const [formVisible, setFormVisible] = useState(false);
 
   useEffect(() => {
     let charIndex = 0;
@@ -50,6 +51,11 @@ export function LoginView({
       }, delay)
     );
     return () => timers.forEach(clearTimeout);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setFormVisible(true), 150);
+    return () => clearTimeout(t);
   }, []);
 
   return (
@@ -87,7 +93,9 @@ export function LoginView({
           </div>
         </section>
 
-        <div className="relative w-full overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/20 via-white/10 to-indigo-200/10 p-6 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-8">
+        <div className={`relative w-full overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/20 via-white/10 to-indigo-200/10 p-6 shadow-2xl shadow-black/30 backdrop-blur-xl transition-all duration-700 md:p-8 ${
+          formVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
+        }`}>
           <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-indigo-400/20 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-cyan-400/20 blur-2xl" />
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-100">Hosgeldiniz</p>
