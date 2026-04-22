@@ -1,5 +1,23 @@
 export type UserRole = "admin" | "manager" | "staff";
 
+export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "settings";
+
+export type RestaurantSettings = {
+  restaurantName: string;
+  currency: string;
+  timezone: string;
+  taxRate: string;
+};
+
+export type ToastType = "error" | "warning" | "success";
+
+export type Toast = {
+  id: number;
+  message: string;
+  type: ToastType;
+  title: string;
+};
+
 export type AppUser = {
   id: string;
   name: string;

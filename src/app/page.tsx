@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { expensesSeed, menuItemsSeed, salesSeed, users } from "@/lib/mock-data";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
-import { AppUser, Expense, MenuItem, Sale, SaleItem, UserRole } from "@/lib/types";
+import { TabType, UserRole } from "@/lib/types";
+
+// Components
 import { DashboardTab } from "@/components/dashboard/DashboardTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
@@ -11,215 +12,127 @@ import { MenuTab } from "@/components/dashboard/MenuTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
 import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
 import { LoginView } from "@/components/dashboard/LoginView";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { ToastContainer } from "@/components/ui/ToastContainer";
+import { SearchModal } from "@/components/ui/SearchModal";
 
-type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "settings";
-type RestaurantSettings = { restaurantName: string; currency: string; timezone: string; taxRate: string };
-type ToastType = "error" | "warning" | "success";
-type Toast = { id: number; message: string; type: ToastType; title: string };
+// Hooks
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useRestaurantData } from "@/lib/hooks/useRestaurantData";
+import { useToast } from "@/lib/hooks/useToast";
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const basePanelClass = "rounded-3xl border p-5 shadow-xl backdrop-blur";
 const baseInputClass = "w-full rounded-xl border px-3 py-2 text-sm outline-none transition";
-const RESTAURANT_NAME_STORAGE_KEY = "restaurant_name";
 const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(seq).padStart(3, "0")}`;
 
 export default function Home() {
-  const [email, setEmail] = useState("admin@restaurant.local");
-  const [password, setPassword] = useState("123456");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [appUsers, setAppUsers] = useState<AppUser[]>(users);
+  // Global App State
   const [tab, setTab] = useState<TabType>("dashboard");
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
-  const [sales, setSales] = useState<Sale[]>(salesSeed);
-  const [expenses, setExpenses] = useState<Expense[]>(expensesSeed);
-  const [cart, setCart] = useState<Record<string, number>>({});
-  const [expenseForm, setExpenseForm] = useState({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
-  const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
-  const [loading, setLoading] = useState(hasSupabaseConfig);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [loginSubmitting, setLoginSubmitting] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
-  const [dashboardVisible, setDashboardVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const [restaurantName, setRestaurantName] = useState(() => {
-    if (typeof window === "undefined") return "LUMINOX";
-    return localStorage.getItem(RESTAURANT_NAME_STORAGE_KEY) || "LUMINOX";
-  });
-  const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
-    taxRate: "10",
-  });
+  const [cart, setCart] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [dashboardVisible, setDashboardVisible] = useState(false);
+  
+  // Custom Hooks
+  const { toasts, pushToast } = useToast();
+  const { 
+    appUsers, 
+    menuItems, 
+    sales, 
+    expenses, 
+    loading, 
+    restaurantSettings, 
+    stats, 
+    salesChartData,
+    createMenuItem,
+    toggleMenuItem,
+    deleteMenuItem,
+    saveRestaurantSettings,
+    updateUserRole,
+    createSale: executeSale,
+    createExpense,
+    createUserByAdmin,
+    expenseForm,
+    setExpenseForm,
+  } = useRestaurantData(null, pushToast);
 
-  const user = appUsers.find((u) => u.id === currentUserId) ?? null;
-  const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+  const { 
+    user, 
+    loginError, 
+    loginSubmitting, 
+    showSplash, 
+    handleLogin, 
+    handleLogout,
+    email,
+    password,
+    setEmail,
+    setPassword
+  } = useAuth(appUsers);
+
+  // Computed styles
   const panelClass = `${basePanelClass} ${
     darkMode
       ? "border-white/10 bg-white/5 text-slate-100 shadow-slate-950/40 [&_.bg-white]:!bg-white/5 [&_.bg-slate-50]:!bg-white/5 [&_.border-slate-200]:!border-white/10 [&_.border-slate-300]:!border-white/15 [&_.text-slate-900]:!text-slate-100 [&_.text-slate-800]:!text-slate-100 [&_.text-slate-700]:!text-slate-200 [&_.text-slate-600]:!text-slate-300 [&_.text-slate-500]:!text-slate-400 [&_.text-slate-400]:!text-slate-500 [&_thead]:!bg-white/5"
       : "border-slate-200/80 bg-white/95 text-slate-900 shadow-slate-900/5"
   }`;
+
   const inputClass = `${baseInputClass} ${
     darkMode
       ? "border-white/15 bg-white/10 text-slate-100 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30"
       : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
   }`;
+
+  // Role Checks
   const canManageMenu = user?.role === "admin" || user?.role === "manager";
   const canManageSettings = user?.role === "admin" || user?.role === "manager";
   const canManageUsers = user?.role === "admin";
 
-  const navItems: Array<{ key: TabType; label: string; icon: React.ReactNode; roles: Array<UserRole> }> = [
+  const navItems: Array<{ key: TabType; label: string; icon: React.ReactNode; roles: UserRole[] }> = [
     { 
-      key: "dashboard", 
-      label: "Dashboard", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-        </svg>
-      ), 
-      roles: ["admin", "manager", "staff"] 
+      key: "dashboard", label: "Dashboard", roles: ["admin", "manager", "staff"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
     },
     { 
-      key: "sales", 
-      label: "Satışlar", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      ), 
-      roles: ["admin", "manager", "staff"] 
+      key: "sales", label: "Satışlar", roles: ["admin", "manager", "staff"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
     },
     { 
-      key: "menu", 
-      label: "Menü Paneli", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ), 
-      roles: ["admin", "manager"] 
+      key: "menu", label: "Menü Paneli", roles: ["admin", "manager"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
     },
     { 
-      key: "transactions", 
-      label: "İşlemler", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-        </svg>
-      ), 
-      roles: ["admin", "manager", "staff"] 
+      key: "transactions", label: "İşlemler", roles: ["admin", "manager", "staff"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
     },
     { 
-      key: "expenses", 
-      label: "Giderler", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-      ), 
-      roles: ["admin", "manager", "staff"] 
+      key: "expenses", label: "Giderler", roles: ["admin", "manager", "staff"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     },
     { 
-      key: "settings", 
-      label: "Ayarlar", 
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ), 
-      roles: ["admin", "manager"] 
+      key: "settings", label: "Ayarlar", roles: ["admin", "manager"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
     },
   ];
+
   const canAccessTab = (tabKey: TabType) => {
     if (!user) return false;
     const item = navItems.find((nav) => nav.key === tabKey);
     return item ? item.roles.includes(user.role) : false;
   };
 
-  const pushToast = (message: string, type: ToastType = "error") => {
-    const id = Date.now() + Math.floor(Math.random() * 1000);
-    const titleByType: Record<ToastType, string> = {
-      success: "Başarılı",
-      warning: "Uyarı",
-      error: "Hata",
-    };
-    setToasts((prev) => [...prev, { id, message, type, title: titleByType[type] }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 3500);
-  };
+  const activeTab = canAccessTab(tab) ? tab : "dashboard";
 
+  // Effects
   useEffect(() => {
-    localStorage.setItem(RESTAURANT_NAME_STORAGE_KEY, restaurantName);
-  }, [restaurantName]);
-
-  useEffect(() => {
-    if (currentUserId) {
+    if (user) {
       const timer = setTimeout(() => setDashboardVisible(true), 50);
       return () => clearTimeout(timer);
     }
     setDashboardVisible(false);
-  }, [currentUserId]);
-
-  useEffect(() => {
-    if (!hasSupabaseConfig || !supabase) return;
-    const supabaseClient = supabase;
-
-    let isMounted = true;
-    const mapAuthUserToAppUser = (authUser: { id: string; email?: string | null }) => {
-      return appUsers.find((u) => u.authUserId === authUser.id || u.email === authUser.email) ?? null;
-    };
-
-    const syncSessionToAppUser = async () => {
-      const { data } = await supabaseClient.auth.getSession();
-      if (!isMounted) return;
-      const authUser = data.session?.user;
-      if (!authUser) {
-        setCurrentUserId(null);
-        return;
-      }
-      const found = mapAuthUserToAppUser(authUser);
-      setCurrentUserId(found?.id ?? null);
-    };
-
-    syncSessionToAppUser();
-
-    const { data: authSubscription } = supabaseClient.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) return;
-      const authUser = session?.user;
-      if (!authUser) {
-        setCurrentUserId(null);
-        return;
-      }
-      const found = mapAuthUserToAppUser(authUser);
-      setCurrentUserId(found?.id ?? null);
-    });
-    return () => {
-      isMounted = false;
-      authSubscription.subscription.unsubscribe();
-    };
-  }, [appUsers]);
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return { sales: [], expenses: [], menu: [] };
-    const q = searchQuery.toLowerCase();
-    
-    return {
-      sales: sales.filter(s => 
-        s.receiptNo.toLowerCase().includes(q) || 
-        s.items.some(item => item.name.toLowerCase().includes(q))
-      ).slice(0, 5),
-      expenses: expenses.filter(e => 
-        e.title.toLowerCase().includes(q) || 
-        e.supplier.toLowerCase().includes(q) || 
-        e.receiptNo.toLowerCase().includes(q)
-      ).slice(0, 5),
-      menu: menuItems.filter(m => 
-        m.name.toLowerCase().includes(q)
-      ).slice(0, 5)
-    };
-  }, [searchQuery, sales, expenses, menuItems]);
+  }, [user]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -227,454 +140,40 @@ export default function Home() {
         e.preventDefault();
         setIsSearchOpen(true);
       }
-      if (e.key === "Escape") {
-        setIsSearchOpen(false);
-      }
+      if (e.key === "Escape") setIsSearchOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!hasSupabaseConfig || !supabase) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes] = await Promise.all([
-        supabase.from("users").select("id, name, role, email, auth_user_id"),
-        supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
-        supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
-        supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
-        supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
-      ]);
-
-      const hasError = usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error;
-      if (hasError) {
-        pushToast("Supabase verileri alinamadi. Demo veriler gosteriliyor.", "warning");
-        setLoading(false);
-        return;
-      }
-
-      const mappedUsers: AppUser[] = (usersRes.data ?? []).map((u) => ({
-        id: u.id,
-        name: u.name,
-        role: u.role,
-        email: u.email,
-        authUserId: u.auth_user_id,
-      }));
-      const mappedMenu: MenuItem[] = (menuRes.data ?? []).map((m) => ({
-        id: m.id,
-        name: m.name,
-        category: m.category,
-        price: Number(m.price),
-        active: Boolean(m.active),
-      }));
-      const saleItemsBySale = (saleItemsRes.data ?? []).reduce<Record<string, SaleItem[]>>((acc, row) => {
-        const item: SaleItem = {
-          menuItemId: row.menu_item_id,
-          name: row.name,
-          qty: Number(row.qty),
-          unitPrice: Number(row.unit_price),
-          lineTotal: Number(row.line_total),
-        };
-        acc[row.sale_id] = [...(acc[row.sale_id] ?? []), item];
-        return acc;
-      }, {});
-      const usersById = mappedUsers.reduce<Record<string, string>>((acc, appUser) => {
-        acc[appUser.id] = appUser.name;
-        return acc;
-      }, {});
-      const mappedSales: Sale[] = (salesRes.data ?? []).map((s) => ({
-        id: s.id,
-        receiptNo: s.receipt_no ?? `SAT-${s.id.slice(0, 12).toUpperCase()}`,
-        createdAt: s.created_at,
-        createdBy: usersById[s.created_by] ?? "Bilinmiyor",
-        totalAmount: Number(s.total_amount),
-        items: saleItemsBySale[s.id] ?? [],
-      }));
-      const mappedExpenses: Expense[] = (expensesRes.data ?? []).map((e) => ({
-        id: e.id,
-        receiptNo: e.receipt_no ?? `GDR-${e.id.slice(0, 12).toUpperCase()}`,
-        title: e.title,
-        supplier: e.supplier ?? "Bilinmiyor",
-        amount: Number(e.amount),
-        expenseDate: e.expense_date,
-        note: e.note ?? "",
-      }));
-
-      if (mappedUsers.length > 0) setAppUsers(mappedUsers);
-      setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
-      setSales(mappedSales.length > 0 ? mappedSales : []);
-      setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
-
-      const settingsRes = await supabase
-        .from("app_settings")
-        .select("ayar_anahtari, ayar_degeri");
-
-      if (!settingsRes.error && settingsRes.data) {
-        const settingsByKey = settingsRes.data.reduce<Record<string, string>>((acc, row) => {
-          acc[row.ayar_anahtari] = row.ayar_degeri;
-          return acc;
-        }, {});
-        const nextRestaurantSettings: RestaurantSettings = {
-          restaurantName: settingsByKey.restaurant_name || restaurantName || "LUMINOX",
-          currency: settingsByKey.currency || "TRY",
-          timezone: settingsByKey.timezone || "Europe/Istanbul",
-          taxRate: settingsByKey.tax_rate || "10",
-        };
-        setRestaurantSettings(nextRestaurantSettings);
-        setRestaurantName(nextRestaurantSettings.restaurantName);
-      }
-
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
-
-  const stats = useMemo(() => {
-    const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return { sales: [], expenses: [], menu: [] };
+    const q = searchQuery.toLowerCase();
     return {
-      totalSales,
-      totalExpenses,
-      net: totalSales - totalExpenses,
-      orderCount: sales.length,
+      sales: sales.filter(s => 
+        s.receiptNo.toLowerCase().includes(q) || 
+        s.createdBy.toLowerCase().includes(q) ||
+        s.items.some(i => i.name.toLowerCase().includes(q))
+      ).slice(0, 5),
+      expenses: expenses.filter(e => 
+        e.title.toLowerCase().includes(q) || 
+        e.supplier.toLowerCase().includes(q) ||
+        (e.note && e.note.toLowerCase().includes(q))
+      ).slice(0, 5),
+      menu: menuItems.filter(m => 
+        m.name.toLowerCase().includes(q) ||
+        m.category.toLowerCase().includes(q)
+      ).slice(0, 5)
     };
-  }, [sales, expenses]);
+  }, [searchQuery, sales, expenses, menuItems]);
 
-  const salesChartData = useMemo(() => {
-    const grouped = sales.reduce<Record<string, number>>((acc, sale) => {
-      const key = sale.createdAt.slice(0, 10);
-      acc[key] = (acc[key] ?? 0) + sale.totalAmount;
-      return acc;
-    }, {});
-    return Object.entries(grouped).map(([date, total]) => ({ date, total }));
-  }, [sales]);
-
-  const handleLogin = async () => {
-    setLoginError(null);
-    if (!email || !password) {
-      setLoginError("E-posta ve şifre gerekli.");
-      return;
-    }
-
-    setLoginSubmitting(true);
-
-    if (hasSupabaseConfig && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error || !data.user) {
-        setLoginError("Giriş başarısız. E-posta veya şifre hatalı.");
-        setLoginSubmitting(false);
-        return;
-      }
-      const found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
-      if (!found) {
-        setLoginError("Kullanıcı profili bulunamadı. Lütfen yöneticinizle iletişime geçin.");
-        setLoginSubmitting(false);
-        return;
-      }
-      setShowSplash(true);
-      setTimeout(() => {
-        setCurrentUserId(found.id);
-        setShowSplash(false);
-        setLoginSubmitting(false);
-        setTimeout(() => setDashboardVisible(true), 50);
-      }, 1000);
-      return;
-    }
-
-    const fallbackUser = appUsers.find((u) => u.email === email);
-    if (!fallbackUser || password !== "123456") {
-      setLoginError("Demo giriş: e-posta veya şifre hatalı.");
-      setLoginSubmitting(false);
-      return;
-    }
-    setShowSplash(true);
-    setTimeout(() => {
-      setCurrentUserId(fallbackUser.id);
-      setShowSplash(false);
-      setLoginSubmitting(false);
-      setTimeout(() => setDashboardVisible(true), 50);
-    }, 1000);
-  };
-
-  const handleLogout = async () => {
-    if (hasSupabaseConfig && supabase) {
-      await supabase.auth.signOut();
-    }
-    setCurrentUserId(null);
-  };
-
-  const addToCart = (menuItemId: string) => {
-    setCart((prev) => ({ ...prev, [menuItemId]: (prev[menuItemId] ?? 0) + 1 }));
-  };
-
-  const clearCart = () => setCart({});
-
-  const createSale = async () => {
-    if (!user) return;
-    const items: SaleItem[] = Object.entries(cart)
-      .map(([id, qty]) => {
-        const menuItem = menuItems.find((m) => m.id === id);
-        if (!menuItem || qty <= 0) return null;
-        return { menuItemId: id, name: menuItem.name, qty, unitPrice: menuItem.price, lineTotal: menuItem.price * qty };
-      })
-      .filter((item): item is SaleItem => Boolean(item));
-
-    if (items.length === 0) return;
-    const totalAmount = items.reduce((sum, item) => sum + item.lineTotal, 0);
-    const saleDateIso = new Date().toISOString().slice(0, 10);
-    const saleSeq = sales.filter((sale) => sale.createdAt.slice(0, 10) === saleDateIso).length + 1;
-    const receiptNo = makeReceiptNo(saleDateIso, saleSeq);
-    const newSale: Sale = {
-      id: crypto.randomUUID(),
-      receiptNo,
-      createdAt: new Date().toISOString(),
-      createdBy: user.name,
-      totalAmount,
-      items,
-    };
-
-    if (hasSupabaseConfig && supabase) {
-      const { data: saleInsert, error: saleError } = await supabase
-        .from("sales")
-        .insert({
-          created_by: user.id,
-          receipt_no: receiptNo,
-          total_amount: totalAmount,
-          payment_status: "paid_manual",
-        })
-        .select("id, receipt_no, created_at")
-        .single();
-      if (saleError || !saleInsert) {
-        pushToast("Satis Supabase'e kaydedilemedi.");
-        return;
-      }
-
-      const saleItemsPayload = items.map((item) => ({
-        sale_id: saleInsert.id,
-        menu_item_id: item.menuItemId,
-        name: item.name,
-        qty: item.qty,
-        unit_price: item.unitPrice,
-        line_total: item.lineTotal,
-      }));
-      const { error: itemError } = await supabase.from("sale_items").insert(saleItemsPayload);
-      if (itemError) {
-        pushToast("Satis kalemleri Supabase'e kaydedilemedi.");
-        return;
-      }
-      newSale.id = saleInsert.id;
-      newSale.receiptNo = saleInsert.receipt_no ?? receiptNo;
-      newSale.createdAt = saleInsert.created_at;
-    }
-
-    setSales((prev) => [newSale, ...prev]);
-    setCart({});
-    pushToast("Sipariş başarıyla kaydedildi.", "success");
-  };
-
-  const createExpense = async () => {
-    if (!expenseForm.title || !expenseForm.amount || !expenseForm.expenseDate) return;
-    const amount = Number(expenseForm.amount);
-    if (Number.isNaN(amount) || amount <= 0) return;
-    const expenseDateIso = expenseForm.expenseDate;
-    const expenseSeq = expenses.filter((expense) => expense.expenseDate === expenseDateIso).length + 1;
-    const receiptNo = makeReceiptNo(expenseDateIso, expenseSeq);
-    const newExpense: Expense = {
-      id: crypto.randomUUID(),
-      receiptNo,
-      title: expenseForm.title,
-      supplier: expenseForm.supplier || "Bilinmiyor",
-      amount,
-      expenseDate: expenseForm.expenseDate,
-      note: expenseForm.note,
-    };
-
-    if (hasSupabaseConfig && supabase) {
-      const { data, error } = await supabase
-        .from("expenses")
-        .insert({
-          receipt_no: receiptNo,
-          title: newExpense.title,
-          supplier: newExpense.supplier,
-          amount: newExpense.amount,
-          expense_date: newExpense.expenseDate,
-          note: newExpense.note,
-          created_by: user?.id ?? null,
-        })
-        .select("id, receipt_no")
-        .single();
-      if (error || !data) {
-        pushToast("Gider Supabase'e kaydedilemedi.");
-        return;
-      }
-      newExpense.id = data.id;
-      newExpense.receiptNo = data.receipt_no ?? receiptNo;
-    }
-
-    setExpenses((prev) => [newExpense, ...prev]);
-    setExpenseForm({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
-  };
-
-  const createMenuItem = async () => {
-    if (!canManageMenu) {
-      pushToast("Bu işlem için yetkiniz yok.", "warning");
-      return;
-    }
-    if (!menuForm.name || !menuForm.category || !menuForm.price) return;
-    const price = Number(menuForm.price);
-    if (Number.isNaN(price) || price <= 0) return;
-    const newItem: MenuItem = { id: crypto.randomUUID(), name: menuForm.name, category: menuForm.category, price, active: true };
-
-    if (hasSupabaseConfig && supabase) {
-      const { data, error } = await supabase
-        .from("menu_items")
-        .insert({
-          name: newItem.name,
-          category: newItem.category,
-          price: newItem.price,
-          active: true,
-        })
-        .select("id")
-        .single();
-      if (error || !data) {
-        pushToast("Menu urunu Supabase'e kaydedilemedi.");
-        return;
-      }
-      newItem.id = data.id;
-    }
-
-    setMenuItems((prev) => [...prev, newItem]);
-    setMenuForm({ name: "", category: "", price: "" });
-  };
-
-  const toggleMenuItem = async (item: MenuItem) => {
-    if (!canManageMenu) {
-      pushToast("Bu işlem için yetkiniz yok.", "warning");
-      return;
-    }
-    const nextActive = !item.active;
-    if (hasSupabaseConfig && supabase) {
-      const { error } = await supabase.from("menu_items").update({ active: nextActive }).eq("id", item.id);
-      if (error) {
-        pushToast("Menu durumu Supabase'de guncellenemedi.");
-        return;
-      }
-    }
-    setMenuItems((prev) => prev.map((m) => (m.id === item.id ? { ...m, active: nextActive } : m)));
-  };
-
-  const deleteMenuItem = async (item: MenuItem) => {
-    if (!canManageMenu) {
-      pushToast("Bu işlem için yetkiniz yok.", "warning");
-      return;
-    }
-    const hasSaleDependency = sales.some((sale) => sale.items.some((saleItem) => saleItem.menuItemId === item.id));
-    if (hasSaleDependency) {
-      pushToast("Bu ürün geçmiş satışlarda kullanıldığı için silinemez.", "warning");
-      return;
-    }
-
-    if (hasSupabaseConfig && supabase) {
-      const { error } = await supabase.from("menu_items").delete().eq("id", item.id);
-      if (error) {
-        pushToast("Menü ürünü Supabase'den silinemedi.");
-        return;
-      }
-    }
-
-    setMenuItems((prev) => prev.filter((menuItem) => menuItem.id !== item.id));
-  };
-
-  const saveRestaurantSettings = async (settings: RestaurantSettings) => {
-    if (!canManageSettings) {
-      pushToast("Ayarları değiştirme yetkiniz yok.", "warning");
-      return;
-    }
-    setRestaurantSettings(settings);
-    setRestaurantName(settings.restaurantName);
-
-    if (!hasSupabaseConfig || !supabase) return;
-    const payload = [
-      { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "currency", ayar_degeri: settings.currency, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: user?.id ?? null },
-    ];
-    const { error } = await supabase
-      .from("app_settings")
-      .upsert(payload, { onConflict: "ayar_anahtari" });
-
-    if (error) {
-      pushToast("Uygulama ayarlari Supabase'e kaydedilemedi.");
-    }
-  };
-
-  const updateUserRole = async (targetUserId: string, nextRole: UserRole) => {
-    if (!canManageUsers) {
-      pushToast("Kullanıcı rolü güncelleme yetkiniz yok.", "warning");
-      return;
-    }
-
-    if (hasSupabaseConfig && supabase) {
-      const { error } = await supabase.from("users").update({ role: nextRole }).eq("id", targetUserId);
-      if (error) {
-        pushToast("Kullanıcı rolü Supabase'de güncellenemedi.");
-        return;
-      }
-    }
-
-    setAppUsers((prev) => prev.map((appUser) => (appUser.id === targetUserId ? { ...appUser, role: nextRole } : appUser)));
-    pushToast("Kullanıcı rolü güncellendi.", "success");
-  };
-
-  const createUserByAdmin = async (payload: { name: string; email: string; password: string; role: UserRole }) => {
-    if (!canManageUsers) {
-      pushToast("Kullanıcı oluşturma yetkiniz yok.", "warning");
-      return;
-    }
-    if (!supabase) {
-      pushToast("Supabase baglantisi gerekli.");
-      return;
-    }
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-    if (!accessToken) {
-      pushToast("Oturum bulunamadi. Tekrar giris yapin.");
-      return;
-    }
-
-    const response = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
-    const responseBody = await response.json();
-    if (!response.ok) {
-      pushToast(responseBody.error ?? "Kullanıcı oluşturulamadı.");
-      return;
-    }
-
-    setAppUsers((prev) => [responseBody.user, ...prev]);
-    pushToast("Kullanıcı başarıyla oluşturuldu.", "success");
-  };
-
-  const orderTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
+  const activeMenu = useMemo(() => menuItems.filter((item) => item.active), [menuItems]);
+  const orderTotal = useMemo(() => Object.entries(cart).reduce((sum, [id, qty]) => {
     const item = menuItems.find((m) => m.id === id);
-    if (!item) return sum;
-    return sum + item.price * qty;
-  }, 0);
+    return item ? sum + item.price * qty : sum;
+  }, 0), [cart, menuItems]);
 
-  const activeTab = canAccessTab(tab) ? tab : "dashboard";
+  const createSale = () => executeSale(cart, makeReceiptNo).then(() => setCart({}));
 
   if (!user) {
     return (
@@ -683,7 +182,7 @@ export default function Home() {
           <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-slate-950">
             <div className="relative flex h-16 w-16 items-center justify-center">
               <span className="absolute inline-block h-16 w-16 animate-spin rounded-full border-4 border-indigo-500/30 border-t-indigo-500" />
-              <span className="text-2xl">◻︎</span>
+              <span className="text-2xl text-white">◻︎</span>
             </div>
             <p className="text-sm font-semibold tracking-widest text-indigo-300 uppercase">Yükleniyor...</p>
           </div>
@@ -694,7 +193,7 @@ export default function Home() {
             loading={loading}
             email={email}
             password={password}
-            onEmailChange={setEmail}
+            onEmailChange={setEmail} 
             onPasswordChange={setPassword}
             onLogin={handleLogin}
             errorMessage={loginError}
@@ -706,464 +205,99 @@ export default function Home() {
   }
 
   return (
-    <main
-      className={`relative min-h-screen w-full overflow-hidden p-4 transition-opacity duration-700 ${
-        darkMode
-          ? "theme-dark bg-slate-950 text-slate-100"
-          : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
-      } ${
-        dashboardVisible ? "opacity-100" : "opacity-0"
-      }`}
+    <main className={`relative min-h-screen w-full overflow-hidden p-4 transition-opacity duration-700 ${
+        darkMode ? "theme-dark bg-slate-950 text-slate-100" : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
+      } ${dashboardVisible ? "opacity-100" : "opacity-0"}`}
     >
-      {!darkMode ? <div className="pointer-events-none absolute -left-24 top-8 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl" /> : null}
-      {!darkMode ? <div className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" /> : null}
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
-        <aside className={`sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border px-0 py-5 shadow-xl shadow-slate-900/20 backdrop-blur ${
-          darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/90"
-        }`}>
-          <div className={`mx-4 rounded-2xl border px-4 py-4 ${
-            darkMode
-              ? "border-white/10 bg-slate-900/60"
-              : "border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50"
-          }`}>
-            <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-indigo-200" : "text-indigo-500"}`}>Marka</p>
-            <p className={`mt-1 text-lg font-bold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{restaurantName || "LUMINOX"}</p>
-            <p className={`mt-1 text-xs ${darkMode ? "text-slate-300" : "text-slate-500"}`}>Restoran Analitiği</p>
-          </div>
-          <p className={`px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-slate-400" : "text-slate-400"}`}>Ana Menü</p>
-          <nav className="space-y-1 px-3">
-            {navItems.map((item) => {
-              const isAllowed = user ? item.roles.includes(user.role) : false;
-              return (
-              <button
-                key={item.key}
-                onClick={() => {
-                  if (!isAllowed) {
-                    pushToast("Bu menü için yetkiniz yok.", "warning");
-                    return;
-                  }
-                  setTab(item.key);
-                }}
-                disabled={!isAllowed}
-                className={`group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition ${
-                  activeTab === item.key
-                    ? darkMode
-                      ? "border-white/20 bg-white/10 text-indigo-100 shadow-sm"
-                      : "border-indigo-200 bg-gradient-to-r from-indigo-50 to-violet-50 text-violet-700 shadow-sm"
-                    : isAllowed
-                    ? darkMode
-                      ? "border-transparent text-slate-200 hover:border-white/10 hover:bg-white/10 hover:text-white"
-                      : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
-                    : "cursor-not-allowed border-transparent text-slate-400/60"
-                }`}
-              >
-                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm leading-none transition ${
-                  darkMode
-                    ? "bg-white/10 text-slate-300 group-hover:bg-white/20 group-hover:text-white"
-                    : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700"
-                }`}>
-                  {item.icon}
-                </span>
-                <span className="text-[15px] font-semibold">{item.label}</span>
-              </button>
-            )})}
-          </nav>
-          <div className={`mx-3 mt-5 rounded-2xl border px-3 py-3 ${
-            darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/70"
-          }`}>
-            <p className={`mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-slate-400" : "text-slate-400"}`}>Yardım</p>
-            <button
-              onClick={() => {
-                if (!canManageSettings) {
-                  pushToast("Ayarlar sayfası için yetkiniz yok.", "warning");
-                  return;
-                }
-                setTab("settings");
-              }}
-              className={`mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold transition ${
-                darkMode ? "text-slate-200 hover:bg-white/10 hover:text-white" : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
-              }`}
-            >
-              <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm leading-none transition ${
-                darkMode ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500 shadow-sm"
-              }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </span>
-              <span>Ayarlar</span>
-            </button>
-            <button className={`mt-1 flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left text-[15px] font-semibold transition ${
-              darkMode ? "text-slate-200 hover:bg-white/10 hover:text-white" : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-900"
-            }`}>
-              <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm leading-none transition ${
-                darkMode ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500 shadow-sm"
-              }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </span>
-              <span>Yardım Merkezi</span>
-            </button>
-            <div className={`mt-1 flex items-center justify-between rounded-2xl border px-2 py-2.5 text-[15px] font-semibold ${
-              darkMode ? "border-white/10 bg-white/5 text-slate-200" : "border-slate-200 bg-slate-50/70 text-slate-700"
-            }`}>
-              <div className="flex min-w-0 items-center gap-3">
-                <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm leading-none transition ${
-                  darkMode ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500 shadow-sm"
-                }`}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                </span>
-                <span className="truncate">Karanlık Mod</span>
-              </div>
-              <button
-                onClick={() => setDarkMode((d) => !d)}
-                className={`relative h-6 w-11 shrink-0 rounded-full border transition-all duration-300 ${
-                  darkMode ? "border-indigo-500 bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]" : "border-slate-300 bg-slate-100"
-                }`}
-              >
-                <div
-                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${
-                    darkMode ? "translate-x-[24px]" : "translate-x-[4px]"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </aside>
+        <Sidebar 
+          user={user} 
+          tab={activeTab} 
+          setTab={setTab} 
+          restaurantName={restaurantSettings.restaurantName} 
+          darkMode={darkMode}
+          navItems={navItems}
+          onSettingsClick={() => setTab("settings")}
+          pushToast={pushToast}
+        />
 
-        <section className="space-y-4">
-          <header className={`flex min-h-[68px] flex-wrap items-center justify-between gap-3 rounded-3xl border px-4 py-2.5 shadow-xl shadow-slate-900/10 backdrop-blur ${
-            darkMode ? "border-white/10 bg-white/5" : "border-slate-200/80 bg-white/90"
-          }`}>
-            <div>
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${darkMode ? "text-indigo-200" : "text-indigo-500"}`}>Panel</p>
-              <h1 className={`text-2xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Restorant Yönetim Sistemi</h1>
-            </div>
-            <div className="ml-auto flex items-center gap-3">
-              <div 
+        <div className="space-y-4">
+          <header className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-4">
+              <button 
                 onClick={() => setIsSearchOpen(true)}
-                className={`flex h-10 min-w-[280px] cursor-pointer items-center gap-3 rounded-2xl border px-4 transition-all hover:shadow-lg ${
-                  darkMode ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-slate-200 bg-white hover:shadow-indigo-100"
+                className={`flex items-center gap-3 px-4 py-2 rounded-2xl border transition ${
+                  darkMode ? "bg-white/5 border-white/10 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-500 hover:text-slate-900"
                 }`}
               >
-                <svg className={`w-4 h-4 ${darkMode ? "text-slate-400" : "text-slate-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className={`flex-1 text-sm ${darkMode ? "text-slate-500" : "text-slate-400"}`}>Hızlı arama yapın...</span>
-                <span className={`rounded-lg border px-1.5 py-0.5 text-[10px] font-bold ${
-                  darkMode ? "border-white/10 bg-white/5 text-slate-500" : "border-slate-200 bg-slate-50 text-slate-400"
-                }`}>⌘+K</span>
-              </div>
-              <button className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${
-                darkMode ? "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-600 hover:shadow-indigo-100"
-              }`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <span className="text-sm font-medium">Hızlı ara...</span>
+                <kbd className="text-[10px] opacity-40 font-bold">⌘K</kbd>
               </button>
-              <button className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${
-                darkMode ? "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-600 hover:shadow-indigo-100"
-              }`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => {
-                  if (!canManageSettings) {
-                    pushToast("Ayarlar sayfası için yetkiniz yok.", "warning");
-                    return;
-                  }
-                  setTab("settings");
-                }}
-                className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${
-                  darkMode ? "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-600 hover:shadow-indigo-100"
+            </div>
+            
+            <div className="relative flex items-center gap-3">
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 transition ${
+                  isProfileOpen 
+                    ? (darkMode ? "border-indigo-500/50 bg-indigo-500/10" : "border-indigo-200 bg-indigo-50")
+                    : (darkMode ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-slate-200 bg-white hover:bg-slate-50")
                 }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-[10px] font-bold text-white shadow-sm">
+                  {user.name.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div className="hidden text-left sm:block">
+                  <p className={`text-[10px] font-bold leading-tight ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{user.name}</p>
+                  <p className="text-[9px] font-medium text-slate-400 capitalize">{user.role}</p>
+                </div>
+                <svg className={`h-3 w-3 text-slate-400 transition-transform ${isProfileOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
-              <div className={`flex items-center gap-2 rounded-2xl border px-2 py-1.5 ${
-                darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-white"
-              }`}>
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-200 to-violet-200" />
-                <button
-                  onClick={handleLogout}
-                  className={`rounded-xl border px-2.5 py-1.5 text-xs font-medium transition ${
-                    darkMode
-                      ? "border-white/20 text-slate-200 hover:bg-white/10"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  Çıkış
-                </button>
-              </div>
+
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+                  <div className={`absolute right-0 top-full z-20 mt-2 w-48 origin-top-right rounded-2xl border p-2 shadow-xl animate-in fade-in zoom-in duration-200 ${
+                    darkMode ? "border-white/10 bg-slate-900 text-slate-200" : "border-slate-100 bg-white text-slate-700"
+                  }`}>
+                    <div className="px-3 py-2 border-b border-white/5 mb-1">
+                      <p className="text-xs font-bold truncate">{user.name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                    </div>
+                    <button 
+                      onClick={() => { setTab("settings"); setIsProfileOpen(false); }}
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      Profil Ayarları
+                    </button>
+                    <button 
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-red-400 transition hover:bg-red-500/10"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                      Çıkış Yap
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </header>
 
-          {activeTab === "dashboard" ? (
-            <DashboardTab
-              tl={tl}
-              stats={stats}
-              sales={sales}
-              salesChartData={salesChartData}
-              menuItems={menuItems}
-              darkMode={darkMode}
-            />
-          ) : null}
-
-          {activeTab === "sales" ? (
-            <SalesTab
-              panelClass={panelClass}
-              darkMode={darkMode}
-              activeMenu={activeMenu}
-              menuItems={menuItems}
-              cart={cart}
-              tl={tl}
-              orderTotal={orderTotal}
-              addToCart={addToCart}
-              createSale={createSale}
-              clearCart={clearCart}
-              sales={sales}
-            />
-          ) : null}
-
-          {activeTab === "transactions" ? (
-            <TransactionsTab
-              panelClass={panelClass}
-              darkMode={darkMode}
-              sales={sales}
-              expenses={expenses}
-              tl={tl}
-            />
-          ) : null}
-
-          {activeTab === "expenses" ? (
-            <ExpensesTab
-              panelClass={panelClass}
-              inputClass={inputClass}
-              darkMode={darkMode}
-              expenseForm={expenseForm}
-              setExpenseForm={setExpenseForm}
-              createExpense={createExpense}
-              expenses={expenses}
-              tl={tl}
-            />
-          ) : null}
-
-          {activeTab === "menu" ? (
-            <MenuTab
-              panelClass={panelClass}
-              inputClass={inputClass}
-              darkMode={darkMode}
-              menuForm={menuForm}
-              setMenuForm={setMenuForm}
-              createMenuItem={createMenuItem}
-              menuItems={menuItems}
-              tl={tl}
-              toggleMenuItem={toggleMenuItem}
-              deleteMenuItem={deleteMenuItem}
-              canManageMenu={canManageMenu}
-            />
-          ) : null}
-
-          {activeTab === "settings" ? (
-            <SettingsTab
-              user={user}
-              panelClass={panelClass}
-              inputClass={inputClass}
-              darkMode={darkMode}
-              onToggleDarkMode={() => setDarkMode((d) => !d)}
-              restaurantSettings={restaurantSettings}
-              onSaveRestaurantSettings={saveRestaurantSettings}
-              canManageSettings={canManageSettings}
-              appUsers={appUsers}
-              canManageUsers={canManageUsers}
-              onUpdateUserRole={updateUserRole}
-              onCreateUser={createUserByAdmin}
-            />
-          ) : null}
-        </section>
-      </div>
-      <div className="pointer-events-none fixed right-4 top-4 z-[60] space-y-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`pointer-events-auto relative w-[340px] overflow-hidden rounded-2xl border p-3 shadow-xl backdrop-blur animate-[toast-in_220ms_ease-out] ${
-              toast.type === "success"
-                ? "border-emerald-200 bg-emerald-50/95 text-emerald-800"
-                : toast.type === "warning"
-                ? "border-amber-200 bg-amber-50/95 text-amber-900"
-                : "border-rose-200 bg-rose-50/95 text-rose-800"
-            }`}
-          >
-            <div className="flex items-start gap-2.5">
-              <span className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
-                toast.type === "success"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : toast.type === "warning"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-rose-100 text-rose-700"
-              }`}>
-                {toast.type === "success" ? "✓" : toast.type === "warning" ? "!" : "×"}
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold">{toast.title}</p>
-                <p className="mt-0.5 text-sm leading-snug">{toast.message}</p>
-              </div>
-            </div>
-            <div className={`mt-2 h-1 w-full origin-left animate-[toast-progress_3500ms_linear] rounded-full ${
-              toast.type === "success"
-                ? "bg-emerald-300"
-                : toast.type === "warning"
-                ? "bg-amber-300"
-                : "bg-rose-300"
-            }`} />
-          </div>
-        ))}
-      </div>
-      <style jsx global>{`
-        @keyframes toast-in {
-          from {
-            opacity: 0;
-            transform: translateY(-8px) scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        @keyframes toast-progress {
-          from {
-            transform: scaleX(1);
-          }
-          to {
-            transform: scaleX(0);
-          }
-        }
-      `}</style>
-      {/* Arama Overlay */}
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] backdrop-blur-sm bg-slate-900/40 p-4">
-          <div 
-            className={`w-full max-w-2xl overflow-hidden rounded-[2.5rem] border shadow-2xl transition-all ${
-              darkMode ? "border-white/10 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-900"
-            }`}
-          >
-            <div className={`flex items-center gap-4 border-b p-6 ${darkMode ? "border-white/10" : "border-slate-100"}`}>
-              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                autoFocus
-                placeholder="Satış, gider veya ürün ara..."
-                className="flex-1 bg-transparent text-xl font-medium outline-none placeholder:text-slate-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button 
-                onClick={() => setIsSearchOpen(false)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-widest ${darkMode ? "bg-white/5 hover:bg-white/10" : "bg-slate-100 hover:bg-slate-200"}`}
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
-              {!searchQuery.trim() ? (
-                <div className="py-12 text-center">
-                  <p className="text-slate-500 font-medium italic">Bir şeyler yazarak aramaya başlayın...</p>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Satışlar */}
-                  {searchResults.sales.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">Satış Fişleri</h3>
-                      <div className="grid gap-2">
-                        {searchResults.sales.map(s => (
-                          <button 
-                            key={s.id}
-                            onClick={() => { setTab("transactions"); setIsSearchOpen(false); }}
-                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
-                          >
-                            <div>
-                              <p className="text-sm font-bold">{s.receiptNo}</p>
-                              <p className="text-xs text-slate-500">{s.items.map(i => i.name).join(", ").slice(0, 50)}...</p>
-                            </div>
-                            <span className="text-sm font-black text-emerald-500">{tl.format(s.totalAmount)}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Giderler */}
-                  {searchResults.expenses.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-amber-500">Giderler</h3>
-                      <div className="grid gap-2">
-                        {searchResults.expenses.map(e => (
-                          <button 
-                            key={e.id}
-                            onClick={() => { setTab("expenses"); setIsSearchOpen(false); }}
-                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
-                          >
-                            <div>
-                              <p className="text-sm font-bold">{e.title}</p>
-                              <p className="text-xs text-slate-500">{e.supplier} - {e.receiptNo}</p>
-                            </div>
-                            <span className="text-sm font-black text-rose-500">{tl.format(e.amount)}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Menü */}
-                  {searchResults.menu.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">Menü Ürünleri</h3>
-                      <div className="grid gap-2">
-                        {searchResults.menu.map(m => (
-                          <button 
-                            key={m.id}
-                            onClick={() => { setTab("menu"); setIsSearchOpen(false); }}
-                            className={`flex items-center justify-between rounded-2xl p-4 text-left transition ${darkMode ? "hover:bg-white/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
-                          >
-                            <div>
-                              <p className="text-sm font-bold">{m.name}</p>
-                              <p className="text-xs text-slate-500">{m.category}</p>
-                            </div>
-                            <span className="text-sm font-black text-slate-400">{tl.format(m.price)}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {searchResults.sales.length === 0 && searchResults.expenses.length === 0 && searchResults.menu.length === 0 && (
-                    <div className="py-12 text-center">
-                      <p className="text-slate-500">Sonuç bulunamadı.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            <div className={`border-t p-4 flex justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
-              <div className="flex items-center gap-1.5"><span className="px-1 rounded bg-slate-200 dark:bg-slate-700">ESC</span> Kapat</div>
-              <div className="flex items-center gap-1.5"><span className="px-1 rounded bg-slate-200 dark:bg-slate-700">ENTER</span> Seç</div>
-            </div>
-          </div>
+          <section className="min-h-[80vh]">
+            {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} panelClass={panelClass} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
+            {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
+            {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
+            {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo)} tl={tl} />}
+            {activeTab === "menu" && <MenuTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} onCreateMenuItem={createMenuItem} onToggleMenuItem={toggleMenuItem} onDeleteMenuItem={deleteMenuItem} tl={tl} />}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={saveRestaurantSettings} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} />}
+          </section>
         </div>
-      )}
+      </div>
+
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} results={searchResults} darkMode={darkMode} tl={tl} />
+      <ToastContainer toasts={toasts} />
     </main>
   );
 }
