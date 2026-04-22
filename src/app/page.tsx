@@ -76,7 +76,7 @@ export default function Home() {
     createUserByAdmin,
     expenseForm,
     setExpenseForm,
-  } = useRestaurantData(null, pushToast);
+  } = useRestaurantData(pushToast);
 
   const { 
     user, 
@@ -193,7 +193,7 @@ export default function Home() {
     return item ? sum + item.price * qty : sum;
   }, 0), [cart, menuItems]);
 
-  const createSale = () => executeSale(cart, makeReceiptNo).then(() => setCart({}));
+  const createSale = () => executeSale(cart, makeReceiptNo, user).then(() => setCart({}));
 
   if (isCheckingAuth) {
     return (
@@ -321,9 +321,9 @@ export default function Home() {
             {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} panelClass={panelClass} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
             {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
             {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
-            {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo)} tl={tl} />}
+            {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo, user?.id ?? null)} tl={tl} />}
             {activeTab === "menu" && <MenuTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} onCreateMenuItem={createMenuItem} onToggleMenuItem={toggleMenuItem} onDeleteMenuItem={deleteMenuItem} tl={tl} />}
-            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={saveRestaurantSettings} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} />}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} />}
           </section>
         </div>
       </div>

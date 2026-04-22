@@ -5,7 +5,7 @@ import { supabase, hasSupabaseConfig } from "@/lib/supabase";
 import { AppUser, Expense, MenuItem, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 import { expensesSeed, menuItemsSeed, salesSeed, users as initialUsers } from "@/lib/mock-data";
 
-export function useRestaurantData(user: AppUser | null, pushToast: (msg: string, type?: ToastType) => void) {
+export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void) {
   const [appUsers, setAppUsers] = useState<AppUser[]>(initialUsers);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
   const [sales, setSales] = useState<Sale[]>(salesSeed);
@@ -189,14 +189,14 @@ export function useRestaurantData(user: AppUser | null, pushToast: (msg: string,
   };
 
   // Handlers for Settings
-  const saveRestaurantSettings = async (settings: RestaurantSettings) => {
+  const saveRestaurantSettings = async (settings: RestaurantSettings, actorUserId?: string | null) => {
     setRestaurantSettings(settings);
     if (!hasSupabaseConfig || !supabase) return;
     const payload = [
-      { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "currency", ayar_degeri: settings.currency, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: user?.id ?? null },
-      { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: user?.id ?? null },
+      { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: actorUserId ?? null },
+      { ayar_anahtari: "currency", ayar_degeri: settings.currency, guncelleyen_kullanici: actorUserId ?? null },
+      { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: actorUserId ?? null },
+      { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: actorUserId ?? null },
     ];
     const { error } = await supabase.from("app_settings").upsert(payload, { onConflict: "ayar_anahtari" });
     if (error) pushToast("Ayarlar kaydedilemedi.");
@@ -215,22 +215,26 @@ export function useRestaurantData(user: AppUser | null, pushToast: (msg: string,
     pushToast("Kullanıcı rolü güncellendi.", "success");
   };
 
-  const createSale = async (cart: Record<string, number>, makeReceiptNo: (d: string, s: number) => string) => {
+  const createSale = async (
+    cart: Record<string, number>,
+    makeReceiptNo: (d: string, s: number) => string,
+    actorUser: AppUser | null
+  ) => {
     const items: SaleItem[] = Object.entries(cart).map(([id, qty]) => {
       const item = menuItems.find(m => m.id === id);
       if (!item || qty <= 0) return null;
       return { menuItemId: id, name: item.name, qty, unitPrice: item.price, lineTotal: item.price * qty };
     }).filter((i): i is SaleItem => i !== null);
 
-    if (items.length === 0 || !user) return;
+    if (items.length === 0 || !actorUser) return;
     const totalAmount = items.reduce((sum, i) => sum + i.lineTotal, 0);
     const saleDateIso = new Date().toISOString().slice(0, 10);
     const receiptNo = makeReceiptNo(saleDateIso, sales.filter(s => s.createdAt.slice(0, 10) === saleDateIso).length + 1);
 
-    const newSale: Sale = { id: crypto.randomUUID(), receiptNo, createdAt: new Date().toISOString(), createdBy: user.name, totalAmount, items };
+    const newSale: Sale = { id: crypto.randomUUID(), receiptNo, createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
 
     if (hasSupabaseConfig && supabase) {
-      const { data: saleInsert, error: saleError } = await supabase.from("sales").insert({ created_by: user.id, receipt_no: receiptNo, total_amount: totalAmount, payment_status: "paid_manual" }).select("id, receipt_no, created_at").single();
+      const { data: saleInsert, error: saleError } = await supabase.from("sales").insert({ created_by: actorUser.id, receipt_no: receiptNo, total_amount: totalAmount, payment_status: "paid_manual" }).select("id, receipt_no, created_at").single();
       if (saleError || !saleInsert) {
         pushToast("Satış kaydedilemedi.");
         return;
@@ -248,7 +252,7 @@ export function useRestaurantData(user: AppUser | null, pushToast: (msg: string,
     pushToast("Satış başarıyla kaydedildi.", "success");
   };
 
-  const createExpense = async (makeReceiptNo: (d: string, s: number) => string) => {
+  const createExpense = async (makeReceiptNo: (d: string, s: number) => string, actorUserId?: string | null) => {
     const amount = Number(expenseForm.amount);
     if (!expenseForm.title || isNaN(amount) || amount <= 0 || !expenseForm.expenseDate) return;
     
@@ -256,7 +260,7 @@ export function useRestaurantData(user: AppUser | null, pushToast: (msg: string,
     const newExpense: Expense = { id: crypto.randomUUID(), receiptNo, title: expenseForm.title, supplier: expenseForm.supplier || "Bilinmiyor", amount, expenseDate: expenseForm.expenseDate, note: expenseForm.note };
 
     if (hasSupabaseConfig && supabase) {
-      const { data, error } = await supabase.from("expenses").insert({ receipt_no: receiptNo, title: newExpense.title, supplier: newExpense.supplier, amount: newExpense.amount, expense_date: newExpense.expenseDate, note: newExpense.note, created_by: user?.id ?? null }).select("id, receipt_no").single();
+      const { data, error } = await supabase.from("expenses").insert({ receipt_no: receiptNo, title: newExpense.title, supplier: newExpense.supplier, amount: newExpense.amount, expense_date: newExpense.expenseDate, note: newExpense.note, created_by: actorUserId ?? null }).select("id, receipt_no").single();
       if (error || !data) {
         pushToast("Gider kaydedilemedi.");
         return;
