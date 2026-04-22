@@ -7,9 +7,12 @@ create table if not exists public.users (
   auth_user_id uuid unique references auth.users(id) on delete set null,
   name text not null,
   role text not null check (role in ('admin', 'manager', 'staff')),
+  permissions jsonb,
   email text unique not null,
   created_at timestamptz not null default now()
 );
+
+alter table public.users add column if not exists permissions jsonb;
 
 create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),
@@ -87,30 +90,6 @@ create table if not exists public.app_settings (
   guncelleyen_kullanici uuid references public.users(id),
   guncellenme_tarihi timestamptz not null default now()
 );
-
-insert into public.users (name, role, email)
-values
-  ('Ahmet Yildiz', 'admin', 'admin@restaurant.local'),
-  ('Zeynep Kaya', 'manager', 'manager@restaurant.local'),
-  ('Can Demir', 'staff', 'staff@restaurant.local')
-on conflict (email) do nothing;
-
-insert into public.menu_items (name, category, price, active)
-values
-  ('Doner Porsiyon', 'Ana Yemek', 180, true),
-  ('Pilav Ustu Tavuk', 'Ana Yemek', 160, true),
-  ('Ayran', 'Icecek', 30, true),
-  ('Kola', 'Icecek', 45, true),
-  ('Kunefe', 'Tatli', 95, true)
-on conflict do nothing;
-
-insert into public.app_settings (ayar_anahtari, ayar_degeri, aciklama)
-values
-  ('restaurant_name', 'LUMINOX', 'Restoran gorunen adi'),
-  ('currency', 'TRY', 'Para birimi'),
-  ('timezone', 'Europe/Istanbul', 'Saat dilimi'),
-  ('tax_rate', '10', 'Varsayilan KDV orani')
-on conflict (ayar_anahtari) do nothing;
 
 -- RLS (production-safe)
 alter table public.users enable row level security;
@@ -289,7 +268,8 @@ begin
   elsif tg_op = 'DELETE' then
     event_name := 'record_deleted';
   else
-    if tg_table_name = 'users' and old.role is distinct from new.role then
+    if tg_table_name = 'users'
+      and (to_jsonb(old)->>'role') is distinct from (to_jsonb(new)->>'role') then
       event_name := 'role_changed';
     else
       event_name := 'record_updated';

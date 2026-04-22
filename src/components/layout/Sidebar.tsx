@@ -16,6 +16,7 @@ export function Sidebar({
   restaurantName,
   darkMode,
   navItems,
+  canAccessTab,
   onSettingsClick,
   pushToast,
 }: {
@@ -25,6 +26,7 @@ export function Sidebar({
   restaurantName: string;
   darkMode: boolean;
   navItems: NavItem[];
+  canAccessTab: (tab: TabType) => boolean;
   onSettingsClick: () => void;
   pushToast: (msg: string, type: "warning") => void;
 }) {
@@ -45,7 +47,7 @@ export function Sidebar({
       <p className={`px-6 pb-3 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-slate-400" : "text-slate-400"}`}>Ana Menü</p>
       <nav className="space-y-1 px-3">
         {navItems.map((item) => {
-          const isAllowed = item.roles.includes(user.role);
+          const isAllowed = canAccessTab(item.key);
           return (
             <button
               key={item.key}

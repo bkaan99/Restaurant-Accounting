@@ -2,15 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
-import { AppUser, AuditLog, Expense, MenuItem, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
-import { expensesSeed, menuItemsSeed, salesSeed, users as initialUsers } from "@/lib/mock-data";
+import { AppUser, AuditLog, Expense, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
 export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void) {
-  const [appUsers, setAppUsers] = useState<AppUser[]>(initialUsers);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(menuItemsSeed);
-  const [sales, setSales] = useState<Sale[]>(salesSeed);
-  const [expenses, setExpenses] = useState<Expense[]>(expensesSeed);
+  const [appUsers, setAppUsers] = useState<AppUser[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<RolePermissionConfig>({
+    admin: ROLE_PERMISSION_DEFAULTS.admin,
+    manager: ROLE_PERMISSION_DEFAULTS.manager,
+    staff: ROLE_PERMISSION_DEFAULTS.staff,
+  });
   const [loading, setLoading] = useState(hasSupabaseConfig);
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
     restaurantName: "LUMINOX",
@@ -28,8 +32,15 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
     setLoading(true);
     try {
-      const [usersRes, menuRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
-        supabase.from("users").select("id, name, role, email, auth_user_id"),
+      const usersWithPermissionsRes = await supabase
+        .from("users")
+        .select("id, name, role, email, auth_user_id, permissions");
+
+      const usersRes = usersWithPermissionsRes.error
+        ? await supabase.from("users").select("id, name, role, email, auth_user_id")
+        : usersWithPermissionsRes;
+
+      const [menuRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
@@ -41,7 +52,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       ]);
 
       if (usersRes.error || menuRes.error || salesRes.error || saleItemsRes.error || expensesRes.error) {
-        pushToast("Supabase verileri alınamadı. Demo veriler gösteriliyor.", "warning");
+        pushToast("Supabase verileri alınamadı.", "warning");
         setLoading(false);
         return;
       }
@@ -52,6 +63,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         role: u.role,
         email: u.email,
         authUserId: u.auth_user_id,
+        permissions: ("permissions" in u ? (u.permissions as PermissionKey[] | null) : null) ?? null,
       }));
 
       const mappedMenu: MenuItem[] = (menuRes.data ?? []).map((m) => ({
@@ -113,10 +125,10 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         };
       });
 
-      if (mappedUsers.length > 0) setAppUsers(mappedUsers);
-      setMenuItems(mappedMenu.length > 0 ? mappedMenu : menuItemsSeed);
-      setSales(mappedSales.length > 0 ? mappedSales : []);
-      setExpenses(mappedExpenses.length > 0 ? mappedExpenses : []);
+      setAppUsers(mappedUsers);
+      setMenuItems(mappedMenu);
+      setSales(mappedSales);
+      setExpenses(mappedExpenses);
       setAuditLogs(mappedAuditLogs);
 
       const settingsRes = await supabase.from("app_settings").select("ayar_anahtari, ayar_degeri");
@@ -130,6 +142,23 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
           currency: settingsByKey.currency || "TRY",
           timezone: settingsByKey.timezone || "Europe/Istanbul",
           taxRate: settingsByKey.tax_rate || "10",
+        });
+
+        const parsePermissionSetting = (key: string, fallback: PermissionKey[]) => {
+          const raw = settingsByKey[key];
+          if (!raw) return fallback;
+          try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? (parsed as PermissionKey[]) : fallback;
+          } catch {
+            return fallback;
+          }
+        };
+
+        setRolePermissions({
+          admin: ROLE_PERMISSION_DEFAULTS.admin,
+          manager: parsePermissionSetting("role_permissions_manager", ROLE_PERMISSION_DEFAULTS.manager),
+          staff: parsePermissionSetting("role_permissions_staff", ROLE_PERMISSION_DEFAULTS.staff),
         });
       }
     } catch (err) {
@@ -220,9 +249,19 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: actorUserId ?? null },
       { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: actorUserId ?? null },
     ];
+    const fallbackPayload = payload.map(({ ayar_anahtari, ayar_degeri }) => ({ ayar_anahtari, ayar_degeri }));
+
     const { error } = await supabase.from("app_settings").upsert(payload, { onConflict: "ayar_anahtari" });
-    if (error) pushToast("Ayarlar kaydedilemedi.");
-    else pushToast("Ayarlar güncellendi.", "success");
+    if (error) {
+      const { error: retryError } = await supabase.from("app_settings").upsert(fallbackPayload, { onConflict: "ayar_anahtari" });
+      if (retryError) {
+        pushToast(`Ayarlar kaydedilemedi: ${retryError.message}`);
+      } else {
+        pushToast("Ayarlar güncellendi.", "success");
+      }
+      return;
+    }
+    pushToast("Ayarlar güncellendi.", "success");
   };
 
   const updateUserRole = async (targetUserId: string, nextRole: UserRole) => {
@@ -235,6 +274,43 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     }
     setAppUsers((prev) => prev.map((u) => (u.id === targetUserId ? { ...u, role: nextRole } : u)));
     pushToast("Kullanıcı rolü güncellendi.", "success");
+  };
+
+  const updateUserPermissions = async (targetUserId: string, permissions: PermissionKey[]) => {
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("users").update({ permissions }).eq("id", targetUserId);
+      if (error) {
+        pushToast("Kullanıcı yetkileri güncellenemedi.");
+        return;
+      }
+    }
+    setAppUsers((prev) => prev.map((u) => (u.id === targetUserId ? { ...u, permissions } : u)));
+    pushToast("Kullanıcı yetkileri güncellendi.", "success");
+  };
+
+  const updateRolePermissions = async (role: "manager" | "staff", permissions: PermissionKey[], actorUserId?: string | null) => {
+    const settingKey = role === "manager" ? "role_permissions_manager" : "role_permissions_staff";
+    if (hasSupabaseConfig && supabase) {
+      const payload = [{
+        ayar_anahtari: settingKey,
+        ayar_degeri: JSON.stringify(permissions),
+        guncelleyen_kullanici: actorUserId ?? null,
+        aciklama: `${role} rolü izinleri`,
+      }];
+      const fallbackPayload = [{ ayar_anahtari: settingKey, ayar_degeri: JSON.stringify(permissions) }];
+
+      const { error } = await supabase.from("app_settings").upsert(payload, { onConflict: "ayar_anahtari" });
+      if (error) {
+        const { error: retryError } = await supabase.from("app_settings").upsert(fallbackPayload, { onConflict: "ayar_anahtari" });
+        if (retryError) {
+          pushToast(`Rol yetkileri kaydedilemedi: ${retryError.message}`);
+          return;
+        }
+      }
+    }
+
+    setRolePermissions((prev) => ({ ...prev, [role]: permissions }));
+    pushToast("Rol yetkileri güncellendi.", "success");
   };
 
   const createSale = async (
@@ -327,6 +403,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     expenses,
     auditLogs,
     loading,
+    rolePermissions,
     restaurantSettings,
     stats,
     salesChartData,
@@ -335,6 +412,8 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     deleteMenuItem,
     saveRestaurantSettings,
     updateUserRole,
+    updateUserPermissions,
+    updateRolePermissions,
     setAppUsers,
     setExpenses,
     createSale,

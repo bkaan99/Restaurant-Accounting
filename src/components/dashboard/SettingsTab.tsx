@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AppUser, AuditLog, UserRole } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { AppUser, AuditLog, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
 type RestaurantSettings = {
@@ -22,9 +22,13 @@ export function SettingsTab({
   canManageSettings,
   appUsers,
   canManageUsers,
+  canManagePermissions,
   onUpdateUserRole,
+  onUpdateRolePermissions,
+  rolePermissions,
   onCreateUser,
   auditLogs,
+  allPermissions,
 }: {
   user: AppUser;
   panelClass: string;
@@ -36,9 +40,13 @@ export function SettingsTab({
   canManageSettings: boolean;
   appUsers: AppUser[];
   canManageUsers: boolean;
+  canManagePermissions: boolean;
   onUpdateUserRole: (targetUserId: string, nextRole: UserRole) => Promise<void>;
+  onUpdateRolePermissions: (role: "manager" | "staff", permissions: PermissionKey[], actorUserId?: string | null) => Promise<void>;
+  rolePermissions: RolePermissionConfig;
   onCreateUser: (payload: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
   auditLogs: AuditLog[];
+  allPermissions: PermissionKey[];
 }) {
   const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX",
@@ -49,8 +57,12 @@ export function SettingsTab({
 
   const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
   const [saved, setSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "audit" | "appearance" | "system">("profile");
+  const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "permissions" | "audit" | "appearance" | "system">("profile");
   const [roleDrafts, setRoleDrafts] = useState<Record<string, UserRole>>({});
+  const [rolePermissionDrafts, setRolePermissionDrafts] = useState<Record<"manager" | "staff", PermissionKey[]>>({
+    manager: rolePermissions.manager,
+    staff: rolePermissions.staff,
+  });
   const [selectedAuditLogId, setSelectedAuditLogId] = useState<number | null>(null);
   const [newUserForm, setNewUserForm] = useState<{ name: string; email: string; password: string; role: UserRole }>({
     name: "",
@@ -60,6 +72,13 @@ export function SettingsTab({
   });
 
   const selectedAuditLog = auditLogs.find((log) => log.id === selectedAuditLogId) ?? null;
+
+  useEffect(() => {
+    setRolePermissionDrafts({
+      manager: rolePermissions.manager,
+      staff: rolePermissions.staff,
+    });
+  }, [rolePermissions.manager, rolePermissions.staff]);
 
   const handleSave = async () => {
     await onSaveRestaurantSettings(localRestaurantSettings);
@@ -92,6 +111,15 @@ export function SettingsTab({
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      )
+    },
+    {
+      id: "permissions",
+      label: "Yetki Ayarlama",
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V9a5 5 0 00-10 0v2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
         </svg>
       )
     },
@@ -132,6 +160,7 @@ export function SettingsTab({
     if (activeSection === "profile") return "Hesap bilgilerinizi ve profil detaylarınızı buradan yönetebilirsiniz.";
     if (activeSection === "restaurant") return "İşletme bilgilerini, para birimini ve vergi oranlarını güncelleyin.";
     if (activeSection === "users") return "Ekip üyelerini ekleyin, rollerini ve yetkilerini düzenleyin.";
+    if (activeSection === "permissions") return "Kullanıcı bazlı özel yetkileri yönetin. Admin kullanıcılar her zaman tam yetkilidir.";
     if (activeSection === "audit") return "Kim, ne zaman, hangi kaydı değiştirdi veya sildi geçmişini inceleyin.";
     if (activeSection === "appearance") return "Uygulamanın görünümünü ve kullanıcı arayüzünü özelleştirin.";
     return "Sistem bağlantı durumunu ve altyapı detaylarını inceleyin.";
@@ -374,6 +403,67 @@ export function SettingsTab({
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* Yetki Ayarlama */}
+          {activeSection === "permissions" && (
+            <div className="space-y-5">
+              {!canManagePermissions && (
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-amber-500/5 border-amber-500/20 text-amber-200" : "bg-amber-50 border-amber-100 text-amber-900"}`}>
+                  <p className="text-xs font-bold">Bu ekranı görüntülemek için yetkiniz yok.</p>
+                </div>
+              )}
+
+              {canManagePermissions && (
+                <div className={`rounded-2xl border p-5 space-y-5 ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white"}`}>
+                  <div>
+                    <h4 className={`text-sm font-black ${darkMode ? "text-slate-100" : "text-slate-900"}`}>Rol Bazlı Yetki Ayarı</h4>
+                    <p className="text-xs font-medium text-slate-500">Bu ayarlar varsayılan rol yetkilerini belirler. Admin her zaman tüm yetkilere sahiptir.</p>
+                  </div>
+
+                  {(["manager", "staff"] as const).map((roleKey) => {
+                    const selectedPermissions = rolePermissionDrafts[roleKey] ?? rolePermissions[roleKey];
+                    return (
+                      <div key={roleKey} className={`rounded-xl border p-4 space-y-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-black uppercase tracking-wider text-indigo-500">{roleKey}</p>
+                          <button
+                            onClick={() => onUpdateRolePermissions(roleKey, selectedPermissions, user.id)}
+                            className="h-8 px-3 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+                          >
+                            Rolü Kaydet
+                          </button>
+                        </div>
+
+                        <div className="grid gap-2 md:grid-cols-3">
+                          {allPermissions.map((permission) => {
+                            const checked = selectedPermissions.includes(permission);
+                            return (
+                              <label key={`${roleKey}-${permission}`} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold ${darkMode ? "border-white/10 bg-white/5 text-slate-300" : "border-slate-200 bg-white text-slate-700"}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    setRolePermissionDrafts((prev) => {
+                                      const current = prev[roleKey] ?? rolePermissions[roleKey];
+                                      const next = e.target.checked
+                                        ? Array.from(new Set([...current, permission]))
+                                        : current.filter((item) => item !== permission);
+                                      return { ...prev, [roleKey]: next };
+                                    });
+                                  }}
+                                />
+                                <span>{permission}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

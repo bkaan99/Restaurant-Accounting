@@ -110,7 +110,7 @@ export function LoginView({
             }`}
           >
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-500"}`} />
-            <span>Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi (simdilik demo veri ile calisiyor)"}</span>
+            <span>Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi"}</span>
           </div>
           {loading ? <p className="mt-2 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
-import { TabType, UserRole } from "@/lib/types";
+import { ALL_PERMISSIONS, PermissionKey, TabType, UserRole } from "@/lib/types";
 
 // Components
 import { DashboardTab } from "@/components/dashboard/DashboardTab";
@@ -51,6 +51,7 @@ export default function Home() {
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -64,6 +65,7 @@ export default function Home() {
     sales, 
     expenses, 
     auditLogs,
+    rolePermissions,
     loading, 
     restaurantSettings, 
     stats, 
@@ -73,6 +75,7 @@ export default function Home() {
     deleteMenuItem,
     saveRestaurantSettings,
     updateUserRole,
+    updateRolePermissions,
     createSale: executeSale,
     createExpense,
     createUserByAdmin,
@@ -107,10 +110,18 @@ export default function Home() {
       : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
   }`;
 
-  // Role Checks
-  const canManageMenu = user?.role === "admin" || user?.role === "manager";
-  const canManageSettings = user?.role === "admin" || user?.role === "manager";
-  const canManageUsers = user?.role === "admin";
+  const hasPermission = (permission: PermissionKey) => {
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    const effectivePermissions = user.permissions ?? rolePermissions[user.role];
+    return effectivePermissions.includes(permission);
+  };
+
+  // Role/Permission Checks
+  const canManageMenu = hasPermission("menu_manage");
+  const canManageSettings = hasPermission("settings_manage");
+  const canManageUsers = hasPermission("users_manage");
+  const canManagePermissions = hasPermission("permissions_manage");
 
   const navItems: Array<{ key: TabType; label: string; icon: React.ReactNode; roles: UserRole[] }> = [
     { 
@@ -122,7 +133,7 @@ export default function Home() {
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
     },
     { 
-      key: "menu", label: "Menü Paneli", roles: ["admin", "manager"],
+      key: "menu", label: "Menü Paneli", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
     },
     { 
@@ -134,19 +145,27 @@ export default function Home() {
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     },
     { 
-      key: "settings", label: "Ayarlar", roles: ["admin", "manager"],
+      key: "settings", label: "Ayarlar", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
     },
     {
-      key: "audit", label: "Audit Log", roles: ["admin", "manager"],
+      key: "audit", label: "Audit Log", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M9 8h6m-9 12h12a2 2 0 002-2V6a2 2 0 00-2-2h-3.5a1.5 1.5 0 01-3 0H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
     },
   ];
 
+  const tabPermissionMap: Record<TabType, PermissionKey> = {
+    dashboard: "dashboard_view",
+    sales: "sales_manage",
+    transactions: "transactions_view",
+    expenses: "expenses_manage",
+    menu: "menu_manage",
+    settings: "settings_manage",
+    audit: "audit_view",
+  };
+
   const canAccessTab = (tabKey: TabType) => {
-    if (!user) return false;
-    const item = navItems.find((nav) => nav.key === tabKey);
-    return item ? item.roles.includes(user.role) : false;
+    return hasPermission(tabPermissionMap[tabKey]);
   };
 
   const activeTab = canAccessTab(tab) ? tab : "dashboard";
@@ -255,6 +274,7 @@ export default function Home() {
           restaurantName={restaurantSettings.restaurantName} 
           darkMode={darkMode}
           navItems={navItems}
+          canAccessTab={canAccessTab}
           onSettingsClick={() => setTab("settings")}
           pushToast={pushToast}
         />
@@ -328,8 +348,25 @@ export default function Home() {
             {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
             {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
             {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo, user?.id ?? null)} tl={tl} />}
-            {activeTab === "menu" && <MenuTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} onCreateMenuItem={createMenuItem} onToggleMenuItem={toggleMenuItem} onDeleteMenuItem={deleteMenuItem} tl={tl} />}
-            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} onUpdateUserRole={updateUserRole} onCreateUser={createUserByAdmin} auditLogs={auditLogs} />}
+            {activeTab === "menu" && (
+              <MenuTab
+                darkMode={darkMode}
+                panelClass={panelClass}
+                inputClass={inputClass}
+                menuForm={menuForm}
+                setMenuForm={setMenuForm}
+                createMenuItem={async () => {
+                  await createMenuItem(menuForm);
+                  setMenuForm({ name: "", category: "", price: "" });
+                }}
+                menuItems={menuItems}
+                tl={tl}
+                toggleMenuItem={toggleMenuItem}
+                deleteMenuItem={deleteMenuItem}
+                canManageMenu={canManageMenu}
+              />
+            )}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} auditLogs={auditLogs} allPermissions={ALL_PERMISSIONS} />}
             {activeTab === "audit" && <AuditLogsTab panelClass={panelClass} darkMode={darkMode} auditLogs={auditLogs} />}
           </section>
         </div>

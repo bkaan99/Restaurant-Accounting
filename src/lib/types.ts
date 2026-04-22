@@ -1,5 +1,48 @@
 export type UserRole = "admin" | "manager" | "staff";
 
+export type PermissionKey =
+  | "dashboard_view"
+  | "sales_manage"
+  | "transactions_view"
+  | "expenses_manage"
+  | "menu_manage"
+  | "settings_manage"
+  | "users_manage"
+  | "permissions_manage"
+  | "audit_view";
+
+export const ALL_PERMISSIONS: PermissionKey[] = [
+  "dashboard_view",
+  "sales_manage",
+  "transactions_view",
+  "expenses_manage",
+  "menu_manage",
+  "settings_manage",
+  "users_manage",
+  "permissions_manage",
+  "audit_view",
+];
+
+export const ROLE_PERMISSION_DEFAULTS: Record<UserRole, PermissionKey[]> = {
+  admin: ALL_PERMISSIONS,
+  manager: [
+    "dashboard_view",
+    "sales_manage",
+    "transactions_view",
+    "expenses_manage",
+    "menu_manage",
+    "settings_manage",
+    "audit_view",
+  ],
+  staff: ["dashboard_view", "sales_manage", "transactions_view", "expenses_manage"],
+};
+
+export type RolePermissionConfig = {
+  admin: PermissionKey[];
+  manager: PermissionKey[];
+  staff: PermissionKey[];
+};
+
 export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
 
 export type RestaurantSettings = {
@@ -24,6 +67,7 @@ export type AppUser = {
   role: UserRole;
   email: string;
   authUserId?: string | null;
+  permissions?: PermissionKey[] | null;
 };
 
 export type MenuItem = {
