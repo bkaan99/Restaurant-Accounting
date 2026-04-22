@@ -1,12 +1,13 @@
 "use client";
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { MenuItem, Sale } from "@/lib/types";
+import { Expense, MenuItem, Sale } from "@/lib/types";
 
 export function DashboardTab({
   tl,
   stats,
   sales,
+  expenses,
   salesChartData,
   menuItems,
   darkMode,
@@ -15,6 +16,7 @@ export function DashboardTab({
   tl: Intl.NumberFormat;
   stats: { totalSales: number; totalExpenses: number; net: number; orderCount: number };
   sales: Sale[];
+  expenses: Expense[];
   salesChartData: { date: string; total: number }[];
   menuItems: MenuItem[];
   darkMode?: boolean;
