@@ -11,11 +11,32 @@ export function useAuth(appUsers: AppUser[]) {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const user = appUsers.find((u) => u.id === currentUserId) ?? null;
 
   useEffect(() => {
-    if (!hasSupabaseConfig || !supabase) return;
+    const savedUserId = localStorage.getItem("currentUserId");
+    if (savedUserId && !currentUserId) {
+      setCurrentUserId(savedUserId);
+    }
+    // Set to false after checking localStorage
+    setIsCheckingAuth(false);
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      localStorage.setItem("currentUserId", currentUserId);
+    } else {
+      localStorage.removeItem("currentUserId");
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !supabase) {
+      setIsCheckingAuth(false);
+      return;
+    }
 
     let isMounted = true;
     const mapAuthUserToAppUser = (authUser: { id: string; email?: string | null }) => {
@@ -28,10 +49,12 @@ export function useAuth(appUsers: AppUser[]) {
       const authUser = data.session?.user;
       if (!authUser) {
         setCurrentUserId(null);
+        setIsCheckingAuth(false);
         return;
       }
       const found = mapAuthUserToAppUser(authUser);
       setCurrentUserId(found?.id ?? null);
+      setIsCheckingAuth(false);
     };
 
     syncSessionToAppUser();
@@ -41,10 +64,11 @@ export function useAuth(appUsers: AppUser[]) {
       const authUser = session?.user;
       if (!authUser) {
         setCurrentUserId(null);
-        return;
+      } else {
+        const found = mapAuthUserToAppUser(authUser);
+        setCurrentUserId(found?.id ?? null);
       }
-      const found = mapAuthUserToAppUser(authUser);
-      setCurrentUserId(found?.id ?? null);
+      setIsCheckingAuth(false);
     });
 
     return () => {
@@ -116,6 +140,7 @@ export function useAuth(appUsers: AppUser[]) {
     loginError,
     loginSubmitting,
     showSplash,
+    isCheckingAuth,
     handleLogin,
     handleLogout,
   };

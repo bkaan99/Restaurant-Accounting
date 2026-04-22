@@ -29,7 +29,26 @@ const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(s
 export default function Home() {
   // Global App State
   const [tab, setTab] = useState<TabType>("dashboard");
+  
+  useEffect(() => {
+    const savedTab = localStorage.getItem("activeTab") as TabType;
+    if (savedTab) setTab(savedTab);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("activeTab", tab);
+  }, [tab]);
+
   const [darkMode, setDarkMode] = useState(true);
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem("darkMode");
+    if (savedMode !== null) setDarkMode(savedMode === "true");
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("darkMode", String(darkMode));
+  }, [darkMode]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -64,6 +83,7 @@ export default function Home() {
     loginError, 
     loginSubmitting, 
     showSplash, 
+    isCheckingAuth,
     handleLogin, 
     handleLogout,
     email,
@@ -174,6 +194,18 @@ export default function Home() {
   }, 0), [cart, menuItems]);
 
   const createSale = () => executeSale(cart, makeReceiptNo).then(() => setCart({}));
+
+  if (isCheckingAuth) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-slate-950">
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <span className="absolute inline-block h-16 w-16 animate-spin rounded-full border-4 border-indigo-500/30 border-t-indigo-500" />
+          <span className="text-2xl text-white">◻︎</span>
+        </div>
+        <p className="text-sm font-semibold tracking-widest text-indigo-300 uppercase">Sistem Hazırlanıyor...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
