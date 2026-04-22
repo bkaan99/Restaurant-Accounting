@@ -10,6 +10,7 @@ export function DashboardTab({
   salesChartData,
   menuItems,
   darkMode,
+  panelClass,
 }: {
   tl: Intl.NumberFormat;
   stats: { totalSales: number; totalExpenses: number; net: number; orderCount: number };
@@ -17,6 +18,7 @@ export function DashboardTab({
   salesChartData: { date: string; total: number }[];
   menuItems: MenuItem[];
   darkMode?: boolean;
+  panelClass: string;
 }) {
   const dm = darkMode ?? false;
 

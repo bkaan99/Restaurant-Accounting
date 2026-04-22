@@ -4,6 +4,7 @@ import { MenuItem, Sale } from "@/lib/types";
 
 export function SalesTab({
   panelClass,
+  inputClass,
   darkMode,
   activeMenu,
   menuItems,
@@ -16,6 +17,7 @@ export function SalesTab({
   sales,
 }: {
   panelClass: string;
+  inputClass: string;
   darkMode?: boolean;
   activeMenu: MenuItem[];
   menuItems: MenuItem[];
