@@ -390,7 +390,7 @@ export default function Home() {
         </div>
       </div>
 
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} results={searchResults} darkMode={darkMode} tl={tl} />
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} results={searchResults} darkMode={darkMode} tl={tl} onNavigate={setTab} />
       <ToastContainer toasts={toasts} />
     </main>
   );
