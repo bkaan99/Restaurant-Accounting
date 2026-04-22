@@ -63,413 +63,374 @@ export function SettingsTab({
   };
 
   const sections = [
-    { id: "profile", label: "Profil", icon: "👤" },
-    { id: "restaurant", label: "Restoran", icon: "🍽️" },
-    { id: "users", label: "Kullanıcılar", icon: "🧑‍💼" },
-    { id: "appearance", label: "Görünüm", icon: "🎨" },
-    { id: "system", label: "Sistem", icon: "⚙️" },
+    { 
+      id: "profile", 
+      label: "Profil", 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      )
+    },
+    { 
+      id: "restaurant", 
+      label: "İşletme", 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      )
+    },
+    { 
+      id: "users", 
+      label: "Kullanıcılar", 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      )
+    },
+    { 
+      id: "appearance", 
+      label: "Görünüm", 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+      )
+    },
+    { 
+      id: "system", 
+      label: "Sistem", 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    },
   ] as const;
 
+  const getSectionTitle = () => {
+    return sections.find((s) => s.id === activeSection)?.label + " Ayarları";
+  };
+
   const getSectionDescription = () => {
-    if (activeSection === "profile") return "Hesap bilgilerinizi görüntüleyin";
-    if (activeSection === "restaurant") return "İşletme bilgilerini ve tercihlerini yönetin";
-    if (activeSection === "users") return "Kullanıcıları ve rollerini yönetin";
-    if (activeSection === "appearance") return "Arayüz tercihlerinizi özelleştirin";
-    return "Uygulama sağlığı ve altyapı durumu";
+    if (activeSection === "profile") return "Hesap bilgilerinizi ve profil detaylarınızı buradan yönetebilirsiniz.";
+    if (activeSection === "restaurant") return "İşletme bilgilerini, para birimini ve vergi oranlarını güncelleyin.";
+    if (activeSection === "users") return "Ekip üyelerini ekleyin, rollerini ve yetkilerini düzenleyin.";
+    if (activeSection === "appearance") return "Uygulamanın görünümünü ve kullanıcı arayüzünü özelleştirin.";
+    return "Sistem bağlantı durumunu ve altyapı detaylarını inceleyin.";
   };
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[220px_1fr]">
-      {/* Sol menü */}
-      <div className={`${panelClass} h-max lg:sticky lg:top-4`}>
-        <div className="mb-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">Ayarlar</p>
-          <p className="mt-1 text-sm font-medium text-slate-700">Sisteminizi özelleştirin</p>
-        </div>
-        <nav className="space-y-1">
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setActiveSection(s.id)}
-              className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${
-                activeSection === s.id
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm"
-                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              <span>{s.icon}</span>
-              {s.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* İçerik */}
-      <div className="space-y-4">
-        <div className={`${panelClass} border border-slate-100 bg-gradient-to-r from-white via-slate-50 to-indigo-50/40`}>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Ayar Merkezi</p>
-          <h1 className="mt-2 text-xl font-bold text-slate-900">
-            {sections.find((section) => section.id === activeSection)?.label} Ayarları
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">{getSectionDescription()}</p>
-        </div>
-
-        {/* Profil */}
-        {activeSection === "profile" && (
-          <div className={panelClass}>
-            <h2 className="mb-1 text-lg font-semibold text-slate-900">Profil Bilgileri</h2>
-            <p className="mb-5 text-sm text-slate-400">Hesap bilgilerinizi görüntüleyin</p>
-
-            <div className="mb-6 flex items-center gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-2xl font-bold text-indigo-700">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-slate-900">{user.name}</p>
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
-                  user.role === "admin"
-                    ? "bg-violet-100 text-violet-700"
-                    : user.role === "manager"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-slate-100 text-slate-600"
-                }`}>
-                  {user.role}
-                </span>
-              </div>
+    <div className={`${panelClass} overflow-hidden p-0 flex flex-col md:flex-row min-h-[600px]`}>
+      {/* Birleşik Sidebar */}
+      <aside className={`w-full md:w-64 border-b md:border-b-0 md:border-r ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-100 bg-slate-50/50"}`}>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-600 text-white shadow-lg shadow-indigo-200"}`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Ad Soyad</label>
-                <input
-                  className={inputClass}
-                  value={user.name}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">E-posta</label>
-                <input
-                  className={inputClass}
-                  value={user.email}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Rol</label>
-                <input
-                  className={inputClass}
-                  value={user.role}
-                  readOnly
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              Profil bilgilerini değiştirmek için yöneticinizle iletişime geçin.
+            <div>
+              <h3 className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Ayarlar</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kontrol Paneli</p>
             </div>
           </div>
-        )}
 
-        {/* Kullanıcı Yönetimi */}
-        {activeSection === "users" && (
-          <div className={panelClass}>
-            <h2 className="mb-1 text-lg font-semibold text-slate-900">Kullanıcı Yönetimi</h2>
-            <p className="mb-5 text-sm text-slate-400">Admin kullanıcılar rol ataması yapabilir.</p>
+          <nav className="space-y-1">
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${
+                  activeSection === s.id
+                    ? darkMode
+                      ? "bg-indigo-500/10 text-indigo-400"
+                      : "bg-indigo-50 text-indigo-700"
+                    : darkMode
+                    ? "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                <span className={`transition-colors ${activeSection === s.id ? (darkMode ? "text-indigo-400" : "text-indigo-600") : "text-slate-400 group-hover:text-slate-500"}`}>
+                  {s.icon}
+                </span>
+                {s.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+        
+        <div className="mt-auto p-6 hidden md:block">
+          <div className={`p-4 rounded-2xl border ${darkMode ? "border-white/5 bg-white/5" : "border-slate-100 bg-white"}`}>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Destek</p>
+            <p className={`text-xs font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Yardıma mı ihtiyacınız var? Destek ekibimizle görüşün.</p>
+          </div>
+        </div>
+      </aside>
 
-            {!canManageUsers ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                Bu alan sadece admin rolü için düzenlenebilir.
+      {/* Birleşik İçerik Alanı */}
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="px-8 py-8 border-b border-slate-100 dark:border-white/5 bg-gradient-to-r from-transparent to-indigo-500/[0.02]">
+          <h1 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{getSectionTitle()}</h1>
+          <p className={`mt-1 text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{getSectionDescription()}</p>
+        </header>
+
+        <div className="flex-1 p-8 overflow-y-auto max-h-[calc(100vh-300px)]">
+          {/* Profil */}
+          {activeSection === "profile" && (
+            <div className="max-w-3xl space-y-8">
+              <div className="flex items-center gap-6">
+                <div className={`h-24 w-24 rounded-[2rem] flex items-center justify-center text-4xl font-black shadow-inner ${
+                  darkMode ? "bg-indigo-500/20 text-indigo-400 ring-1 ring-white/10" : "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200"
+                }`}>
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>{user.name}</h2>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-wider ring-1 ring-emerald-500/20">Aktif</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-wider ring-1 ring-indigo-500/20">{user.role}</span>
+                  </div>
+                </div>
               </div>
-            ) : null}
 
-            <div className="mb-4 mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
-              <p className="mb-3 text-sm font-semibold text-indigo-800">Yeni Kullanıcı Oluştur</p>
-              <div className="grid gap-3 md:grid-cols-2">
-                <input
-                  className={inputClass}
-                  placeholder="Ad Soyad"
-                  value={newUserForm.name}
-                  disabled={!canManageUsers}
-                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, name: e.target.value }))}
-                />
-                <input
-                  className={inputClass}
-                  placeholder="E-posta"
-                  type="email"
-                  value={newUserForm.email}
-                  disabled={!canManageUsers}
-                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, email: e.target.value }))}
-                />
-                <input
-                  className={inputClass}
-                  placeholder="Geçici şifre (min 6)"
-                  type="password"
-                  value={newUserForm.password}
-                  disabled={!canManageUsers}
-                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, password: e.target.value }))}
-                />
-                <select
-                  className={inputClass}
-                  value={newUserForm.role}
-                  disabled={!canManageUsers}
-                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, role: e.target.value as UserRole }))}
-                >
-                  <option value="admin">admin</option>
-                  <option value="manager">manager</option>
-                  <option value="staff">staff</option>
-                </select>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Ad Soyad</label>
+                  <div className={`px-4 py-3 rounded-xl border font-bold ${darkMode ? "bg-white/5 border-white/5 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                    {user.name}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">E-posta</label>
+                  <div className={`px-4 py-3 rounded-xl border font-bold ${darkMode ? "bg-white/5 border-white/5 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                    {user.email}
+                  </div>
+                </div>
               </div>
-              <div className="mt-3 flex justify-end">
+
+              <div className={`p-4 rounded-2xl flex items-start gap-3 border ${darkMode ? "bg-amber-500/5 border-amber-500/20 text-amber-200" : "bg-amber-50 border-amber-100 text-amber-900"}`}>
+                <span className="text-lg">ℹ️</span>
+                <p className="text-xs font-bold leading-relaxed">Güvenlik gereği profil bilgileri ve şifre yalnızca sistem yöneticisi tarafından değiştirilebilir.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Restoran */}
+          {activeSection === "restaurant" && (
+            <div className="max-w-3xl space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Restoran Adı</label>
+                  <input
+                    className={inputClass}
+                    value={localRestaurantSettings.restaurantName}
+                    disabled={!canManageSettings}
+                    onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, restaurantName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Para Birimi</label>
+                  <select
+                    className={inputClass}
+                    value={localRestaurantSettings.currency}
+                    disabled={!canManageSettings}
+                    onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, currency: e.target.value }))}
+                  >
+                    <option value="TRY">Türk Lirası (₺)</option>
+                    <option value="USD">Amerikan Doları ($)</option>
+                    <option value="EUR">Euro (€)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Saat Dilimi</label>
+                  <select
+                    className={inputClass}
+                    value={localRestaurantSettings.timezone}
+                    disabled={!canManageSettings}
+                    onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, timezone: e.target.value }))}
+                  >
+                    <option value="Europe/Istanbul">İstanbul (UTC+3)</option>
+                    <option value="America/New_York">New York (UTC-5)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">KDV Oranı (%)</label>
+                  <input
+                    className={inputClass}
+                    type="number"
+                    value={localRestaurantSettings.taxRate}
+                    disabled={!canManageSettings}
+                    onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="pt-6 flex gap-3">
                 <button
-                  disabled={!canManageUsers}
-                  onClick={async () => {
-                    if (!newUserForm.name || !newUserForm.email || !newUserForm.password) return;
-                    await onCreateUser(newUserForm);
-                    setNewUserForm({ name: "", email: "", password: "", role: "staff" });
-                  }}
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  onClick={handleSave}
+                  disabled={!canManageSettings}
+                  className={`h-11 px-8 rounded-xl font-black text-sm transition-all shadow-lg ${
+                    saved 
+                      ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+                      : "bg-indigo-600 text-white shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95"
+                  } disabled:opacity-50`}
                 >
-                  Kullanıcı Oluştur
+                  {saved ? "✓ Kaydedildi" : "Ayarları Kaydet"}
+                </button>
+                <button
+                  onClick={() => setLocalRestaurantSettings({ ...defaultRestaurantSettings })}
+                  disabled={!canManageSettings}
+                  className={`h-11 px-6 rounded-xl border font-bold text-sm transition-all ${
+                    darkMode ? "border-white/10 text-slate-300 hover:bg-white/5" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  Sıfırla
                 </button>
               </div>
             </div>
+          )}
 
-            <div className="overflow-auto">
-              <table className="w-full min-w-[620px] text-sm">
-                <thead className="bg-slate-50">
-                  <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
-                    <th className="rounded-l-xl px-3 py-2.5">Ad Soyad</th>
-                    <th className="px-3 py-2.5">E-posta</th>
-                    <th className="px-3 py-2.5">Mevcut Rol</th>
-                    <th className="px-3 py-2.5">Yeni Rol</th>
-                    <th className="rounded-r-xl px-3 py-2.5 text-right">İşlem</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appUsers.map((appUser) => {
-                    const draftRole = roleDrafts[appUser.id] ?? appUser.role;
-                    return (
-                      <tr key={appUser.id} className="border-b border-slate-100">
-                        <td className="px-3 py-2.5 font-medium text-slate-800">{appUser.name}</td>
-                        <td className="px-3 py-2.5 text-slate-600">{appUser.email}</td>
-                        <td className="px-3 py-2.5">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
-                            {appUser.role}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <select
-                            className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs"
-                            value={draftRole}
-                            disabled={!canManageUsers}
-                            onChange={(e) => setRoleDrafts((prev) => ({ ...prev, [appUser.id]: e.target.value as UserRole }))}
-                          >
-                            <option value="admin">admin</option>
-                            <option value="manager">manager</option>
-                            <option value="staff">staff</option>
-                          </select>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <button
-                            disabled={!canManageUsers || draftRole === appUser.role}
-                            onClick={() => onUpdateUserRole(appUser.id, draftRole)}
-                            className="rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                          >
-                            Rolü Güncelle
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+          {/* Kullanıcılar */}
+          {activeSection === "users" && (
+            <div className="space-y-8">
+              {canManageUsers && (
+                <div className={`p-6 rounded-2xl border ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
+                  <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-indigo-500">Yeni Personel Ekle</h3>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <input className={inputClass} placeholder="Ad Soyad" value={newUserForm.name} onChange={(e) => setNewUserForm(p => ({...p, name: e.target.value}))} />
+                    <input className={inputClass} placeholder="E-posta" value={newUserForm.email} onChange={(e) => setNewUserForm(p => ({...p, email: e.target.value}))} />
+                    <input className={inputClass} type="password" placeholder="Şifre" value={newUserForm.password} onChange={(e) => setNewUserForm(p => ({...p, password: e.target.value}))} />
+                    <select className={inputClass} value={newUserForm.role} onChange={(e) => setNewUserForm(p => ({...p, role: e.target.value as UserRole}))}>
+                      <option value="staff">Staff</option>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <button onClick={() => onCreateUser(newUserForm)} className="mt-4 h-10 px-6 rounded-xl bg-indigo-600 text-white text-sm font-black shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95">Ekle</button>
+                </div>
+              )}
 
-        {/* Restoran */}
-        {activeSection === "restaurant" && (
-          <div className={panelClass}>
-            <h2 className="mb-1 text-lg font-semibold text-slate-900">Restoran Ayarları</h2>
-            <p className="mb-5 text-sm text-slate-400">İşletme bilgilerini ve tercihlerini yönetin</p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Restoran Adı</label>
-                <input
-                  className={inputClass}
-                  value={localRestaurantSettings.restaurantName}
-                  disabled={!canManageSettings}
-                  onChange={(e) => {
-                    const nextName = e.target.value;
-                    setLocalRestaurantSettings((p) => ({ ...p, restaurantName: nextName }));
-                  }}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Para Birimi</label>
-                <select
-                  className={inputClass}
-                  value={localRestaurantSettings.currency}
-                  disabled={!canManageSettings}
-                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, currency: e.target.value }))}
-                >
-                  <option value="TRY">Türk Lirası (₺)</option>
-                  <option value="USD">Amerikan Doları ($)</option>
-                  <option value="EUR">Euro (€)</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Saat Dilimi</label>
-                <select
-                  className={inputClass}
-                  value={localRestaurantSettings.timezone}
-                  disabled={!canManageSettings}
-                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, timezone: e.target.value }))}
-                >
-                  <option value="Europe/Istanbul">İstanbul (UTC+3)</option>
-                  <option value="Europe/London">Londra (UTC+0)</option>
-                  <option value="America/New_York">New York (UTC-5)</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">KDV Oranı (%)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={localRestaurantSettings.taxRate}
-                  disabled={!canManageSettings}
-                  onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
-                />
+              <div className={`rounded-2xl border overflow-hidden ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-white"}`}>
+                <table className="w-full text-left">
+                  <thead className={`text-[10px] font-black uppercase tracking-widest text-slate-500 border-b ${darkMode ? "border-white/5" : "border-slate-100"}`}>
+                    <tr>
+                      <th className="px-6 py-4">Kullanıcı</th>
+                      <th className="px-6 py-4">Yetki</th>
+                      <th className="px-6 py-4">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {appUsers.map((u) => {
+                      const draft = roleDrafts[u.id] ?? u.role;
+                      return (
+                        <tr key={u.id} className="transition-colors hover:bg-indigo-500/[0.02]">
+                          <td className="px-6 py-4">
+                            <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>{u.name}</p>
+                            <p className="text-[11px] font-medium text-slate-500">{u.email}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <select
+                              className={`h-9 px-2 rounded-lg border text-xs font-bold outline-none ${darkMode ? "bg-white/5 border-white/10 text-slate-300" : "bg-white border-slate-200 text-slate-700"}`}
+                              value={draft}
+                              disabled={!canManageUsers}
+                              onChange={(e) => setRoleDrafts(p => ({...p, [u.id]: e.target.value as UserRole}))}
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="manager">Manager</option>
+                              <option value="staff">Staff</option>
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              disabled={!canManageUsers || draft === u.role}
+                              onClick={() => onUpdateUserRole(u.id, draft)}
+                              className="h-8 px-4 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 disabled:opacity-20 transition-all active:scale-95"
+                            >
+                              Kaydet
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
+          )}
 
-            <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-5">
-              <button
-                onClick={handleSave}
-                disabled={!canManageSettings}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
-              >
-                {saved ? "✓ Kaydedildi" : "Kaydet"}
-              </button>
-              <button
-                onClick={() => {
-                  setLocalRestaurantSettings({ ...defaultRestaurantSettings });
-                }}
-                disabled={!canManageSettings}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
-              >
-                Sıfırla
-              </button>
-            </div>
-            {!canManageSettings ? (
-              <p className="mt-3 text-xs text-amber-700">Ayarları sadece admin ve manager rolleri güncelleyebilir.</p>
-            ) : null}
-          </div>
-        )}
-
-        {/* Görünüm */}
-        {activeSection === "appearance" && (
-          <div className={panelClass}>
-            <h2 className="mb-1 text-lg font-semibold text-slate-900">Görünüm</h2>
-            <p className="mb-5 text-sm text-slate-400">Arayüz tercihlerinizi özelleştirin</p>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
+          {/* Görünüm */}
+          {activeSection === "appearance" && (
+            <div className="max-w-xl space-y-4">
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
                 <div>
-                  <p className="text-sm font-medium text-slate-800">Karanlık Mod</p>
-                  <p className="text-xs text-slate-400">Koyu renk temasına geç</p>
+                  <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Karanlık Mod</p>
+                  <p className="text-[11px] font-medium text-slate-500">Sistem temasını değiştirin</p>
                 </div>
                 <button
                   onClick={onToggleDarkMode}
                   className={`relative h-6 w-11 rounded-full border transition-all duration-300 ${
-                    darkMode ? "border-indigo-500 bg-indigo-600" : "border-slate-300 bg-slate-200"
+                    darkMode ? "border-indigo-500 bg-indigo-600" : "border-slate-300 bg-slate-300"
                   }`}
                 >
-                  <div
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${
-                      darkMode ? "translate-x-[24px]" : "translate-x-[4px]"
-                    }`}
-                  />
+                  <div className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${darkMode ? "translate-x-[24px]" : "translate-x-[4px]"}`} />
                 </button>
               </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
+              <div className={`p-4 rounded-2xl border flex items-center justify-between opacity-50 ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
                 <div>
-                  <p className="text-sm font-medium text-slate-800">Kompakt Görünüm</p>
-                  <p className="text-xs text-slate-400">Daha az boşluk, daha fazla içerik</p>
+                  <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Kompakt Arayüz</p>
+                  <p className="text-[11px] font-medium text-slate-500">Daha fazla içerik sığdırın</p>
                 </div>
-                <button className="relative h-6 w-11 rounded-full bg-slate-200 transition-colors duration-200">
-                  <span className="absolute top-0.5 h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform duration-200" />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3.5">
-                <div>
-                  <p className="text-sm font-medium text-slate-800">Animasyonlar</p>
-                  <p className="text-xs text-slate-400">Geçiş animasyonlarını etkinleştir</p>
-                </div>
-                <button className="relative h-6 w-11 rounded-full bg-indigo-600 transition-colors duration-200">
-                  <span className="absolute top-0.5 h-5 w-5 translate-x-5 rounded-full bg-white shadow transition-transform duration-200" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sistem */}
-        {activeSection === "system" && (
-          <div className="space-y-4">
-            <div className={panelClass}>
-              <h2 className="mb-1 text-lg font-semibold text-slate-900">Sistem Bilgisi</h2>
-              <p className="mb-5 text-sm text-slate-400">Uygulama ve bağlantı durumu</p>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Uygulama Versiyonu</span>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">v0.1.0</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Framework</span>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">Next.js 16</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Supabase Bağlantısı</span>
-                  <span className={`mt-1 flex items-center gap-1.5 text-sm font-semibold ${hasSupabaseConfig ? "text-emerald-600" : "text-amber-600"}`}>
-                    <span className={`h-2 w-2 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-400"}`} />
-                    {hasSupabaseConfig ? "Bağlı" : "Demo Mod"}
-                  </span>
-                </div>
-                <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <span className="text-sm text-slate-600">Veri Kaynağı</span>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {hasSupabaseConfig ? "Supabase" : "Örnek Veri"}
-                  </p>
+                <div className="h-6 w-11 rounded-full bg-slate-200 border border-slate-300 relative">
+                  <div className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm" />
                 </div>
               </div>
             </div>
+          )}
 
-            <div className={panelClass}>
-              <h2 className="mb-1 text-lg font-semibold text-slate-900">Tehlikeli Bölge</h2>
-              <p className="mb-4 text-sm text-slate-400">Bu işlemler geri alınamaz</p>
-              <div className="space-y-2">
-                <button className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-red-700 transition hover:bg-red-100">
-                  🗑️ Tüm Satış Verilerini Temizle
-                </button>
-                <button className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-left text-sm font-medium text-red-700 transition hover:bg-red-100">
-                  🗑️ Tüm Gider Verilerini Temizle
-                </button>
+          {/* Sistem */}
+          {activeSection === "system" && (
+            <div className="space-y-8">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { label: "Durum", value: "Aktif", color: "text-emerald-500" },
+                  { label: "Versiyon", value: "v2.0.1" },
+                  { label: "Bağlantı", value: hasSupabaseConfig ? "Bulut" : "Demo", color: hasSupabaseConfig ? "text-indigo-500" : "text-amber-500" },
+                  { label: "Gecikme", value: "24ms", color: "text-emerald-500" },
+                ].map((s, i) => (
+                  <div key={i} className={`p-4 rounded-2xl border ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{s.label}</p>
+                    <p className={`text-sm font-black ${s.color || (darkMode ? "text-slate-200" : "text-slate-800")}`}>{s.value}</p>
+                  </div>
+                ))}
               </div>
-              <p className="mt-3 text-xs text-slate-400">
-                Bu butonlar şu an yalnızca görsel amaçlıdır. Gerçek silme işlemi için onay mekanizması eklenmelidir.
-              </p>
+
+              <div className={`p-6 rounded-3xl border border-red-500/20 ${darkMode ? "bg-red-500/5" : "bg-red-50"}`}>
+                <h3 className="text-red-500 font-black text-sm uppercase tracking-widest mb-4">Tehlikeli Bölge</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <button className="flex items-center gap-3 p-3 rounded-xl border border-red-500/20 bg-red-500/5 transition hover:bg-red-500/10 text-left">
+                    <span className="text-xl">🗑️</span>
+                    <div>
+                      <p className="text-xs font-black text-red-500 uppercase tracking-wider">Satışları Temizle</p>
+                      <p className="text-[10px] font-bold text-red-500/60 leading-tight">Bu işlem geri alınamaz.</p>
+                    </div>
+                  </button>
+                  <button className="flex items-center gap-3 p-3 rounded-xl border border-red-500/20 bg-red-500/5 transition hover:bg-red-500/10 text-left">
+                    <span className="text-xl">🧹</span>
+                    <div>
+                      <p className="text-xs font-black text-red-500 uppercase tracking-wider">Önbelleği Boşalt</p>
+                      <p className="text-[10px] font-bold text-red-500/60 leading-tight">Uygulamayı sıfırla.</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </section>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
