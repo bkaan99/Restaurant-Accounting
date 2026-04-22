@@ -11,9 +11,10 @@ export function useAuth(appUsers: AppUser[]) {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
+  const [localUser, setLocalUser] = useState<AppUser | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  const user = appUsers.find((u) => u.id === currentUserId) ?? null;
+  const user = localUser || (appUsers.find((u) => u.id === currentUserId) ?? null);
 
   useEffect(() => {
     const savedUserId = localStorage.getItem("currentUserId");
@@ -53,6 +54,7 @@ export function useAuth(appUsers: AppUser[]) {
         return;
       }
       const found = mapAuthUserToAppUser(authUser);
+      setLocalUser(found);
       setCurrentUserId(found?.id ?? null);
       setIsCheckingAuth(false);
     };
@@ -66,6 +68,7 @@ export function useAuth(appUsers: AppUser[]) {
         setCurrentUserId(null);
       } else {
         const found = mapAuthUserToAppUser(authUser);
+        setLocalUser(found);
         setCurrentUserId(found?.id ?? null);
       }
       setIsCheckingAuth(false);
@@ -93,7 +96,27 @@ export function useAuth(appUsers: AppUser[]) {
         setLoginSubmitting(false);
         return;
       }
-      const found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
+      let found = appUsers.find((u) => u.authUserId === data.user.id || u.email === data.user.email);
+      
+      if (!found) {
+        // Cache'de yoksa direkt veritabanından çekmeyi dene
+        const { data: profileData } = await supabase
+          .from("users")
+          .select("id, name, role, email, auth_user_id")
+          .or(`auth_user_id.eq.${data.user.id},email.eq.${data.user.email}`)
+          .single();
+        
+        if (profileData) {
+          found = {
+            id: profileData.id,
+            name: profileData.name,
+            role: profileData.role,
+            email: profileData.email,
+            authUserId: profileData.auth_user_id
+          };
+        }
+      }
+
       if (!found) {
         setLoginError("Kullanıcı profili bulunamadı. Lütfen yöneticinizle iletişime geçin.");
         setLoginSubmitting(false);
@@ -101,6 +124,7 @@ export function useAuth(appUsers: AppUser[]) {
       }
       setShowSplash(true);
       setTimeout(() => {
+        setLocalUser(found);
         setCurrentUserId(found.id);
         setShowSplash(false);
         setLoginSubmitting(false);
@@ -117,6 +141,7 @@ export function useAuth(appUsers: AppUser[]) {
     }
     setShowSplash(true);
     setTimeout(() => {
+      setLocalUser(fallbackUser);
       setCurrentUserId(fallbackUser.id);
       setShowSplash(false);
       setLoginSubmitting(false);
@@ -127,6 +152,7 @@ export function useAuth(appUsers: AppUser[]) {
     if (hasSupabaseConfig && supabase) {
       await supabase.auth.signOut();
     }
+    setLocalUser(null);
     setCurrentUserId(null);
   };
 

@@ -249,26 +249,75 @@ export function AuditLogsTab({
       </div>
 
       {selectedLog ? (
-        <div className={`mt-4 rounded-2xl border p-4 ${dm ? "border-white/10 bg-white/5" : "border-slate-200 bg-white"}`}>
-          <h3 className={`text-sm font-semibold ${dm ? "text-slate-200" : "text-slate-800"}`}>Detaylı Kayıt İncelemesi</h3>
-          <div className="mt-3 grid gap-3 lg:grid-cols-3">
-            <div className={`rounded-xl border p-3 ${dm ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Metadata</p>
-              <pre className={`mt-1 whitespace-pre-wrap break-all text-[11px] ${dm ? "text-slate-300" : "text-slate-600"}`}>
-                {JSON.stringify(selectedLog.metadata, null, 2)}
-              </pre>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className={`absolute inset-0 backdrop-blur-sm transition-all duration-500 ${
+              dm ? "bg-slate-950/60" : "bg-white/40"
+            }`} 
+            onClick={() => setSelectedLogId(null)} 
+          />
+          <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[2.5rem] border shadow-2xl animate-in fade-in zoom-in duration-300 ${
+            dm ? "border-white/10 bg-slate-900 shadow-slate-950" : "border-slate-200 bg-white shadow-slate-200"
+          }`}>
+            <div className="flex items-center justify-between border-b px-6 py-5 dark:border-white/5">
+              <div>
+                <h3 className={`text-xl font-black tracking-tight ${dm ? "text-white" : "text-slate-900"}`}>Kayıt Detayları</h3>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">Audit Log #{selectedLog.id}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedLogId(null)}
+                className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-all ${
+                  dm ? "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+                }`}
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <div className={`rounded-xl border p-3 ${dm ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Old Data</p>
-              <pre className={`mt-1 whitespace-pre-wrap break-all text-[11px] ${dm ? "text-slate-300" : "text-slate-600"}`}>
-                {selectedLog.oldData ? JSON.stringify(selectedLog.oldData, null, 2) : "null"}
-              </pre>
-            </div>
-            <div className={`rounded-xl border p-3 ${dm ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">New Data</p>
-              <pre className={`mt-1 whitespace-pre-wrap break-all text-[11px] ${dm ? "text-slate-300" : "text-slate-600"}`}>
-                {selectedLog.newData ? JSON.stringify(selectedLog.newData, null, 2) : "null"}
-              </pre>
+
+            <div className="overflow-y-auto p-6 md:p-8 max-h-[calc(90vh-80px)]">
+              <div className="grid gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "İşlem", value: selectedLog.eventType },
+                    { label: "Tablo", value: selectedLog.tableName },
+                    { label: "Kayıt ID", value: selectedLog.recordId },
+                    { label: "Zaman", value: new Date(selectedLog.changedAt).toLocaleString("tr-TR") }
+                  ].map((stat, i) => (
+                    <div key={i} className={`p-4 rounded-3xl border ${dm ? "border-white/5 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{stat.label}</p>
+                      <p className={`text-xs font-black ${dm ? "text-slate-200" : "text-slate-800"}`}>{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="space-y-3">
+                    <p className="text-xs font-black uppercase tracking-widest text-indigo-500">Eski Veri (Old Data)</p>
+                    <div className={`rounded-3xl border p-5 overflow-auto max-h-[300px] ${dm ? "border-white/5 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+                      <pre className={`text-[11px] font-medium leading-relaxed ${dm ? "text-slate-300" : "text-slate-600"}`}>
+                        {selectedLog.oldData ? JSON.stringify(selectedLog.oldData, null, 2) : "--- Değişiklik yok ---"}
+                      </pre>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-500">Yeni Veri (New Data)</p>
+                    <div className={`rounded-3xl border p-5 overflow-auto max-h-[300px] ${dm ? "border-white/5 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+                      <pre className={`text-[11px] font-medium leading-relaxed ${dm ? "text-slate-300" : "text-slate-600"}`}>
+                        {selectedLog.newData ? JSON.stringify(selectedLog.newData, null, 2) : "--- Veri yok ---"}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Metadata & Sistem Bilgisi</p>
+                  <div className={`rounded-3xl border p-5 ${dm ? "border-white/5 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+                    <pre className={`text-[11px] font-medium leading-relaxed ${dm ? "text-slate-300" : "text-slate-600"}`}>
+                      {JSON.stringify(selectedLog.metadata, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

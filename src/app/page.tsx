@@ -33,7 +33,9 @@ export default function Home() {
   
   useEffect(() => {
     const savedTab = localStorage.getItem("activeTab") as TabType;
-    if (savedTab) setTab(savedTab);
+    if (savedTab) {
+      setTab(savedTab);
+    }
   }, []);
 
   useEffect(() => {
@@ -382,7 +384,7 @@ export default function Home() {
                 canManageMenu={canManageMenu}
               />
             )}
-            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} auditLogs={auditLogs} allPermissions={ALL_PERMISSIONS} />}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} allPermissions={ALL_PERMISSIONS} />}
             {activeTab === "audit" && <AuditLogsTab panelClass={panelClass} darkMode={darkMode} auditLogs={auditLogs} />}
           </section>
         </div>

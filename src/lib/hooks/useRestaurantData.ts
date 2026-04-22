@@ -109,27 +109,25 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         note: e.note ?? "",
       }));
 
-      const mappedAuditLogs: AuditLog[] = (auditLogsRes.data ?? []).map((row) => {
-        const actorRelation = Array.isArray(row.users) ? row.users[0] : row.users;
-        return {
-        id: row.id,
-        eventType: row.event_type,
-        tableName: row.table_name,
-        recordId: row.record_id,
-        changedByRole: row.changed_by_role ?? null,
-        changedAt: row.changed_at,
-        oldData: (row.old_data as Record<string, unknown> | null) ?? null,
-        newData: (row.new_data as Record<string, unknown> | null) ?? null,
-        metadata: (row.metadata as Record<string, unknown> | null) ?? {},
-        actorName: actorRelation?.name ?? "Bilinmiyor",
-        };
-      });
+      const mappedLogs: AuditLog[] = (auditLogsRes?.data || []).map((log: any) => ({
+        id: log.id,
+        eventType: log.event_type,
+        tableName: log.table_name,
+        recordId: log.record_id,
+        changedByRole: log.changed_by_role,
+        changedAt: log.changed_at,
+        oldData: log.old_data,
+        newData: log.new_data,
+        metadata: log.metadata,
+        actorName: log.users?.name || "Sistem",
+      }));
+
+      setAuditLogs(mappedLogs);
 
       setAppUsers(mappedUsers);
       setMenuItems(mappedMenu);
       setSales(mappedSales);
       setExpenses(mappedExpenses);
-      setAuditLogs(mappedAuditLogs);
 
       const settingsRes = await supabase.from("app_settings").select("ayar_anahtari, ayar_degeri");
       if (!settingsRes.error && settingsRes.data) {
