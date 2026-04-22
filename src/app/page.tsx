@@ -295,6 +295,22 @@ export default function Home() {
             </div>
             
             <div className="relative flex items-center gap-3">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+                  darkMode 
+                    ? "border-white/10 bg-white/5 text-yellow-400 hover:bg-white/10" 
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+                title={darkMode ? "Aydınlık Moda Geç" : "Karanlık Moda Geç"}
+              >
+                {darkMode ? (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg>
+                ) : (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                )}
+              </button>
+
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 transition ${
