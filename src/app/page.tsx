@@ -25,30 +25,8 @@ export default async function LandingPage() {
   const displayName = restaurantName || "Restoran";
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#fafafa] px-6 selection:bg-violet-500/10">
-      {/* Background Ornaments (Light Version) */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute -top-40 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-violet-600/5 blur-[120px]" />
-        <div className="absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-indigo-600/5 blur-[100px]" />
-        <div className="absolute top-1/2 right-0 h-96 w-96 -translate-y-1/2 rounded-full bg-fuchsia-600/5 blur-[100px]" />
-        <div
-          className="absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
-          }}
-        />
-      </div>
-
+    <main className="relative min-h-screen overflow-hidden">
       <LandingClient displayName={displayName} />
-
-      {/* Footer Info */}
-      <div className="absolute bottom-10 flex flex-col items-center gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-700">
-          Powered by <span className="text-slate-500">Antigravity Premium</span>
-        </p>
-      </div>
     </main>
   );
 }

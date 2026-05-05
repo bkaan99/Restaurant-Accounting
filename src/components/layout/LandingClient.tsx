@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChefLoading } from "@/components/ui/ChefLoading";
+import { useTheme } from "@/context/ThemeContext";
 
 export function LandingClient({ displayName }: { displayName: string }) {
   const [isLoading, setIsLoading] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
 
   useEffect(() => {
-    // İlk açılışta kısa bir yükleme efekti için
     const timer = setTimeout(() => setIsLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
@@ -18,39 +20,74 @@ export function LandingClient({ displayName }: { displayName: string }) {
   };
 
   return (
-    <>
+    <div
+      className={`relative min-h-screen flex flex-col items-center justify-center overflow-hidden selection:bg-violet-500/10 transition-colors duration-500 ${
+        isDark ? "bg-[#020408]" : "bg-[#fafafa]"
+      }`}
+    >
       {isLoading && <ChefLoading />}
 
       {/* Premium Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-white/40 backdrop-blur-xl">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl ${
+          isDark ? "border-white/5 bg-black/20" : "border-black/5 bg-white/40"
+        }`}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           {/* Left: Logo & Name */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-100">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg ${isDark ? "shadow-violet-900/20" : "shadow-violet-200"}`}>
               <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <span className="text-sm font-black tracking-tight text-slate-800 sm:text-base">{displayName}</span>
+            <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-white" : "text-slate-800"}`}>{displayName}</span>
           </div>
 
           {/* Right: Nav Links */}
           <div className="flex items-center gap-6 sm:gap-8">
-            <Link href="/menu" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:text-violet-600">
+            <Link href="/menu" onClick={handleNav} className={`text-xs font-bold uppercase tracking-widest transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-violet-600"}`}>
               Menü
             </Link>
-            <Link href="/contact" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:text-violet-600">
+            <Link href="/contact" onClick={handleNav} className={`text-xs font-bold uppercase tracking-widest transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-violet-600"}`}>
               İletişim
             </Link>
+            <button
+              onClick={toggleTheme}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+                isDark
+                  ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  : "border-black/10 bg-white/60 text-slate-600 hover:bg-white"
+              }`}
+              title="Temayı değiştir"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3a9 9 0 000 18V3z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
           </div>
         </div>
       </nav>
       
+      {/* Background Ornaments */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className={`absolute -top-40 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full blur-[120px] ${isDark ? "bg-violet-600/10" : "bg-violet-500/5"}`} />
+        <div className={`absolute -bottom-40 left-0 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-indigo-600/5" : "bg-indigo-500/5"}`} />
+        <div
+          className={`absolute inset-0 ${isDark ? "opacity-[0.02] text-white/30" : "opacity-[0.05] text-black/30"}`}
+          style={{
+            backgroundImage: "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
+            backgroundSize: "80px 80px",
+          }}
+        />
+      </div>
+
       <div className="relative z-10 flex w-full max-w-[340px] flex-col items-center text-center">
         {/* Animated Glow Logo Container */}
         <div className="group relative mb-12">
-          <div className="absolute -inset-4 animate-pulse rounded-[2.5rem] bg-violet-600/10 blur-2xl transition duration-1000 group-hover:bg-violet-600/20" />
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-gradient-to-br from-violet-600 to-indigo-700 shadow-xl shadow-violet-200 transition-transform duration-500 group-hover:scale-110">
+          <div className={`absolute -inset-4 animate-pulse rounded-[2.5rem] blur-2xl transition duration-1000 ${isDark ? "bg-violet-600/20 group-hover:bg-violet-600/40" : "bg-violet-600/10 group-hover:bg-violet-600/20"}`} />
+          <div className={`relative flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-gradient-to-br from-violet-600 to-indigo-700 shadow-xl transition-transform duration-500 group-hover:scale-110 ${isDark ? "shadow-violet-900/40" : "shadow-violet-200"}`}>
             <svg
               className="h-12 w-12 text-white"
               fill="none"
@@ -72,10 +109,10 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <span className="inline-block rounded-full border border-violet-500/10 bg-violet-500/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-violet-600">
             Hoş Geldiniz
           </span>
-          <h1 className="mt-6 bg-gradient-to-b from-slate-900 to-slate-500 bg-clip-text text-5xl font-black tracking-tighter text-transparent">
+          <h1 className={`mt-6 bg-gradient-to-b bg-clip-text text-5xl font-black tracking-tighter text-transparent ${isDark ? "from-white to-slate-400" : "from-slate-900 to-slate-500"}`}>
             {displayName}
           </h1>
-          <p className="mt-6 text-sm font-medium leading-relaxed text-slate-500">
+          <p className={`mt-6 text-sm font-medium leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             Damak tadınıza hitap eden dijital menümüzü keşfedin <br className="hidden sm:block" /> ya da profesyonel yönetim sistemine erişin.
           </p>
         </div>
@@ -85,7 +122,9 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/menu"
             onClick={handleNav}
-            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] bg-slate-900 px-6 py-5 text-sm font-black text-white transition-all hover:scale-[1.02] hover:bg-black active:scale-[0.98] shadow-xl shadow-slate-200"
+            className={`group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] px-6 py-5 text-sm font-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl ${
+              isDark ? "bg-white text-black shadow-none" : "bg-slate-900 text-white shadow-slate-200"
+            }`}
           >
             <svg
               className="h-5 w-5"
@@ -106,7 +145,11 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/dashboard"
             onClick={handleNav}
-            className="group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-6 py-5 text-sm font-black text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98] shadow-sm"
+            className={`group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border px-6 py-5 text-sm font-black transition-all active:scale-[0.98] shadow-sm ${
+              isDark
+                ? "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.08] hover:text-white"
+                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            }`}
           >
             <svg
               className="h-4 w-4 transition-transform group-hover:rotate-12"
@@ -125,6 +168,6 @@ export function LandingClient({ displayName }: { displayName: string }) {
           </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }

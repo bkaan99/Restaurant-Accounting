@@ -21,6 +21,7 @@ import { SearchModal } from "@/components/ui/SearchModal";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useRestaurantData } from "@/lib/hooks/useRestaurantData";
 import { useToast } from "@/lib/hooks/useToast";
+import { useTheme } from "@/context/ThemeContext";
 
 const tl = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const basePanelClass = "rounded-3xl border p-5 shadow-xl backdrop-blur";
@@ -42,16 +43,8 @@ export default function Home() {
     localStorage.setItem("activeTab", tab);
   }, [tab]);
 
-  const [darkMode, setDarkMode] = useState(true);
-
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode !== null) setDarkMode(savedMode === "true");
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
+  const { theme, toggleTheme } = useTheme();
+  const darkMode = theme === "dark";
   const [cart, setCart] = useState<Record<string, number>>({});
   const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -305,7 +298,7 @@ export default function Home() {
             
             <div className="relative flex items-center gap-3">
               <button
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={toggleTheme}
                 className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${
                   darkMode 
                     ? "border-white/10 bg-white/5 text-yellow-400 hover:bg-white/10" 
@@ -394,7 +387,7 @@ export default function Home() {
                 canManageMenu={canManageMenu}
               />
             )}
-            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} allPermissions={ALL_PERMISSIONS} />}
+            {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={toggleTheme} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} allPermissions={ALL_PERMISSIONS} />}
             {activeTab === "audit" && <AuditLogsTab panelClass={panelClass} darkMode={darkMode} auditLogs={auditLogs} />}
           </section>
         </div>
