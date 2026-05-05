@@ -22,24 +22,24 @@ export function LandingClient({ displayName }: { displayName: string }) {
       {isLoading && <ChefLoading />}
 
       {/* Premium Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-white/40 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           {/* Left: Logo & Name */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-900/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-100">
               <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <span className="text-sm font-black tracking-tight text-white sm:text-base">{displayName}</span>
+            <span className="text-sm font-black tracking-tight text-slate-800 sm:text-base">{displayName}</span>
           </div>
 
           {/* Right: Nav Links */}
           <div className="flex items-center gap-6 sm:gap-8">
-            <Link href="/menu" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-white">
+            <Link href="/menu" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:text-violet-600">
               Menü
             </Link>
-            <Link href="/contact" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-white">
+            <Link href="/contact" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:text-violet-600">
               İletişim
             </Link>
           </div>
@@ -49,8 +49,8 @@ export function LandingClient({ displayName }: { displayName: string }) {
       <div className="relative z-10 flex w-full max-w-[340px] flex-col items-center text-center">
         {/* Animated Glow Logo Container */}
         <div className="group relative mb-12">
-          <div className="absolute -inset-4 animate-pulse rounded-[2.5rem] bg-violet-600/20 blur-2xl transition duration-1000 group-hover:bg-violet-600/40 group-hover:duration-200" />
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-gradient-to-br from-violet-600 to-indigo-700 shadow-2xl shadow-violet-900/40 transition-transform duration-500 group-hover:scale-110">
+          <div className="absolute -inset-4 animate-pulse rounded-[2.5rem] bg-violet-600/10 blur-2xl transition duration-1000 group-hover:bg-violet-600/20" />
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-gradient-to-br from-violet-600 to-indigo-700 shadow-xl shadow-violet-200 transition-transform duration-500 group-hover:scale-110">
             <svg
               className="h-12 w-12 text-white"
               fill="none"
@@ -69,10 +69,10 @@ export function LandingClient({ displayName }: { displayName: string }) {
 
         {/* Text Section */}
         <div className="mb-10">
-          <span className="inline-block rounded-full border border-violet-500/20 bg-violet-500/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-violet-400">
+          <span className="inline-block rounded-full border border-violet-500/10 bg-violet-500/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-violet-600">
             Hoş Geldiniz
           </span>
-          <h1 className="mt-6 bg-gradient-to-b from-white to-slate-400 bg-clip-text text-5xl font-black tracking-tighter text-transparent">
+          <h1 className="mt-6 bg-gradient-to-b from-slate-900 to-slate-500 bg-clip-text text-5xl font-black tracking-tighter text-transparent">
             {displayName}
           </h1>
           <p className="mt-6 text-sm font-medium leading-relaxed text-slate-500">
@@ -85,9 +85,8 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/menu"
             onClick={handleNav}
-            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] bg-white px-6 py-5 text-sm font-black text-black transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] bg-slate-900 px-6 py-5 text-sm font-black text-white transition-all hover:scale-[1.02] hover:bg-black active:scale-[0.98] shadow-xl shadow-slate-200"
           >
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/5 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
             <svg
               className="h-5 w-5"
               fill="none"
@@ -107,7 +106,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/dashboard"
             onClick={handleNav}
-            className="group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border border-white/10 bg-white/[0.03] px-6 py-5 text-sm font-black text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98]"
+            className="group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white px-6 py-5 text-sm font-black text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98] shadow-sm"
           >
             <svg
               className="h-4 w-4 transition-transform group-hover:rotate-12"
