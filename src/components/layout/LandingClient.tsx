@@ -36,10 +36,8 @@ export function LandingClient({ displayName }: { displayName: string }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           {/* Left: Logo & Name */}
           <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg ${isDark ? "shadow-violet-900/20" : "shadow-violet-200"}`}>
-              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
+            <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border ${isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/70"}`}>
+              <img src="/logo.png" alt={`${displayName} logosu`} className="h-full w-full object-contain p-1" />
             </div>
             <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-white" : "text-slate-800"}`}>{displayName}</span>
           </div>
@@ -87,20 +85,10 @@ export function LandingClient({ displayName }: { displayName: string }) {
         {/* Animated Glow Logo Container */}
         <div className="group relative mb-12">
           <div className={`absolute -inset-4 animate-pulse rounded-[2.5rem] blur-2xl transition duration-1000 ${isDark ? "bg-violet-600/20 group-hover:bg-violet-600/40" : "bg-violet-600/10 group-hover:bg-violet-600/20"}`} />
-          <div className={`relative flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-gradient-to-br from-violet-600 to-indigo-700 shadow-xl transition-transform duration-500 group-hover:scale-110 ${isDark ? "shadow-violet-900/40" : "shadow-violet-200"}`}>
-            <svg
-              className="h-12 w-12 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
+          <div className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2.2rem] border shadow-xl transition-transform duration-500 group-hover:scale-110 ${
+            isDark ? "border-white/10 bg-white/5 shadow-violet-900/40" : "border-black/10 bg-white/85 shadow-violet-200"
+          }`}>
+            <img src="/logo.png" alt={`${displayName} logosu`} className="h-full w-full object-contain p-3" />
           </div>
         </div>
 
@@ -172,6 +160,13 @@ export function LandingClient({ displayName }: { displayName: string }) {
           </Link>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="absolute bottom-8 text-center animate-fade-in opacity-0" style={{ animationFillMode: 'forwards', animationDelay: '1.5s' }}>
+        <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${isDark ? "text-slate-600" : "text-slate-400"}`}>
+          {displayName} Premium Deneyimi
+        </p>
+      </footer>
     </div>
   );
 }

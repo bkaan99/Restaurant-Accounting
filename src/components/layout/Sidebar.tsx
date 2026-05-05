@@ -39,6 +39,13 @@ export function Sidebar({
           ? "border-white/10 bg-slate-900/60"
           : "border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50"
       }`}>
+        <div className="mb-3">
+          <img
+            src="/logo.png"
+            alt={`${restaurantName || "LUMINOX"} logosu`}
+            className="h-12 w-auto rounded-lg object-contain"
+          />
+        </div>
         <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${darkMode ? "text-indigo-200" : "text-indigo-500"}`}>Marka</p>
         <p className={`mt-1 text-lg font-bold tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{restaurantName || "LUMINOX"}</p>
         <p className={`mt-1 text-xs ${darkMode ? "text-slate-300" : "text-slate-500"}`}>Restoran Analitiği</p>
