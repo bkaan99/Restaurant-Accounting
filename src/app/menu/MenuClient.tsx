@@ -177,7 +177,11 @@ export function MenuClient({
                 </div>
 
                 {/* Items Box with Dashed Border Aesthetic */}
-                <div className="relative rounded-[2.5rem] border border-dashed border-black/10 dark:border-white/10 bg-white/40 dark:bg-gradient-to-br dark:from-white/[0.04] dark:to-transparent p-8 sm:p-12 shadow-sm dark:shadow-none transition-all hover:border-violet-500/30">
+                <div className={`relative rounded-[2.5rem] border border-dashed p-8 sm:p-12 shadow-sm transition-all hover:border-violet-500/30 ${
+                  isDark 
+                    ? "border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] shadow-none backdrop-blur-sm" 
+                    : "border-black/10 bg-white/40"
+                }`}>
                   <div className="grid gap-8 sm:grid-cols-1">
                     {items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between group">
