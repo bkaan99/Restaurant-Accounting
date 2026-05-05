@@ -66,31 +66,33 @@ export function MenuClient({
     }, {});
   }, [filteredItems, activeCategory]);
 
+  const featuredItems = useMemo(() => filteredItems.slice(0, 3), [filteredItems]);
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-slate-100">
+    <div className="min-h-screen bg-[#07090f] text-slate-100">
 
       {/* Arka plan */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-60 left-1/2 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-indigo-600/8 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/6 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-cyan-600/5 blur-3xl" />
+        <div className="absolute -top-56 left-1/2 h-[720px] w-[720px] -translate-x-1/2 rounded-full bg-violet-700/15 blur-3xl" />
+        <div className="absolute top-1/3 -left-20 h-72 w-72 rounded-full bg-cyan-600/10 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0a0a0f]/85 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#07090f]/75 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-base shadow-lg shadow-indigo-500/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/20 bg-white/[0.06] text-base">
               🍽️
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Dijital Menü</p>
-              <h1 className="text-sm font-black tracking-tight text-white leading-tight">{displayName}</h1>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-violet-300/90">Chef Selection</p>
+              <h1 className="text-sm font-black leading-tight text-white">{displayName}</h1>
             </div>
           </div>
           <Link
             href="/"
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold text-slate-400 transition hover:bg-white/[0.08] hover:text-white"
+            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
           >
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -100,11 +102,25 @@ export function MenuClient({
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 pb-20 pt-6">
+      <main className="mx-auto max-w-4xl px-4 pb-20 pt-6">
+        <section className="mb-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.10] via-white/[0.04] to-transparent p-5 shadow-2xl shadow-black/40">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Digital Tasting Menu</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Lezzeti sec, keyifle siparis et
+              </h2>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-black/20 px-4 py-2 text-right">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Toplam urun</p>
+              <p className="text-xl font-black text-white">{menuItems.length}</p>
+            </div>
+          </div>
+        </section>
 
         {/* Arama */}
         <div className="relative mb-5">
-          <svg className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -112,11 +128,11 @@ export function MenuClient({
             placeholder="Ürün veya kategori ara..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 pl-11 pr-4 text-sm text-slate-200 outline-none placeholder:text-slate-600 transition focus:border-indigo-500/40 focus:bg-white/[0.06] focus:ring-2 focus:ring-indigo-500/15"
+            className="w-full rounded-2xl border border-white/15 bg-white/[0.04] py-3.5 pl-11 pr-4 text-sm text-slate-200 outline-none placeholder:text-slate-500 transition focus:border-violet-400/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-violet-500/20"
           />
         </div>
 
-        {/* Kategori kartları */}
+        {/* Kategori sekmeleri */}
         <div className="mb-7 flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {categories.map((cat) => {
             const meta = getMeta(cat);
@@ -125,25 +141,44 @@ export function MenuClient({
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`flex shrink-0 flex-col items-center gap-1.5 rounded-2xl border px-4 py-3 transition-all ${
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition ${
                   isActive
-                    ? "border-indigo-500/40 bg-gradient-to-b from-indigo-600/30 to-indigo-600/10 shadow-lg shadow-indigo-500/10"
-                    : "border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06]"
+                    ? "border-violet-400/40 bg-violet-500/20 text-white shadow-lg shadow-violet-600/20"
+                    : "border-white/15 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
                 }`}
               >
-                <span className="text-xl leading-none">{cat === "Tümü" ? "✨" : meta.icon}</span>
-                <span className={`text-[10px] font-black tracking-wide ${isActive ? "text-indigo-300" : "text-slate-500"}`}>
-                  {cat}
-                </span>
+                <span className="text-base leading-none">{cat === "Tümü" ? "✨" : meta.icon}</span>
+                <span>{cat}</span>
               </button>
             );
           })}
         </div>
 
+        {featuredItems.length > 0 && (
+          <section className="mb-10">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-[0.22em] text-slate-300">One Cikanlar</h3>
+              <span className="text-[11px] text-slate-500">Bugunun secimi</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {featuredItems.map((item) => (
+                <article
+                  key={`featured-${item.id}`}
+                  className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur-sm"
+                >
+                  <p className="text-[11px] font-semibold text-slate-400">{item.category}</p>
+                  <h4 className="mt-2 line-clamp-1 text-base font-black text-white">{item.name}</h4>
+                  <p className="mt-3 text-right text-sm font-black text-violet-300">{tl.format(item.price)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* İçerik */}
         {Object.keys(groupedItems).length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/5 bg-white/[0.03] text-4xl">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] text-4xl">
               🔍
             </div>
             <div>
@@ -158,11 +193,11 @@ export function MenuClient({
               return (
                 <section key={category}>
                   {/* Kategori başlığı */}
-                  <div className={`mb-4 flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-gradient-to-r ${meta.gradient} px-4 py-3`}>
+                  <div className={`mb-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r ${meta.gradient} px-4 py-3`}>
                     <span className="text-2xl">{meta.icon}</span>
                     <div className="flex-1">
                       <h2 className={`text-sm font-black uppercase tracking-widest ${meta.light}`}>{category}</h2>
-                      <p className="text-[10px] font-medium text-slate-600">{items.length} ürün</p>
+                      <p className="text-[10px] font-medium text-slate-500">{items.length} urun</p>
                     </div>
                   </div>
 
@@ -171,27 +206,26 @@ export function MenuClient({
                     {items.map((item, idx) => (
                       <div
                         key={item.id}
-                        className="group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.05]"
+                        className="group relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-4 transition-all hover:-translate-y-0.5 hover:border-violet-300/30"
                         style={{ animationDelay: `${idx * 40}ms` }}
                       >
-                        <div className="mb-3 flex items-center justify-between">
-                          <span className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold text-slate-400">
+                        <div className="absolute inset-y-3 left-3 w-1 rounded-full bg-violet-300/70 opacity-80 transition group-hover:bg-fuchsia-300" />
+                        <div className="mb-3 ml-4 flex items-center justify-between">
+                          <span className="rounded-lg border border-white/10 bg-black/10 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
                             {item.category}
                           </span>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-[11px] font-black text-slate-500">
-                            {String(idx + 1).padStart(2, "0")}
-                          </div>
+                          <span className="text-[11px] font-semibold text-slate-500">#{String(idx + 1).padStart(2, "0")}</span>
                         </div>
 
-                        <div>
-                          <p className="line-clamp-1 text-base font-black tracking-tight text-slate-100 transition-colors group-hover:text-white">
+                        <div className="ml-4">
+                          <p className="line-clamp-1 text-base font-black tracking-tight text-white">
                             {item.name}
                           </p>
                           <div className="mt-2 flex items-center justify-between">
-                            <span className="text-[11px] font-medium text-slate-500">
-                              Taze ve gunluk hazirlanir
+                            <span className="text-[11px] font-medium text-slate-400">
+                              Sef onerisi
                             </span>
-                            <span className={`rounded-xl bg-gradient-to-br ${meta.gradient} border border-white/[0.08] px-3 py-1.5 text-sm font-black ${meta.light}`}>
+                            <span className={`rounded-xl border border-white/15 bg-black/20 px-3 py-1.5 text-sm font-black ${meta.light}`}>
                               {tl.format(item.price)}
                             </span>
                           </div>
@@ -207,11 +241,11 @@ export function MenuClient({
 
         {/* Footer */}
         <div className="mt-16 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/10 text-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-lg">
             🍽️
           </div>
-          <p className="text-xs font-bold text-slate-600">{displayName}</p>
-          <p className="text-[10px] text-slate-700">Fiyatlarımıza KDV dahildir · Güncel menü</p>
+          <p className="text-xs font-bold text-slate-500">{displayName}</p>
+          <p className="text-[10px] text-slate-600">Fiyatlara KDV dahildir · Guncel menu</p>
         </div>
       </main>
     </div>
