@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MenuItem } from "@/lib/types";
 
@@ -62,13 +62,6 @@ export function MenuClient({
 }) {
   const [activeCategory, setActiveCategory] = useState<string>("Tümü");
   const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const displayName = restaurantName || "Restoran";
 
@@ -104,46 +97,28 @@ export function MenuClient({
         <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-fuchsia-600/10 blur-[100px]" />
       </div>
 
-      {/* Floating Header */}
-      <header 
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          scrolled 
-            ? "border-b border-white/5 bg-black/60 py-3 backdrop-blur-2xl" 
-            : "bg-transparent py-5"
-        }`}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="group flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-900/20 transition hover:scale-105 active:scale-95">
-              <svg className="h-5 w-5 text-white transition group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+      {/* Navbar */}
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-900/20">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-            </Link>
-            <div>
-              <h1 className="text-lg font-black tracking-tight text-white">{displayName}</h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400/80">Premium Experience</p>
             </div>
+            <span className="text-sm font-black tracking-tight text-white sm:text-base">{displayName}</span>
           </div>
-          
-          <div className="relative flex items-center gap-3">
-             <div className="hidden h-8 w-px bg-white/10 sm:block" />
-             <div className="flex h-10 items-center rounded-2xl border border-white/10 bg-white/[0.03] px-3 backdrop-blur-md transition-all focus-within:border-violet-500/50 focus-within:bg-white/[0.06]">
-                <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input 
-                  type="text" 
-                  placeholder="Ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-24 bg-transparent pl-2 text-xs font-medium text-slate-200 outline-none transition-all placeholder:text-slate-600 focus:w-40 sm:w-32 sm:focus:w-48"
-                />
-             </div>
+
+          <div className="flex items-center gap-6 sm:gap-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-white">Menü</span>
+            <Link href="/contact" className="text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-white">
+              İletişim
+            </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-4">
+      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-24">
         {/* Hero Section */}
         <section className="mb-12 flex flex-col items-center text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/5 px-4 py-1.5 backdrop-blur-sm">

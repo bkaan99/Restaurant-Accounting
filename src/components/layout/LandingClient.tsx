@@ -20,6 +20,31 @@ export function LandingClient({ displayName }: { displayName: string }) {
   return (
     <>
       {isLoading && <ChefLoading />}
+
+      {/* Premium Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          {/* Left: Logo & Name */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 shadow-lg shadow-violet-900/20">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <span className="text-sm font-black tracking-tight text-white sm:text-base">{displayName}</span>
+          </div>
+
+          {/* Right: Nav Links */}
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link href="/menu" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-white">
+              Menü
+            </Link>
+            <Link href="/contact" onClick={handleNav} className="text-xs font-bold uppercase tracking-widest text-slate-400 transition hover:text-white">
+              İletişim
+            </Link>
+          </div>
+        </div>
+      </nav>
       
       <div className="relative z-10 flex w-full max-w-[340px] flex-col items-center text-center">
         {/* Animated Glow Logo Container */}
