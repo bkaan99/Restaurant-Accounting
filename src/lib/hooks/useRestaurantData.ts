@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
 import { AppUser, AuditLog, Expense, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
-export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void) {
+export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void, userId?: string | null) {
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -15,7 +15,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     manager: ROLE_PERMISSION_DEFAULTS.manager,
     staff: ROLE_PERMISSION_DEFAULTS.staff,
   });
-  const [loading, setLoading] = useState(hasSupabaseConfig);
+  const [loading, setLoading] = useState(false);
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
     restaurantName: "LUMINOX",
     currency: "TRY",
@@ -168,8 +168,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   };
 
   useEffect(() => {
+    if (!userId) return; // Kullanıcı giriş yapmadan veri çekme
     loadData();
-  }, []);
+  }, [userId]);
 
   const stats = useMemo(() => {
     const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);

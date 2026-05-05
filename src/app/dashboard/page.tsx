@@ -62,6 +62,21 @@ export default function Home() {
   // Custom Hooks
   const { toasts, pushToast } = useToast();
   const { 
+    user: authUser, 
+    loginError, 
+    loginSubmitting, 
+    showSplash, 
+    isCheckingAuth,
+    handleLogin, 
+    handleLogout,
+    email,
+    password,
+    setEmail,
+    setPassword,
+    currentUserId,
+  } = useAuth();
+
+  const { 
     appUsers, 
     menuItems, 
     sales, 
@@ -83,21 +98,10 @@ export default function Home() {
     createUserByAdmin,
     expenseForm,
     setExpenseForm,
-  } = useRestaurantData(pushToast);
+  } = useRestaurantData(pushToast, currentUserId);
 
-  const { 
-    user, 
-    loginError, 
-    loginSubmitting, 
-    showSplash, 
-    isCheckingAuth,
-    handleLogin, 
-    handleLogout,
-    email,
-    password,
-    setEmail,
-    setPassword
-  } = useAuth(appUsers);
+  // appUsers yüklendikten sonra user'ı resolve et
+  const user = authUser ?? (appUsers.find((u) => u.id === currentUserId) ?? null);
 
   // Computed styles
   const panelClass = `${basePanelClass} ${
