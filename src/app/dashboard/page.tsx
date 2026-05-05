@@ -43,7 +43,12 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
+  const [menuForm, setMenuForm] = useState<{ name: string; description?: string; category: string; price: string }>({
+    name: "",
+    description: "",
+    category: "",
+    price: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -364,7 +369,7 @@ export default function Home() {
                 setMenuForm={setMenuForm}
                 createMenuItem={async () => {
                   await createMenuItem(menuForm);
-                  setMenuForm({ name: "", category: "", price: "" });
+                  setMenuForm({ name: "", description: "", category: "", price: "" });
                 }}
                 menuCategories={menuCategories}
                 createMenuCategory={createMenuCategory}

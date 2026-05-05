@@ -189,7 +189,12 @@ export function MenuClient({
                           <h3 className={`text-base font-black tracking-tight transition-colors ${isDark ? "text-white group-hover:text-violet-200" : "text-slate-900 group-hover:text-violet-600"}`}>
                             {item.name}
                           </h3>
-                          <div className="mt-1 h-[1px] w-full border-t border-dashed border-black/5 dark:border-white/5" />
+                          {item.description && (
+                            <p className={`mt-1 text-xs font-medium leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                              {item.description}
+                            </p>
+                          )}
+                          <div className="mt-2 h-[1px] w-full border-t border-dashed border-black/5 dark:border-white/5" />
                         </div>
                         
                         <div className="ml-6 flex shrink-0 items-center">

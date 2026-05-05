@@ -16,7 +16,7 @@ async function getMenuData(): Promise<{ menuItems: MenuItem[]; restaurantName: s
     const [menuRes, settingsRes] = await Promise.all([
       supabase
         .from("menu_items")
-        .select("id, name, category, price, active")
+        .select("id, name, description, category, price, active")
         .eq("active", true)
         .order("category", { ascending: true })
         .order("name", { ascending: true }),
@@ -28,6 +28,7 @@ async function getMenuData(): Promise<{ menuItems: MenuItem[]; restaurantName: s
     const menuItems: MenuItem[] = (menuRes.data ?? []).map((m) => ({
       id: m.id,
       name: m.name,
+      description: m.description || null,
       category: m.category,
       price: Number(m.price),
       active: Boolean(m.active),

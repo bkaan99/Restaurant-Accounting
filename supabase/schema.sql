@@ -17,11 +17,14 @@ alter table public.users add column if not exists permissions jsonb;
 create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  description text,
   category text not null,
   price numeric(10,2) not null check (price > 0),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.menu_items add column if not exists description text;
 
 create table if not exists public.menu_categories (
   id uuid primary key default gen_random_uuid(),

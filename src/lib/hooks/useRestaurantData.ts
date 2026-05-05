@@ -41,8 +41,16 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         ? await supabase.from("users").select("id, name, role, email, auth_user_id")
         : usersWithPermissionsRes;
 
-      const [menuRes, categoriesRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
-        supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
+      const menuWithDescriptionRes = await supabase
+        .from("menu_items")
+        .select("id, name, description, category, price, active")
+        .order("name", { ascending: true });
+
+      const menuRes = menuWithDescriptionRes.error
+        ? await supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true })
+        : menuWithDescriptionRes;
+
+      const [categoriesRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("menu_categories").select("id, name, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
@@ -71,6 +79,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       const mappedMenu: MenuItem[] = (menuRes.data ?? []).map((m) => ({
         id: m.id,
         name: m.name,
+        description: "description" in m ? (m.description || null) : null,
         category: m.category,
         price: Number(m.price),
         active: Boolean(m.active),
@@ -222,13 +231,13 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   }, [sales]);
 
   // Handlers for MenuItem
-  const createMenuItem = async (form: { name: string; category: string; price: string }) => {
+  const createMenuItem = async (form: { name: string; description?: string; category: string; price: string }) => {
     const price = Number(form.price);
     if (!form.name || !form.category || isNaN(price) || price <= 0) return;
     
-    const newItem: MenuItem = { id: crypto.randomUUID(), name: form.name, category: form.category, price, active: true };
+    const newItem: MenuItem = { id: crypto.randomUUID(), name: form.name, description: form.description || null, category: form.category, price, active: true };
     if (hasSupabaseConfig && supabase) {
-      const { data, error } = await supabase.from("menu_items").insert({ name: newItem.name, category: newItem.category, price: newItem.price, active: true }).select("id").single();
+      const { data, error } = await supabase.from("menu_items").insert({ name: newItem.name, description: newItem.description, category: newItem.category, price: newItem.price, active: true }).select("id").single();
       if (error || !data) {
         pushToast("Menü ürünü kaydedilemedi.");
         return;
@@ -304,12 +313,12 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     setMenuItems((prev) => prev.filter((m) => m.id !== item.id));
   };
 
-  const updateMenuItem = async (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "category" | "price">>) => {
+  const updateMenuItem = async (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "description" | "category" | "price">>) => {
     const updated = { ...item, ...updates };
     if (hasSupabaseConfig && supabase) {
       const { error } = await supabase
         .from("menu_items")
-        .update({ name: updated.name, category: updated.category, price: updated.price })
+        .update({ name: updated.name, description: updated.description, category: updated.category, price: updated.price })
         .eq("id", item.id);
       if (error) {
         pushToast("Ürün güncellenemedi.");

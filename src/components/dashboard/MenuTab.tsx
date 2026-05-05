@@ -19,7 +19,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 const getCategoryIcon = (cat: string) => CATEGORY_ICONS[cat] ?? "🍴";
 
-type EditForm = { name: string; category: string; price: string };
+type EditForm = { name: string; description: string; category: string; price: string };
 
 export function MenuTab({
   panelClass,
@@ -40,8 +40,8 @@ export function MenuTab({
   panelClass: string;
   inputClass: string;
   darkMode?: boolean;
-  menuForm: { name: string; category: string; price: string };
-  setMenuForm: React.Dispatch<React.SetStateAction<{ name: string; category: string; price: string }>>;
+  menuForm: { name: string; description?: string; category: string; price: string };
+  setMenuForm: React.Dispatch<React.SetStateAction<{ name: string; description?: string; category: string; price: string }>>;
   createMenuItem: () => Promise<void>;
   menuCategories: MenuCategory[];
   createMenuCategory: (name: string) => Promise<void>;
@@ -56,7 +56,7 @@ export function MenuTab({
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ name: "", category: "", price: "" });
+  const [editForm, setEditForm] = useState<EditForm>({ name: "", description: "", category: "", price: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tümü");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export function MenuTab({
 
   const openEdit = (item: MenuItem) => {
     setEditingItem(item);
-    setEditForm({ name: item.name, category: item.category, price: String(item.price) });
+    setEditForm({ name: item.name, description: item.description || "", category: item.category, price: String(item.price) });
   };
 
   const handleSaveEdit = async () => {
@@ -93,7 +93,7 @@ export function MenuTab({
     const price = Number(editForm.price);
     if (!editForm.name || !editForm.category || isNaN(price) || price <= 0) return;
     setSaving(true);
-    await updateMenuItem(editingItem, { name: editForm.name, category: editForm.category, price });
+    await updateMenuItem(editingItem, { name: editForm.name, description: editForm.description || null, category: editForm.category, price });
     setSaving(false);
     setEditingItem(null);
   };
@@ -217,7 +217,12 @@ export function MenuTab({
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] font-medium ${dm ? "text-slate-500" : "text-slate-400"}`}>{item.category}</p>
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    <p className={`text-[11px] font-medium ${dm ? "text-indigo-400" : "text-indigo-600"}`}>{item.category}</p>
+                    {item.description && (
+                      <p className={`truncate text-[11px] ${dm ? "text-slate-500" : "text-slate-500"}`}>{item.description}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Fiyat */}
@@ -285,6 +290,9 @@ export function MenuTab({
             <Field dm={dm} label="Ürün Adı">
               <input className={inputClass} placeholder="Örn: Izgara Köfte" value={menuForm.name} onChange={(e) => setMenuForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
+            <Field dm={dm} label="Açıklama (İsteğe Bağlı)">
+              <textarea className={`${inputClass} resize-none`} rows={2} placeholder="Örn: 200gr antrikot, patates kızartması ile..." value={menuForm.description || ""} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} />
+            </Field>
             <Field dm={dm} label="Kategori">
               <div className="space-y-2">
                 <select
@@ -349,6 +357,9 @@ export function MenuTab({
           <div className="space-y-4">
             <Field dm={dm} label="Ürün Adı">
               <input className={inputClass} value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} />
+            </Field>
+            <Field dm={dm} label="Açıklama (İsteğe Bağlı)">
+              <textarea className={`${inputClass} resize-none`} rows={2} value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} />
             </Field>
             <Field dm={dm} label="Kategori">
               <select
