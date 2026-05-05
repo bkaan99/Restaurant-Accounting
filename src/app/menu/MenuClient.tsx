@@ -167,33 +167,34 @@ export function MenuClient({
                   </div>
 
                   {/* Ürün kartları */}
-                  <div className="space-y-2.5">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {items.map((item, idx) => (
                       <div
                         key={item.id}
-                        className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-4 transition-all hover:border-white/[0.1] hover:bg-white/[0.05]"
+                        className="group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.05]"
                         style={{ animationDelay: `${idx * 40}ms` }}
                       >
-                        {/* Numara */}
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-[11px] font-black text-slate-600">
-                          {String(idx + 1).padStart(2, "0")}
-                        </div>
-
-                        {/* Bilgi */}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-bold text-slate-100 group-hover:text-white transition-colors">
-                            {item.name}
-                          </p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="text-[10px] font-medium text-slate-600">{item.category}</span>
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold text-slate-400">
+                            {item.category}
+                          </span>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-[11px] font-black text-slate-500">
+                            {String(idx + 1).padStart(2, "0")}
                           </div>
                         </div>
 
-                        {/* Fiyat */}
-                        <div className="shrink-0">
-                          <span className={`rounded-xl bg-gradient-to-br ${meta.gradient} border border-white/[0.08] px-3.5 py-2 text-sm font-black ${meta.light}`}>
-                            {tl.format(item.price)}
-                          </span>
+                        <div>
+                          <p className="line-clamp-1 text-base font-black tracking-tight text-slate-100 transition-colors group-hover:text-white">
+                            {item.name}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-slate-500">
+                              Taze ve gunluk hazirlanir
+                            </span>
+                            <span className={`rounded-xl bg-gradient-to-br ${meta.gradient} border border-white/[0.08] px-3 py-1.5 text-sm font-black ${meta.light}`}>
+                              {tl.format(item.price)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
