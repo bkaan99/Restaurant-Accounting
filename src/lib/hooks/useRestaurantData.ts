@@ -238,6 +238,22 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     setMenuItems((prev) => prev.filter((m) => m.id !== item.id));
   };
 
+  const updateMenuItem = async (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "category" | "price">>) => {
+    const updated = { ...item, ...updates };
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({ name: updated.name, category: updated.category, price: updated.price })
+        .eq("id", item.id);
+      if (error) {
+        pushToast("Ürün güncellenemedi.");
+        return;
+      }
+    }
+    setMenuItems((prev) => prev.map((m) => (m.id === item.id ? updated : m)));
+    pushToast("Ürün güncellendi.", "success");
+  };
+
   // Handlers for Settings
   const saveRestaurantSettings = async (settings: RestaurantSettings, actorUserId?: string | null) => {
     setRestaurantSettings(settings);
@@ -415,6 +431,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     createMenuItem,
     toggleMenuItem,
     deleteMenuItem,
+    updateMenuItem,
     saveRestaurantSettings,
     updateUserRole,
     updateUserPermissions,

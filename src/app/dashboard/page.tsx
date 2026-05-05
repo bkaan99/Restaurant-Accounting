@@ -90,6 +90,7 @@ export default function Home() {
     createMenuItem,
     toggleMenuItem,
     deleteMenuItem,
+    updateMenuItem,
     saveRestaurantSettings,
     updateUserRole,
     updateRolePermissions,
@@ -385,6 +386,7 @@ export default function Home() {
                 tl={tl}
                 toggleMenuItem={toggleMenuItem}
                 deleteMenuItem={deleteMenuItem}
+                updateMenuItem={updateMenuItem}
                 canManageMenu={canManageMenu}
               />
             )}
