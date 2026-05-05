@@ -240,6 +240,12 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   // Handlers for Settings
   const saveRestaurantSettings = async (settings: RestaurantSettings, actorUserId?: string | null) => {
     setRestaurantSettings(settings);
+    // Demo modda localStorage'a kaydet (landing page okuyabilsin)
+    try {
+      localStorage.setItem("restaurantSettings", JSON.stringify(settings));
+    } catch {
+      // sessizce geç
+    }
     if (!hasSupabaseConfig || !supabase) return;
     const payload = [
       { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: actorUserId ?? null },
