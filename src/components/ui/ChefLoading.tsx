@@ -30,7 +30,7 @@ export function ChefLoading() {
                 className="h-2 w-2 animate-bounce rounded-full bg-slate-200/80 shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
                 style={{ 
                   animationDelay: `${i * 0.1}s`,
-                  opacity: Math.random() * 0.5 + 0.5
+                  opacity: 0.4 + (i % 5) * 0.1
                 }} 
               />
             ))}

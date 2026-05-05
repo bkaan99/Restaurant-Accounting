@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChefLoading } from "@/components/ui/ChefLoading";
 
 export function LandingClient({ displayName }: { displayName: string }) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // İlk açılışta kısa bir yükleme efekti için
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleNav = () => {
     setIsLoading(true);
