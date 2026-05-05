@@ -23,6 +23,19 @@ create table if not exists public.menu_items (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+insert into public.menu_categories (name)
+select distinct category
+from public.menu_items
+where coalesce(trim(category), '') <> ''
+on conflict (name) do nothing;
+
 create table if not exists public.sales (
   id uuid primary key default gen_random_uuid(),
   receipt_no text unique,
@@ -82,6 +95,41 @@ where e.id = ranked_expenses.id;
 create unique index if not exists sales_receipt_no_unique_idx on public.sales(receipt_no);
 create unique index if not exists expenses_receipt_no_unique_idx on public.expenses(receipt_no);
 
+-- Sales receipt no üretimini veritabanına taşı (race condition önleme)
+create sequence if not exists public.sales_receipt_no_seq;
+
+create or replace function public.generate_sales_receipt_no(p_created_at timestamptz default now())
+returns text
+language plpgsql
+as $$
+declare
+  receipt_date text;
+  seq_value bigint;
+begin
+  receipt_date := to_char(coalesce(p_created_at, now()), 'YYYY-MM-DD');
+  seq_value := nextval('public.sales_receipt_no_seq');
+  return 'F-' || receipt_date || '-' || lpad(seq_value::text, 6, '0');
+end;
+$$;
+
+create or replace function public.assign_sales_receipt_no()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.receipt_no is null or btrim(new.receipt_no) = '' then
+    new.receipt_no := public.generate_sales_receipt_no(new.created_at);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_assign_sales_receipt_no on public.sales;
+create trigger trg_assign_sales_receipt_no
+before insert on public.sales
+for each row
+execute function public.assign_sales_receipt_no();
+
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
   ayar_anahtari text not null unique,
@@ -94,6 +142,7 @@ create table if not exists public.app_settings (
 -- RLS (production-safe)
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
+alter table public.menu_categories enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
@@ -143,6 +192,21 @@ create policy "menu_select_authenticated"
   using (true);
 create policy "menu_write_admin_manager"
   on public.menu_items
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- menu_categories: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "menu_categories_select_authenticated" on public.menu_categories;
+drop policy if exists "menu_categories_write_admin_manager" on public.menu_categories;
+create policy "menu_categories_select_authenticated"
+  on public.menu_categories
+  for select
+  to authenticated
+  using (true);
+create policy "menu_categories_write_admin_manager"
+  on public.menu_categories
   for all
   to authenticated
   using (public.get_current_user_role() in ('admin', 'manager'))
@@ -329,6 +393,7 @@ $$;
 
 drop trigger if exists trg_audit_users_iud on public.users;
 drop trigger if exists trg_audit_menu_items_iud on public.menu_items;
+drop trigger if exists trg_audit_menu_categories_iud on public.menu_categories;
 drop trigger if exists trg_audit_sales_iud on public.sales;
 drop trigger if exists trg_audit_sale_items_iud on public.sale_items;
 drop trigger if exists trg_audit_expenses_iud on public.expenses;
@@ -347,6 +412,11 @@ execute function public.audit_log_data_change();
 
 create trigger trg_audit_menu_items_iud
 after insert or update or delete on public.menu_items
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_menu_categories_iud
+after insert or update or delete on public.menu_categories
 for each row
 execute function public.audit_log_data_change();
 

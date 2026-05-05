@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const heroTitle = "Restoran operasyonunu tek ekranda yonet.";
 
@@ -62,6 +63,19 @@ export function LoginView({
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8">
       <div className="pointer-events-none absolute -left-28 top-10 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 bottom-8 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+
+      {/* Ana sayfaya dön butonu */}
+      <div className="relative z-10 mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Ana Sayfaya Dön
+        </Link>
+      </div>
       <div className="mx-auto grid min-h-[90vh] w-full max-w-6xl items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/20 via-slate-900/50 to-cyan-500/10 p-8 shadow-2xl backdrop-blur lg:block">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-200">Panel</p>

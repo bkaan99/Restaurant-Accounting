@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
-import { AppUser, AuditLog, Expense, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
+import { AppUser, AuditLog, Expense, MenuCategory, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
-export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void) {
+export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void, userId?: string | null) {
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -15,7 +16,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     manager: ROLE_PERMISSION_DEFAULTS.manager,
     staff: ROLE_PERMISSION_DEFAULTS.staff,
   });
-  const [loading, setLoading] = useState(hasSupabaseConfig);
+  const [loading, setLoading] = useState(false);
   const [restaurantSettings, setRestaurantSettings] = useState<RestaurantSettings>({
     restaurantName: "LUMINOX",
     currency: "TRY",
@@ -40,8 +41,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         ? await supabase.from("users").select("id, name, role, email, auth_user_id")
         : usersWithPermissionsRes;
 
-      const [menuRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
+      const [menuRes, categoriesRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
+        supabase.from("menu_categories").select("id, name, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
@@ -72,6 +74,18 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         category: m.category,
         price: Number(m.price),
         active: Boolean(m.active),
+      }));
+
+      const mappedCategories: MenuCategory[] = (categoriesRes?.data ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        active: Boolean(c.active),
+      }));
+
+      const fallbackFromMenuItems: MenuCategory[] = Array.from(new Set(mappedMenu.map((m) => m.category))).map((name) => ({
+        id: name,
+        name,
+        active: true,
       }));
 
       const saleItemsBySale = (saleItemsRes.data ?? []).reduce<Record<string, SaleItem[]>>((acc, row) => {
@@ -126,6 +140,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
       setAppUsers(mappedUsers);
       setMenuItems(mappedMenu);
+      setMenuCategories(mappedCategories.length > 0 ? mappedCategories : fallbackFromMenuItems);
       setSales(mappedSales);
       setExpenses(mappedExpenses);
 
@@ -168,8 +183,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   };
 
   useEffect(() => {
+    if (!userId) return; // Kullanıcı giriş yapmadan veri çekme
     loadData();
-  }, []);
+  }, [userId]);
 
   const stats = useMemo(() => {
     const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -209,6 +225,43 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     pushToast("Ürün başarıyla eklendi.", "success");
   };
 
+  const createMenuCategory = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const exists = menuCategories.some((c) => c.name.toLocaleLowerCase("tr-TR") === trimmed.toLocaleLowerCase("tr-TR"));
+    if (exists) {
+      pushToast("Bu kategori zaten mevcut.", "warning");
+      return;
+    }
+
+    const newCategory: MenuCategory = {
+      id: crypto.randomUUID(),
+      name: trimmed,
+      active: true,
+    };
+
+    if (hasSupabaseConfig && supabase) {
+      const { data, error } = await supabase
+        .from("menu_categories")
+        .insert({ name: newCategory.name, active: true })
+        .select("id, name, active")
+        .single();
+
+      if (error || !data) {
+        pushToast("Kategori kaydedilemedi.");
+        return;
+      }
+
+      newCategory.id = data.id;
+      newCategory.name = data.name;
+      newCategory.active = Boolean(data.active);
+    }
+
+    setMenuCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name, "tr")));
+    pushToast("Kategori oluşturuldu.", "success");
+  };
+
   const toggleMenuItem = async (item: MenuItem) => {
     const nextActive = !item.active;
     if (hasSupabaseConfig && supabase) {
@@ -237,9 +290,31 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     setMenuItems((prev) => prev.filter((m) => m.id !== item.id));
   };
 
+  const updateMenuItem = async (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "category" | "price">>) => {
+    const updated = { ...item, ...updates };
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({ name: updated.name, category: updated.category, price: updated.price })
+        .eq("id", item.id);
+      if (error) {
+        pushToast("Ürün güncellenemedi.");
+        return;
+      }
+    }
+    setMenuItems((prev) => prev.map((m) => (m.id === item.id ? updated : m)));
+    pushToast("Ürün güncellendi.", "success");
+  };
+
   // Handlers for Settings
   const saveRestaurantSettings = async (settings: RestaurantSettings, actorUserId?: string | null) => {
     setRestaurantSettings(settings);
+    // Demo modda localStorage'a kaydet (landing page okuyabilsin)
+    try {
+      localStorage.setItem("restaurantSettings", JSON.stringify(settings));
+    } catch {
+      // sessizce geç
+    }
     if (!hasSupabaseConfig || !supabase) return;
     const payload = [
       { ayar_anahtari: "restaurant_name", ayar_degeri: settings.restaurantName, guncelleyen_kullanici: actorUserId ?? null },
@@ -313,7 +388,6 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
   const createSale = async (
     cart: Record<string, number>,
-    makeReceiptNo: (d: string, s: number) => string,
     actorUser: AppUser | null
   ) => {
     const items: SaleItem[] = Object.entries(cart).map(([id, qty]) => {
@@ -324,13 +398,14 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
     if (items.length === 0 || !actorUser) return;
     const totalAmount = items.reduce((sum, i) => sum + i.lineTotal, 0);
-    const saleDateIso = new Date().toISOString().slice(0, 10);
-    const receiptNo = makeReceiptNo(saleDateIso, sales.filter(s => s.createdAt.slice(0, 10) === saleDateIso).length + 1);
-
-    const newSale: Sale = { id: crypto.randomUUID(), receiptNo, createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
+    const newSale: Sale = { id: crypto.randomUUID(), receiptNo: "", createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
 
     if (hasSupabaseConfig && supabase) {
-      const { data: saleInsert, error: saleError } = await supabase.from("sales").insert({ created_by: actorUser.id, receipt_no: receiptNo, total_amount: totalAmount, payment_status: "paid_manual" }).select("id, receipt_no, created_at").single();
+      const { data: saleInsert, error: saleError } = await supabase
+        .from("sales")
+        .insert({ created_by: actorUser.id, total_amount: totalAmount, payment_status: "paid_manual" })
+        .select("id, receipt_no, created_at")
+        .single();
       if (saleError || !saleInsert) {
         pushToast("Satış kaydedilemedi.");
         return;
@@ -341,8 +416,10 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         return;
       }
       newSale.id = saleInsert.id;
-      newSale.receiptNo = saleInsert.receipt_no ?? receiptNo;
+      newSale.receiptNo = saleInsert.receipt_no ?? `SAT-${saleInsert.id.slice(0, 12).toUpperCase()}`;
       newSale.createdAt = saleInsert.created_at;
+    } else {
+      newSale.receiptNo = `SAT-${newSale.id.slice(0, 12).toUpperCase()}`;
     }
     setSales(prev => [newSale, ...prev]);
     pushToast("Satış başarıyla kaydedildi.", "success");
@@ -397,6 +474,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   return {
     appUsers,
     menuItems,
+    menuCategories,
     sales,
     expenses,
     auditLogs,
@@ -406,8 +484,10 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     stats,
     salesChartData,
     createMenuItem,
+    createMenuCategory,
     toggleMenuItem,
     deleteMenuItem,
+    updateMenuItem,
     saveRestaurantSettings,
     updateUserRole,
     updateUserPermissions,
