@@ -91,25 +91,8 @@ export default async function LandingPage() {
           QR Menüyü Görüntüle
         </Link>
 
-        {/* Özellik kartları */}
-        <div className="mt-5 grid w-full grid-cols-3 gap-2">
-          {[
-            { icon: "🍽️", label: "Tüm Ürünler" },
-            { icon: "📂", label: "Kategoriler" },
-            { icon: "💰", label: "Güncel Fiyatlar" },
-          ].map((f) => (
-            <div
-              key={f.label}
-              className="flex flex-col items-center gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] px-2 py-3"
-            >
-              <span className="text-xl">{f.icon}</span>
-              <p className="text-[10px] font-bold text-slate-500">{f.label}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Ayırıcı */}
-        <div className="mt-8 flex w-full items-center gap-3">
+        <div className="mt-6 flex w-full items-center gap-3">
           <div className="h-px flex-1 bg-white/5" />
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
             Personel
