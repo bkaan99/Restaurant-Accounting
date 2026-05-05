@@ -388,7 +388,6 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
   const createSale = async (
     cart: Record<string, number>,
-    makeReceiptNo: (d: string, s: number) => string,
     actorUser: AppUser | null
   ) => {
     const items: SaleItem[] = Object.entries(cart).map(([id, qty]) => {
@@ -399,13 +398,14 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
     if (items.length === 0 || !actorUser) return;
     const totalAmount = items.reduce((sum, i) => sum + i.lineTotal, 0);
-    const saleDateIso = new Date().toISOString().slice(0, 10);
-    const receiptNo = makeReceiptNo(saleDateIso, sales.filter(s => s.createdAt.slice(0, 10) === saleDateIso).length + 1);
-
-    const newSale: Sale = { id: crypto.randomUUID(), receiptNo, createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
+    const newSale: Sale = { id: crypto.randomUUID(), receiptNo: "", createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
 
     if (hasSupabaseConfig && supabase) {
-      const { data: saleInsert, error: saleError } = await supabase.from("sales").insert({ created_by: actorUser.id, receipt_no: receiptNo, total_amount: totalAmount, payment_status: "paid_manual" }).select("id, receipt_no, created_at").single();
+      const { data: saleInsert, error: saleError } = await supabase
+        .from("sales")
+        .insert({ created_by: actorUser.id, total_amount: totalAmount, payment_status: "paid_manual" })
+        .select("id, receipt_no, created_at")
+        .single();
       if (saleError || !saleInsert) {
         pushToast("Satış kaydedilemedi.");
         return;
@@ -416,8 +416,10 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         return;
       }
       newSale.id = saleInsert.id;
-      newSale.receiptNo = saleInsert.receipt_no ?? receiptNo;
+      newSale.receiptNo = saleInsert.receipt_no ?? `SAT-${saleInsert.id.slice(0, 12).toUpperCase()}`;
       newSale.createdAt = saleInsert.created_at;
+    } else {
+      newSale.receiptNo = `SAT-${newSale.id.slice(0, 12).toUpperCase()}`;
     }
     setSales(prev => [newSale, ...prev]);
     pushToast("Satış başarıyla kaydedildi.", "success");

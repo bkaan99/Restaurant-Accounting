@@ -95,6 +95,41 @@ where e.id = ranked_expenses.id;
 create unique index if not exists sales_receipt_no_unique_idx on public.sales(receipt_no);
 create unique index if not exists expenses_receipt_no_unique_idx on public.expenses(receipt_no);
 
+-- Sales receipt no üretimini veritabanına taşı (race condition önleme)
+create sequence if not exists public.sales_receipt_no_seq;
+
+create or replace function public.generate_sales_receipt_no(p_created_at timestamptz default now())
+returns text
+language plpgsql
+as $$
+declare
+  receipt_date text;
+  seq_value bigint;
+begin
+  receipt_date := to_char(coalesce(p_created_at, now()), 'YYYY-MM-DD');
+  seq_value := nextval('public.sales_receipt_no_seq');
+  return 'F-' || receipt_date || '-' || lpad(seq_value::text, 6, '0');
+end;
+$$;
+
+create or replace function public.assign_sales_receipt_no()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.receipt_no is null or btrim(new.receipt_no) = '' then
+    new.receipt_no := public.generate_sales_receipt_no(new.created_at);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_assign_sales_receipt_no on public.sales;
+create trigger trg_assign_sales_receipt_no
+before insert on public.sales
+for each row
+execute function public.assign_sales_receipt_no();
+
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
   ayar_anahtari text not null unique,

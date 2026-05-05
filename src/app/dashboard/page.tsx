@@ -220,7 +220,7 @@ export default function Home() {
     return item ? sum + item.price * qty : sum;
   }, 0), [cart, menuItems]);
 
-  const createSale = () => executeSale(cart, makeReceiptNo, user).then(() => setCart({}));
+  const createSale = () => executeSale(cart, user).then(() => setCart({}));
 
   if (isCheckingAuth) {
     return (
