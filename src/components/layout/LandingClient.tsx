@@ -106,13 +106,15 @@ export function LandingClient({ displayName }: { displayName: string }) {
 
         {/* Text Section */}
         <div className="mb-10">
-          <span className="inline-block rounded-full border border-violet-500/10 bg-violet-500/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-violet-600">
+          <span className="animate-fade-in inline-block rounded-full border border-violet-500/10 bg-violet-500/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-violet-600 opacity-0" style={{ animationFillMode: 'forwards', animationDelay: '0.1s' }}>
             Hoş Geldiniz
           </span>
-          <h1 className={`mt-6 bg-gradient-to-b bg-clip-text text-5xl font-black tracking-tighter text-transparent ${isDark ? "from-white to-slate-400" : "from-slate-900 to-slate-500"}`}>
-            {displayName}
-          </h1>
-          <p className={`mt-6 text-sm font-medium leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          <div className="mt-6 flex justify-center overflow-hidden">
+            <h1 className={`bg-gradient-to-b bg-clip-text text-5xl font-black tracking-tighter text-transparent border-r-4 animate-typing whitespace-nowrap pr-2 ${isDark ? "from-white to-slate-400 border-white" : "from-slate-900 to-slate-500 border-slate-900"}`} style={{ width: '0', animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+              {displayName}
+            </h1>
+          </div>
+          <p className={`animate-fade-in mt-6 text-sm font-medium leading-relaxed opacity-0 ${isDark ? "text-slate-400" : "text-slate-500"}`} style={{ animationFillMode: 'forwards', animationDelay: '1s' }}>
             Damak tadınıza hitap eden dijital menümüzü keşfedin <br className="hidden sm:block" /> ya da profesyonel yönetim sistemine erişin.
           </p>
         </div>
@@ -122,9 +124,10 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/menu"
             onClick={handleNav}
-            className={`group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] px-6 py-5 text-sm font-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl ${
+            className={`animate-slide-up group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-[1.5rem] px-6 py-5 text-sm font-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl opacity-0 ${
               isDark ? "bg-white text-black shadow-none" : "bg-slate-900 text-white shadow-slate-200"
             }`}
+            style={{ animationFillMode: 'forwards', animationDelay: '1.2s' }}
           >
             <svg
               className="h-5 w-5"
@@ -145,11 +148,12 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <Link
             href="/dashboard"
             onClick={handleNav}
-            className={`group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border px-6 py-5 text-sm font-black transition-all active:scale-[0.98] shadow-sm ${
+            className={`animate-slide-up group flex w-full items-center justify-center gap-3 rounded-[1.5rem] border px-6 py-5 text-sm font-black transition-all active:scale-[0.98] shadow-sm opacity-0 ${
               isDark
                 ? "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.08] hover:text-white"
                 : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             }`}
+            style={{ animationFillMode: 'forwards', animationDelay: '1.3s' }}
           >
             <svg
               className="h-4 w-4 transition-transform group-hover:rotate-12"

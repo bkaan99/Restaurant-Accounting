@@ -11,21 +11,25 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function resolveInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-
-  const legacyDarkMode = localStorage.getItem("darkMode");
-  if (legacyDarkMode === "true") return "dark";
-  if (legacyDarkMode === "false") return "light";
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(resolveInitialTheme);
+  // Hydration mismatch olmamasi icin ilk render her zaman light.
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme);
+      return;
+    }
+
+    const legacyDarkMode = localStorage.getItem("darkMode");
+    if (legacyDarkMode === "true" || legacyDarkMode === "false") {
+      setTheme(legacyDarkMode === "true" ? "dark" : "light");
+      return;
+    }
+
+    setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
