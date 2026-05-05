@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AppUser, AuditLog, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
+import { useState } from "react";
+import { AppUser, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
 type RestaurantSettings = {
@@ -67,13 +67,6 @@ export function SettingsTab({
     password: "",
     role: "staff",
   });
-
-  useEffect(() => {
-    setRolePermissionDrafts({
-      manager: rolePermissions.manager,
-      staff: rolePermissions.staff,
-    });
-  }, [rolePermissions.manager, rolePermissions.staff]);
 
   const handleSave = async () => {
     await onSaveRestaurantSettings(localRestaurantSettings);

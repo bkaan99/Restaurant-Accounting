@@ -30,14 +30,11 @@ const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(s
 
 export default function Home() {
   // Global App State
-  const [tab, setTab] = useState<TabType>("dashboard");
-  
-  useEffect(() => {
-    const savedTab = localStorage.getItem("activeTab") as TabType;
-    if (savedTab) {
-      setTab(savedTab);
-    }
-  }, []);
+  const [tab, setTab] = useState<TabType>(() => {
+    if (typeof window === "undefined") return "dashboard";
+    const savedTab = localStorage.getItem("activeTab") as TabType | null;
+    return savedTab ?? "dashboard";
+  });
 
   useEffect(() => {
     localStorage.setItem("activeTab", tab);
@@ -50,7 +47,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [dashboardVisible, setDashboardVisible] = useState(false);
   
   // Custom Hooks
   const { toasts, pushToast } = useToast();
@@ -173,13 +169,6 @@ export default function Home() {
   const activeTab = canAccessTab(tab) ? tab : "dashboard";
 
   // Effects
-  useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => setDashboardVisible(true), 50);
-      return () => clearTimeout(timer);
-    }
-    setDashboardVisible(false);
-  }, [user]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -266,7 +255,7 @@ export default function Home() {
   return (
     <main className={`relative min-h-screen w-full overflow-hidden p-4 transition-opacity duration-700 ${
         darkMode ? "theme-dark bg-slate-950 text-slate-100" : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
-      } ${dashboardVisible ? "opacity-100" : "opacity-0"}`}
+      } ${user ? "opacity-100" : "opacity-0"}`}
     >
       <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
         <Sidebar 

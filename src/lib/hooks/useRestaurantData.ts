@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
 import { AppUser, AuditLog, Expense, MenuCategory, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
@@ -25,7 +25,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   });
   const [expenseForm, setExpenseForm] = useState({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!hasSupabaseConfig || !supabase) {
       setLoading(false);
       return;
@@ -123,7 +123,18 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         note: e.note ?? "",
       }));
 
-      const mappedLogs: AuditLog[] = (auditLogsRes?.data || []).map((log: any) => ({
+      const mappedLogs: AuditLog[] = (auditLogsRes?.data || []).map((log: {
+        id: string;
+        event_type: string;
+        table_name: string;
+        record_id: string;
+        changed_by_role: UserRole;
+        changed_at: string;
+        old_data: Record<string, unknown> | null;
+        new_data: Record<string, unknown> | null;
+        metadata: Record<string, unknown> | null;
+        users?: { name?: string | null } | null;
+      }) => ({
         id: log.id,
         eventType: log.event_type,
         tableName: log.table_name,
@@ -180,12 +191,15 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [pushToast]);
 
   useEffect(() => {
     if (!userId) return; // Kullanıcı giriş yapmadan veri çekme
-    loadData();
-  }, [userId]);
+    const timer = setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [userId, loadData]);
 
   const stats = useMemo(() => {
     const totalSales = sales.reduce((sum, s) => sum + s.totalAmount, 0);

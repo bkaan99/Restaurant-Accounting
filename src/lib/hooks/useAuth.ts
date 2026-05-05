@@ -25,23 +25,17 @@ async function fetchUserProfileFromDB(authUser: { id: string; email?: string | n
 export function useAuth() {
   const [email, setEmail] = useState("admin@restaurant.local");
   const [password, setPassword] = useState("123456");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
+    if (typeof window === "undefined" || hasSupabaseConfig) return null;
+    return localStorage.getItem("currentUserId");
+  });
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [localUser, setLocalUser] = useState<AppUser | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(hasSupabaseConfig);
 
   const user = localUser;
-
-  // localStorage'dan userId oku (demo mod için)
-  useEffect(() => {
-    if (!hasSupabaseConfig) {
-      const savedUserId = localStorage.getItem("currentUserId");
-      if (savedUserId) setCurrentUserId(savedUserId);
-      setIsCheckingAuth(false);
-    }
-  }, []);
 
   // currentUserId değişince localStorage'a yaz
   useEffect(() => {
@@ -56,10 +50,7 @@ export function useAuth() {
 
   // Supabase session sync — sadece bir kez çalışır
   useEffect(() => {
-    if (!hasSupabaseConfig || !supabase) {
-      setIsCheckingAuth(false);
-      return;
-    }
+    if (!hasSupabaseConfig || !supabase) return;
 
     let isMounted = true;
 
