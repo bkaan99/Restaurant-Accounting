@@ -27,8 +27,8 @@ export function ChefLoading() {
           {/* Steam Effect */}
           <div className="absolute -top-8 left-1/2 flex -translate-x-1/2 gap-2">
             <div className={`h-8 w-1 animate-steam rounded-full bg-gradient-to-t to-transparent blur-sm ${isDark ? "from-violet-500/40" : "from-violet-500/20"}`} style={{ animationDelay: "0s" }} />
-            <div className={`mt-2 h-10 w-1 animate-steam rounded-full bg-gradient-to-t to-transparent blur-sm ${isDark ? "from-indigo-500/40" : "from-indigo-500/20"}`} style={{ animationDelay: "0.4s" }} />
-            <div className={`h-6 w-1 animate-steam rounded-full bg-gradient-to-t to-transparent blur-sm ${isDark ? "from-fuchsia-500/40" : "from-fuchsia-500/20"}`} style={{ animationDelay: "0.8s" }} />
+            <div className={`mt-2 h-10 w-1 animate-steam rounded-full bg-gradient-to-t to-transparent blur-sm ${isDark ? "from-indigo-500/40" : "from-indigo-500/20"}`} style={{ animationDelay: "0.2s" }} />
+            <div className={`h-6 w-1 animate-steam rounded-full bg-gradient-to-t to-transparent blur-sm ${isDark ? "from-fuchsia-500/40" : "from-fuchsia-500/20"}`} style={{ animationDelay: "0.4s" }} />
           </div>
 
           {/* Rice / Food Particles */}
@@ -42,7 +42,7 @@ export function ChefLoading() {
                     : "bg-slate-400/30"
                 }`}
                 style={{ 
-                  animationDelay: `${i * 0.1}s`,
+                  animationDelay: `${i * 0.05}s`,
                   opacity: 0.4 + (i % 5) * 0.1
                 }} 
               />
@@ -71,7 +71,7 @@ export function ChefLoading() {
           100% { transform: translateY(-25px) scaleX(2); opacity: 0; }
         }
         .animate-steam {
-          animation: steam 2s infinite ease-out;
+          animation: steam 1.2s infinite ease-out;
         }
       `}</style>
     </div>
