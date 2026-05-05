@@ -23,6 +23,19 @@ create table if not exists public.menu_items (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+insert into public.menu_categories (name)
+select distinct category
+from public.menu_items
+where coalesce(trim(category), '') <> ''
+on conflict (name) do nothing;
+
 create table if not exists public.sales (
   id uuid primary key default gen_random_uuid(),
   receipt_no text unique,
@@ -94,6 +107,7 @@ create table if not exists public.app_settings (
 -- RLS (production-safe)
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
+alter table public.menu_categories enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
@@ -143,6 +157,21 @@ create policy "menu_select_authenticated"
   using (true);
 create policy "menu_write_admin_manager"
   on public.menu_items
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- menu_categories: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "menu_categories_select_authenticated" on public.menu_categories;
+drop policy if exists "menu_categories_write_admin_manager" on public.menu_categories;
+create policy "menu_categories_select_authenticated"
+  on public.menu_categories
+  for select
+  to authenticated
+  using (true);
+create policy "menu_categories_write_admin_manager"
+  on public.menu_categories
   for all
   to authenticated
   using (public.get_current_user_role() in ('admin', 'manager'))
@@ -329,6 +358,7 @@ $$;
 
 drop trigger if exists trg_audit_users_iud on public.users;
 drop trigger if exists trg_audit_menu_items_iud on public.menu_items;
+drop trigger if exists trg_audit_menu_categories_iud on public.menu_categories;
 drop trigger if exists trg_audit_sales_iud on public.sales;
 drop trigger if exists trg_audit_sale_items_iud on public.sale_items;
 drop trigger if exists trg_audit_expenses_iud on public.expenses;
@@ -347,6 +377,11 @@ execute function public.audit_log_data_change();
 
 create trigger trg_audit_menu_items_iud
 after insert or update or delete on public.menu_items
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_menu_categories_iud
+after insert or update or delete on public.menu_categories
 for each row
 execute function public.audit_log_data_change();
 

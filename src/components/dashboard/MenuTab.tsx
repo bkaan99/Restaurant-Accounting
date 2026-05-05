@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MenuItem } from "@/lib/types";
+import { MenuCategory, MenuItem } from "@/lib/types";
 
 const CATEGORY_ICONS: Record<string, string> = {
   "Ana Yemek": "🍽️",
@@ -28,6 +28,8 @@ export function MenuTab({
   menuForm,
   setMenuForm,
   createMenuItem,
+  menuCategories,
+  createMenuCategory,
   menuItems,
   tl,
   toggleMenuItem,
@@ -41,6 +43,8 @@ export function MenuTab({
   menuForm: { name: string; category: string; price: string };
   setMenuForm: React.Dispatch<React.SetStateAction<{ name: string; category: string; price: string }>>;
   createMenuItem: () => Promise<void>;
+  menuCategories: MenuCategory[];
+  createMenuCategory: (name: string) => Promise<void>;
   menuItems: MenuItem[];
   tl: Intl.NumberFormat;
   toggleMenuItem: (item: MenuItem) => Promise<void>;
@@ -57,14 +61,17 @@ export function MenuTab({
   const [activeCategory, setActiveCategory] = useState("Tümü");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const activeCount = menuItems.filter((m) => m.active).length;
   const passiveCount = menuItems.length - activeCount;
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(menuItems.map((m) => m.category)));
-    return ["Tümü", ...cats];
-  }, [menuItems]);
+    const fromTable = menuCategories.filter((c) => c.active).map((c) => c.name);
+    const fromItems = menuItems.map((m) => m.category);
+    const unique = Array.from(new Set([...fromTable, ...fromItems]));
+    return ["Tümü", ...unique];
+  }, [menuCategories, menuItems]);
 
   const filtered = useMemo(() => {
     let items = menuItems;
@@ -279,7 +286,42 @@ export function MenuTab({
               <input className={inputClass} placeholder="Örn: Izgara Köfte" value={menuForm.name} onChange={(e) => setMenuForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
             <Field dm={dm} label="Kategori">
-              <input className={inputClass} placeholder="Örn: Ana Yemek" value={menuForm.category} onChange={(e) => setMenuForm((p) => ({ ...p, category: e.target.value }))} />
+              <div className="space-y-2">
+                <select
+                  className={inputClass}
+                  value={menuForm.category}
+                  onChange={(e) => setMenuForm((p) => ({ ...p, category: e.target.value }))}
+                >
+                  <option value="">Kategori secin</option>
+                  {categories
+                    .filter((cat) => cat !== "Tümü")
+                    .map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                </select>
+                <div className="flex items-center gap-2">
+                  <input
+                    className={inputClass}
+                    placeholder="Yeni kategori adi"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                  <button
+                    onClick={async () => {
+                      const nextName = newCategoryName.trim();
+                      if (!nextName) return;
+                      await createMenuCategory(nextName);
+                      setMenuForm((p) => ({ ...p, category: nextName }));
+                      setNewCategoryName("");
+                    }}
+                    className="shrink-0 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-xs font-black text-white transition hover:bg-emerald-500 active:scale-95"
+                  >
+                    Kategori Ekle
+                  </button>
+                </div>
+              </div>
             </Field>
             <Field dm={dm} label="Satış Fiyatı (₺)">
               <input className={inputClass} type="number" placeholder="0" min="0" value={menuForm.price} onChange={(e) => setMenuForm((p) => ({ ...p, price: e.target.value }))} />
@@ -309,7 +351,20 @@ export function MenuTab({
               <input className={inputClass} value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
             <Field dm={dm} label="Kategori">
-              <input className={inputClass} value={editForm.category} onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))} />
+              <select
+                className={inputClass}
+                value={editForm.category}
+                onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
+              >
+                <option value="">Kategori secin</option>
+                {categories
+                  .filter((cat) => cat !== "Tümü")
+                  .map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+              </select>
             </Field>
             <Field dm={dm} label="Satış Fiyatı (₺)">
               <input className={inputClass} type="number" min="0" value={editForm.price} onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))} />

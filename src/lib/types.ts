@@ -78,6 +78,12 @@ export type MenuItem = {
   active: boolean;
 };
 
+export type MenuCategory = {
+  id: string;
+  name: string;
+  active: boolean;
+};
+
 export type SaleItem = {
   menuItemId: string;
   name: string;

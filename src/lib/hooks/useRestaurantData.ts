@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
-import { AppUser, AuditLog, Expense, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
+import { AppUser, AuditLog, Expense, MenuCategory, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
 export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void, userId?: string | null) {
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -40,8 +41,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         ? await supabase.from("users").select("id, name, role, email, auth_user_id")
         : usersWithPermissionsRes;
 
-      const [menuRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
+      const [menuRes, categoriesRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("menu_items").select("id, name, category, price, active").order("name", { ascending: true }),
+        supabase.from("menu_categories").select("id, name, active").order("name", { ascending: true }),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
@@ -72,6 +74,18 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         category: m.category,
         price: Number(m.price),
         active: Boolean(m.active),
+      }));
+
+      const mappedCategories: MenuCategory[] = (categoriesRes?.data ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        active: Boolean(c.active),
+      }));
+
+      const fallbackFromMenuItems: MenuCategory[] = Array.from(new Set(mappedMenu.map((m) => m.category))).map((name) => ({
+        id: name,
+        name,
+        active: true,
       }));
 
       const saleItemsBySale = (saleItemsRes.data ?? []).reduce<Record<string, SaleItem[]>>((acc, row) => {
@@ -126,6 +140,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
       setAppUsers(mappedUsers);
       setMenuItems(mappedMenu);
+      setMenuCategories(mappedCategories.length > 0 ? mappedCategories : fallbackFromMenuItems);
       setSales(mappedSales);
       setExpenses(mappedExpenses);
 
@@ -208,6 +223,43 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     }
     setMenuItems((prev) => [...prev, newItem]);
     pushToast("Ürün başarıyla eklendi.", "success");
+  };
+
+  const createMenuCategory = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const exists = menuCategories.some((c) => c.name.toLocaleLowerCase("tr-TR") === trimmed.toLocaleLowerCase("tr-TR"));
+    if (exists) {
+      pushToast("Bu kategori zaten mevcut.", "warning");
+      return;
+    }
+
+    const newCategory: MenuCategory = {
+      id: crypto.randomUUID(),
+      name: trimmed,
+      active: true,
+    };
+
+    if (hasSupabaseConfig && supabase) {
+      const { data, error } = await supabase
+        .from("menu_categories")
+        .insert({ name: newCategory.name, active: true })
+        .select("id, name, active")
+        .single();
+
+      if (error || !data) {
+        pushToast("Kategori kaydedilemedi.");
+        return;
+      }
+
+      newCategory.id = data.id;
+      newCategory.name = data.name;
+      newCategory.active = Boolean(data.active);
+    }
+
+    setMenuCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name, "tr")));
+    pushToast("Kategori oluşturuldu.", "success");
   };
 
   const toggleMenuItem = async (item: MenuItem) => {
@@ -420,6 +472,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
   return {
     appUsers,
     menuItems,
+    menuCategories,
     sales,
     expenses,
     auditLogs,
@@ -429,6 +482,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     stats,
     salesChartData,
     createMenuItem,
+    createMenuCategory,
     toggleMenuItem,
     deleteMenuItem,
     updateMenuItem,

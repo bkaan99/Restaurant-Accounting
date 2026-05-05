@@ -79,6 +79,7 @@ export default function Home() {
   const { 
     appUsers, 
     menuItems, 
+    menuCategories,
     sales, 
     expenses, 
     auditLogs,
@@ -88,6 +89,7 @@ export default function Home() {
     stats, 
     salesChartData,
     createMenuItem,
+    createMenuCategory,
     toggleMenuItem,
     deleteMenuItem,
     updateMenuItem,
@@ -382,6 +384,8 @@ export default function Home() {
                   await createMenuItem(menuForm);
                   setMenuForm({ name: "", category: "", price: "" });
                 }}
+                menuCategories={menuCategories}
+                createMenuCategory={createMenuCategory}
                 menuItems={menuItems}
                 tl={tl}
                 toggleMenuItem={toggleMenuItem}
