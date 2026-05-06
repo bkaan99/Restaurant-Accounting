@@ -49,7 +49,7 @@ export function MenuTab({
   tl: Intl.NumberFormat;
   toggleMenuItem: (item: MenuItem) => Promise<void>;
   deleteMenuItem: (item: MenuItem) => Promise<void>;
-  updateMenuItem: (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "category" | "price">>) => Promise<void>;
+  updateMenuItem: (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "description" | "category" | "price">>) => Promise<void>;
   canManageMenu: boolean;
 }) {
   const dm = darkMode ?? false;

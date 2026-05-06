@@ -133,6 +133,74 @@ before insert on public.sales
 for each row
 execute function public.assign_sales_receipt_no();
 
+-- Satis + kalemleri atomik olarak olustur (tek transaction)
+create or replace function public.create_sale_with_items(p_items jsonb)
+returns table (
+  id uuid,
+  receipt_no text,
+  created_at timestamptz,
+  total_amount numeric
+)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  actor_profile_id uuid;
+  sale_id uuid;
+  sale_receipt_no text;
+  sale_created_at timestamptz;
+  computed_total numeric(10,2) := 0;
+  current_item jsonb;
+begin
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'p_items must be a non-empty array';
+  end if;
+
+  actor_profile_id := public.get_current_profile_id();
+  if actor_profile_id is null then
+    raise exception 'current profile not found';
+  end if;
+
+  for current_item in select * from jsonb_array_elements(p_items)
+  loop
+    if coalesce((current_item->>'qty')::integer, 0) <= 0 then
+      raise exception 'qty must be greater than 0';
+    end if;
+    if coalesce((current_item->>'unitPrice')::numeric, 0) < 0 then
+      raise exception 'unitPrice cannot be negative';
+    end if;
+    computed_total := computed_total + coalesce(
+      (current_item->>'lineTotal')::numeric,
+      ((current_item->>'qty')::numeric * (current_item->>'unitPrice')::numeric)
+    );
+  end loop;
+
+  insert into public.sales (created_by, total_amount, payment_status)
+  values (actor_profile_id, computed_total, 'paid_manual')
+  returning sales.id, sales.receipt_no, sales.created_at
+  into sale_id, sale_receipt_no, sale_created_at;
+
+  insert into public.sale_items (sale_id, menu_item_id, name, qty, unit_price, line_total)
+  select
+    sale_id,
+    nullif(raw_item->>'menuItemId', '')::uuid,
+    coalesce(nullif(raw_item->>'name', ''), 'Urun'),
+    (raw_item->>'qty')::integer,
+    (raw_item->>'unitPrice')::numeric,
+    coalesce(
+      (raw_item->>'lineTotal')::numeric,
+      ((raw_item->>'qty')::numeric * (raw_item->>'unitPrice')::numeric)
+    )
+  from jsonb_array_elements(p_items) as raw_item;
+
+  return query
+  select sale_id, sale_receipt_no, sale_created_at, computed_total;
+end;
+$$;
+
+grant execute on function public.create_sale_with_items(jsonb) to authenticated;
+
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
   ayar_anahtari text not null unique,

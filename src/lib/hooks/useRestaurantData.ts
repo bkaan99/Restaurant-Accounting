@@ -79,7 +79,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       const mappedMenu: MenuItem[] = (menuRes.data ?? []).map((m) => ({
         id: m.id,
         name: m.name,
-        description: "description" in m ? (m.description || null) : null,
+        description: "description" in m && typeof m.description === "string" ? m.description : null,
         category: m.category,
         price: Number(m.price),
         active: Boolean(m.active),
@@ -132,29 +132,28 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         note: e.note ?? "",
       }));
 
-      const mappedLogs: AuditLog[] = (auditLogsRes?.data || []).map((log: {
-        id: string;
-        event_type: string;
-        table_name: string;
-        record_id: string;
-        changed_by_role: UserRole;
-        changed_at: string;
-        old_data: Record<string, unknown> | null;
-        new_data: Record<string, unknown> | null;
-        metadata: Record<string, unknown> | null;
-        users?: { name?: string | null } | null;
-      }) => ({
-        id: log.id,
-        eventType: log.event_type,
-        tableName: log.table_name,
-        recordId: log.record_id,
-        changedByRole: log.changed_by_role,
-        changedAt: log.changed_at,
-        oldData: log.old_data,
-        newData: log.new_data,
-        metadata: log.metadata,
-        actorName: log.users?.name || "Sistem",
-      }));
+      const mappedLogs: AuditLog[] = (auditLogsRes?.data || []).map((log) => {
+        const eventType: AuditLog["eventType"] =
+          log.event_type === "record_created" ||
+          log.event_type === "record_updated" ||
+          log.event_type === "record_deleted" ||
+          log.event_type === "role_changed"
+            ? log.event_type
+            : "record_updated";
+
+        return {
+          id: Number(log.id),
+          eventType,
+          tableName: log.table_name,
+          recordId: log.record_id,
+          changedByRole: (log.changed_by_role as UserRole | null) ?? null,
+          changedAt: log.changed_at,
+          oldData: log.old_data,
+          newData: log.new_data,
+          metadata: log.metadata ?? {},
+          actorName: log.users?.[0]?.name || "Sistem",
+        };
+      });
 
       setAuditLogs(mappedLogs);
 
@@ -424,23 +423,26 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     const newSale: Sale = { id: crypto.randomUUID(), receiptNo: "", createdAt: new Date().toISOString(), createdBy: actorUser.name, totalAmount, items };
 
     if (hasSupabaseConfig && supabase) {
-      const { data: saleInsert, error: saleError } = await supabase
-        .from("sales")
-        .insert({ created_by: actorUser.id, total_amount: totalAmount, payment_status: "paid_manual" })
-        .select("id, receipt_no, created_at")
+      const { data, error: saleError } = await supabase
+        .rpc("create_sale_with_items", {
+          p_items: items.map((i) => ({
+            menuItemId: i.menuItemId,
+            name: i.name,
+            qty: i.qty,
+            unitPrice: i.unitPrice,
+            lineTotal: i.lineTotal,
+          })),
+        })
         .single();
+      const saleInsert = data as { id: string; receipt_no: string | null; created_at: string; total_amount: number | string } | null;
       if (saleError || !saleInsert) {
         pushToast("Satış kaydedilemedi.");
-        return;
-      }
-      const { error: itemError } = await supabase.from("sale_items").insert(items.map(i => ({ sale_id: saleInsert.id, menu_item_id: i.menuItemId, name: i.name, qty: i.qty, unit_price: i.unitPrice, line_total: i.lineTotal })));
-      if (itemError) {
-        pushToast("Satış kalemleri kaydedilemedi.");
         return;
       }
       newSale.id = saleInsert.id;
       newSale.receiptNo = saleInsert.receipt_no ?? `SAT-${saleInsert.id.slice(0, 12).toUpperCase()}`;
       newSale.createdAt = saleInsert.created_at;
+      newSale.totalAmount = Number(saleInsert.total_amount ?? totalAmount);
     } else {
       newSale.receiptNo = `SAT-${newSale.id.slice(0, 12).toUpperCase()}`;
     }
