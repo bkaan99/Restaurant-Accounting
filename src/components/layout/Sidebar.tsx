@@ -1,6 +1,7 @@
 "use client";
 
 import { AppUser, TabType, UserRole } from "@/lib/types";
+import Image from "next/image";
 
 type NavItem = {
   key: TabType;
@@ -10,7 +11,6 @@ type NavItem = {
 };
 
 export function Sidebar({
-  user,
   tab,
   setTab,
   restaurantName,
@@ -20,7 +20,7 @@ export function Sidebar({
   onSettingsClick,
   pushToast,
 }: {
-  user: AppUser;
+  user?: AppUser;
   tab: TabType;
   setTab: (tab: TabType) => void;
   restaurantName: string;
@@ -40,9 +40,11 @@ export function Sidebar({
           : "border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50"
       }`}>
         <div className="mb-3">
-          <img
+          <Image
             src="/logo.png"
             alt={`${restaurantName || "LUMINOX"} logosu`}
+            width={100}
+            height={50}
             className="h-12 w-auto rounded-lg object-contain"
           />
         </div>

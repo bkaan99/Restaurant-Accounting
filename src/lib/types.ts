@@ -2,6 +2,7 @@ export type UserRole = "admin" | "manager" | "staff";
 
 export type PermissionKey =
   | "dashboard_view"
+  | "reports_view"
   | "sales_manage"
   | "transactions_view"
   | "expenses_manage"
@@ -13,6 +14,7 @@ export type PermissionKey =
 
 export const ALL_PERMISSIONS: PermissionKey[] = [
   "dashboard_view",
+  "reports_view",
   "sales_manage",
   "transactions_view",
   "expenses_manage",
@@ -27,6 +29,7 @@ export const ROLE_PERMISSION_DEFAULTS: Record<UserRole, PermissionKey[]> = {
   admin: ALL_PERMISSIONS,
   manager: [
     "dashboard_view",
+    "reports_view",
     "sales_manage",
     "transactions_view",
     "expenses_manage",
@@ -43,7 +46,7 @@ export type RolePermissionConfig = {
   staff: PermissionKey[];
 };
 
-export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
+export type TabType = "dashboard" | "reports" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
 
 export type RestaurantSettings = {
   restaurantName: string;

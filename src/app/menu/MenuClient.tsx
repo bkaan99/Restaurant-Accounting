@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MenuItem } from "@/lib/types";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -79,7 +80,7 @@ export function MenuClient({
             <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border ${
               isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/70"
             }`}>
-              <img src="/logo.png" alt={`${displayName} logosu`} className="h-full w-full object-contain p-1" />
+              <Image src="/logo.png" alt={`${displayName} logosu`} width={40} height={40} className="h-full w-full object-contain p-1" />
             </div>
             <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-white" : "text-slate-800"}`}>{displayName}</span>
           </Link>

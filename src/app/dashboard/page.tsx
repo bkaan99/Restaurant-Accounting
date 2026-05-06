@@ -6,6 +6,7 @@ import { ALL_PERMISSIONS, PermissionKey, TabType, UserRole } from "@/lib/types";
 
 // Components
 import { DashboardTab } from "@/components/dashboard/DashboardTab";
+import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
@@ -132,6 +133,10 @@ export default function Home() {
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
     },
     { 
+      key: "reports", label: "Raporlar", roles: ["admin", "manager"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    },
+    { 
       key: "sales", label: "Satışlar", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
     },
@@ -159,6 +164,7 @@ export default function Home() {
 
   const tabPermissionMap: Record<TabType, PermissionKey> = {
     dashboard: "dashboard_view",
+    reports: "reports_view",
     sales: "sales_manage",
     transactions: "transactions_view",
     expenses: "expenses_manage",
@@ -356,8 +362,9 @@ export default function Home() {
           </header>
 
           <section className="min-h-[80vh]">
-            {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} panelClass={panelClass} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
-            {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
+            {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
+            {activeTab === "reports" && <ReportsTab darkMode={darkMode} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
+            {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
             {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
             {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo, user?.id ?? null)} tl={tl} />}
             {activeTab === "menu" && (
