@@ -75,6 +75,7 @@ export type MenuItem = {
   name: string;
   description?: string | null;
   category: string;
+  categoryId?: string | null;
   price: number;
   active: boolean;
 };

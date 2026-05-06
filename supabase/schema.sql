@@ -18,13 +18,14 @@ create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
-  category text not null,
+  category_id uuid,
   price numeric(10,2) not null check (price > 0),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
 alter table public.menu_items add column if not exists description text;
+alter table public.menu_items add column if not exists category_id uuid;
 
 create table if not exists public.menu_categories (
   id uuid primary key default gen_random_uuid(),
@@ -33,11 +34,41 @@ create table if not exists public.menu_categories (
   created_at timestamptz not null default now()
 );
 
-insert into public.menu_categories (name)
-select distinct category
-from public.menu_items
-where coalesce(trim(category), '') <> ''
-on conflict (name) do nothing;
+alter table public.menu_items
+  drop constraint if exists menu_items_category_id_fkey;
+alter table public.menu_items
+  add constraint menu_items_category_id_fkey
+  foreign key (category_id) references public.menu_categories(id) on delete set null;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'menu_items'
+      and column_name = 'category'
+  ) then
+    insert into public.menu_categories (name)
+    select distinct mi.category
+    from public.menu_items mi
+    where coalesce(trim(mi.category), '') <> ''
+    on conflict (name) do nothing;
+
+    update public.menu_items mi
+    set category_id = mc.id
+    from public.menu_categories mc
+    where mi.category_id is null
+      and lower(trim(mi.category)) = lower(trim(mc.name));
+  end if;
+end
+$$;
+
+alter table public.menu_items
+  alter column category_id set not null;
+
+alter table public.menu_items
+  drop column if exists category;
 
 create table if not exists public.sales (
   id uuid primary key default gen_random_uuid(),
