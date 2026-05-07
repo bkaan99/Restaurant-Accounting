@@ -34,6 +34,8 @@ export function StockTab({
   const [savingReorderId, setSavingReorderId] = useState<string | null>(null);
   const [savingAdd, setSavingAdd] = useState(false);
   const [savingMove, setSavingMove] = useState(false);
+  const [movementsPage, setMovementsPage] = useState(1);
+  const MOVEMENTS_PER_PAGE = 8;
   const [ingredientForm, setIngredientForm] = useState({ name: "", unit: "adet", onHand: "0", reorderLevel: "0" });
   const [moveForm, setMoveForm] = useState<{ ingredientId: string; movementType: "in" | "out" | "adjust"; qty: string; reason: string }>({
     ingredientId: "",
@@ -165,30 +167,95 @@ export function StockTab({
               <div className="px-4 py-8 text-center">
                 <p className={`text-sm font-bold ${dm ? "text-slate-400" : "text-slate-500"}`}>Hareket yok</p>
               </div>
-            ) : (
-              <div className={`${dm ? "divide-white/5" : "divide-slate-100"} divide-y`}>
-                {inventoryMovements.slice(0, 8).map((m) => (
-                  <div key={m.id} className="flex items-center justify-between px-4 py-3">
-                    <div className="min-w-0">
-                      <p className={`truncate text-xs font-bold ${dm ? "text-slate-200" : "text-slate-700"}`}>
-                        {ingredients.find((i) => i.id === m.ingredientId)?.name ?? "Malzeme"}
-                      </p>
-                      <p className={`mt-0.5 text-[10px] ${dm ? "text-slate-600" : "text-slate-400"}`}>
-                        {new Date(m.createdAt).toLocaleString("tr-TR")}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-xs font-black ${
-                        m.movementType === "in" ? "text-emerald-500" : m.movementType === "out" ? "text-rose-500" : "text-indigo-500"
-                      }`}>
-                        {m.movementType === "in" ? "+" : m.movementType === "out" ? "-" : "≡"} {m.qty}
-                      </p>
-                      {m.reason ? <p className={`text-[10px] ${dm ? "text-slate-600" : "text-slate-400"}`}>{m.reason}</p> : null}
-                    </div>
+            ) : (() => {
+              const totalPages = Math.ceil(inventoryMovements.length / MOVEMENTS_PER_PAGE);
+              const paginated = inventoryMovements.slice(
+                (movementsPage - 1) * MOVEMENTS_PER_PAGE,
+                movementsPage * MOVEMENTS_PER_PAGE
+              );
+              return (
+                <>
+                  <div className={`${dm ? "divide-white/5" : "divide-slate-100"} divide-y`}>
+                    {paginated.map((m) => (
+                      <div key={m.id} className="flex items-center justify-between px-4 py-3">
+                        <div className="min-w-0">
+                          <p className={`truncate text-xs font-bold ${dm ? "text-slate-200" : "text-slate-700"}`}>
+                            {ingredients.find((i) => i.id === m.ingredientId)?.name ?? "Malzeme"}
+                          </p>
+                          <p className={`mt-0.5 text-[10px] ${dm ? "text-slate-600" : "text-slate-400"}`}>
+                            {new Date(m.createdAt).toLocaleString("tr-TR")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-xs font-black ${
+                            m.movementType === "in" ? "text-emerald-500" : m.movementType === "out" ? "text-rose-500" : "text-indigo-500"
+                          }`}>
+                            {m.movementType === "in" ? "+" : m.movementType === "out" ? "-" : "≡"} {m.qty}
+                          </p>
+                          {m.reason ? <p className={`text-[10px] ${dm ? "text-slate-600" : "text-slate-400"}`}>{m.reason}</p> : null}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className={`flex items-center justify-between border-t px-4 py-3 ${dm ? "border-white/5" : "border-slate-100"}`}>
+                      <p className={`text-[11px] font-medium ${dm ? "text-slate-500" : "text-slate-400"}`}>
+                        {(movementsPage - 1) * MOVEMENTS_PER_PAGE + 1}–{Math.min(movementsPage * MOVEMENTS_PER_PAGE, inventoryMovements.length)} / {inventoryMovements.length} hareket
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setMovementsPage((p) => Math.max(1, p - 1))}
+                          disabled={movementsPage === 1}
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                            dm
+                              ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setMovementsPage(page)}
+                            className={`flex h-7 w-7 items-center justify-center rounded-lg border text-[11px] font-bold transition ${
+                              page === movementsPage
+                                ? dm
+                                  ? "border-indigo-500/50 bg-indigo-500/20 text-indigo-300"
+                                  : "border-indigo-200 bg-indigo-50 text-indigo-700"
+                                : dm
+                                ? "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+
+                        <button
+                          onClick={() => setMovementsPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={movementsPage === totalPages}
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                            dm
+                              ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>
