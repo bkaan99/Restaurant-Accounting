@@ -178,31 +178,47 @@ export function MenuClient({
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-black/10 dark:via-white/10 to-transparent" />
                 </div>
 
-                {/* Items Box with Dashed Border Aesthetic */}
-                <div className={`relative rounded-[2.5rem] border border-dashed p-8 sm:p-12 shadow-sm transition-all hover:border-violet-500/30 ${
+                {/* Items Box with Premium Menu Card Aesthetic */}
+                <div className={`relative overflow-hidden rounded-[2.2rem] border p-7 sm:p-10 shadow-sm transition-all ${
                   isDark 
-                    ? "border-white/10 bg-gradient-to-br from-white/[0.03] to-white/[0.01] shadow-none backdrop-blur-sm" 
-                    : "border-black/10 bg-white/40"
+                    ? "border-white/15 bg-gradient-to-b from-white/[0.06] via-white/[0.04] to-white/[0.03] shadow-none backdrop-blur-sm" 
+                    : "border-slate-200 bg-gradient-to-b from-white via-slate-50 to-white"
                 }`}>
+                  <div
+                    className={`pointer-events-none absolute inset-0 opacity-[0.14] ${
+                      isDark ? "text-white/40" : "text-slate-500/30"
+                    }`}
+                    style={{
+                      backgroundImage: "radial-gradient(currentColor 0.6px, transparent 0.6px)",
+                      backgroundSize: "22px 22px",
+                    }}
+                  />
                   <div className="grid gap-8 sm:grid-cols-1">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between group">
+                      <div key={item.id} className="relative flex items-start justify-between gap-6 group">
                         <div className="flex-1">
-                          <h3 className={`text-base font-black tracking-tight transition-colors ${isDark ? "text-white group-hover:text-violet-200" : "text-slate-900 group-hover:text-violet-600"}`}>
+                          <h3 className={`text-[1.17rem] font-black tracking-tight transition-colors ${
+                            isDark ? "text-[#ffb078] group-hover:text-[#ffc497]" : "text-[#a54d2f] group-hover:text-[#8f3d24]"
+                          }`}>
                             {item.name}
                           </h3>
                           {item.description && (
-                            <p className={`mt-1 text-xs font-medium leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                            <p className={`mt-1 text-[0.84rem] font-semibold leading-relaxed ${
+                              isDark ? "text-[#f2d4c2]/85" : "text-[#8d5f4c]"
+                            }`}>
                               {item.description}
                             </p>
                           )}
-                          <div className="mt-2 h-[1px] w-full border-t border-dashed border-black/5 dark:border-white/5" />
+                          <div className={`mt-2 h-[1px] w-full border-t border-dashed ${
+                            isDark ? "border-[#ffb078]/25" : "border-[#be8a74]/35"
+                          }`} />
                         </div>
                         
-                        <div className="ml-6 flex shrink-0 items-center">
-                          <div className="relative">
-                            <div className="absolute -inset-2 rounded-xl bg-violet-600/20 blur-lg opacity-0 transition-opacity group-hover:opacity-100" />
-                            <span className="relative text-lg font-black tracking-tighter text-violet-600 dark:text-violet-300">
+                        <div className="flex shrink-0 items-center pt-0.5">
+                          <div className="relative min-w-[84px] text-right">
+                            <span className={`relative text-[1.35rem] font-black tracking-tight ${
+                              isDark ? "text-[#ffb078]" : "text-[#a54d2f]"
+                            }`}>
                               {tl.format(item.price).replace(",00", "").replace("₺", "")} TL
                             </span>
                           </div>
