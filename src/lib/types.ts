@@ -2,6 +2,7 @@ export type UserRole = "admin" | "manager" | "staff";
 
 export type PermissionKey =
   | "dashboard_view"
+  | "reports_view"
   | "sales_manage"
   | "transactions_view"
   | "expenses_manage"
@@ -13,6 +14,7 @@ export type PermissionKey =
 
 export const ALL_PERMISSIONS: PermissionKey[] = [
   "dashboard_view",
+  "reports_view",
   "sales_manage",
   "transactions_view",
   "expenses_manage",
@@ -27,6 +29,7 @@ export const ROLE_PERMISSION_DEFAULTS: Record<UserRole, PermissionKey[]> = {
   admin: ALL_PERMISSIONS,
   manager: [
     "dashboard_view",
+    "reports_view",
     "sales_manage",
     "transactions_view",
     "expenses_manage",
@@ -43,7 +46,7 @@ export type RolePermissionConfig = {
   staff: PermissionKey[];
 };
 
-export type TabType = "dashboard" | "sales" | "transactions" | "expenses" | "menu" | "audit" | "settings";
+export type TabType = "dashboard" | "reports" | "sales" | "transactions" | "expenses" | "menu" | "stock" | "audit" | "settings";
 
 export type RestaurantSettings = {
   restaurantName: string;
@@ -73,7 +76,9 @@ export type AppUser = {
 export type MenuItem = {
   id: string;
   name: string;
+  description?: string | null;
   category: string;
+  categoryId?: string | null;
   price: number;
   active: boolean;
 };
@@ -122,4 +127,35 @@ export type AuditLog = {
   newData: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   actorName: string;
+};
+
+export type IngredientUnit = "adet" | "gr" | "ml";
+
+export type Ingredient = {
+  id: string;
+  name: string;
+  unit: IngredientUnit | string;
+  onHand: number;
+  reorderLevel: number;
+  active: boolean;
+};
+
+export type InventoryMovementType = "in" | "out" | "adjust";
+
+export type InventoryMovement = {
+  id: string;
+  ingredientId: string;
+  movementType: InventoryMovementType;
+  qty: number;
+  reason?: string | null;
+  relatedSaleId?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+};
+
+export type MenuItemIngredient = {
+  id: string;
+  menuItemId: string;
+  ingredientId: string;
+  qtyPerItem: number;
 };

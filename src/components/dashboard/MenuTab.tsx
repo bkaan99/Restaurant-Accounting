@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MenuCategory, MenuItem } from "@/lib/types";
+import { Ingredient, MenuCategory, MenuItem, MenuItemIngredient } from "@/lib/types";
 
 const CATEGORY_ICONS: Record<string, string> = {
   "Ana Yemek": "🍽️",
@@ -19,7 +19,28 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 const getCategoryIcon = (cat: string) => CATEGORY_ICONS[cat] ?? "🍴";
 
-type EditForm = { name: string; category: string; price: string };
+type EditForm = { name: string; description: string; category: string; price: string };
+
+type MenuTabProps = {
+  panelClass: string;
+  inputClass: string;
+  darkMode?: boolean;
+  menuForm: { name: string; description?: string; category: string; price: string };
+  setMenuForm: React.Dispatch<React.SetStateAction<{ name: string; description?: string; category: string; price: string }>>;
+  createMenuItem: () => Promise<void>;
+  menuCategories: MenuCategory[];
+  createMenuCategory: (name: string) => Promise<void>;
+  ingredients: Ingredient[];
+  menuItemIngredients: MenuItemIngredient[];
+  upsertMenuItemIngredient: (payload: { menuItemId: string; ingredientId: string; qtyPerItem: string }) => Promise<void>;
+  deleteMenuItemIngredient: (id: string) => Promise<void>;
+  menuItems: MenuItem[];
+  tl: Intl.NumberFormat;
+  toggleMenuItem: (item: MenuItem) => Promise<void>;
+  deleteMenuItem: (item: MenuItem) => Promise<void>;
+  updateMenuItem: (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "description" | "category" | "price">>) => Promise<void>;
+  canManageMenu: boolean;
+};
 
 export function MenuTab({
   panelClass,
@@ -30,38 +51,28 @@ export function MenuTab({
   createMenuItem,
   menuCategories,
   createMenuCategory,
+  ingredients,
+  menuItemIngredients,
+  upsertMenuItemIngredient,
+  deleteMenuItemIngredient,
   menuItems,
   tl,
   toggleMenuItem,
   deleteMenuItem,
   updateMenuItem,
   canManageMenu,
-}: {
-  panelClass: string;
-  inputClass: string;
-  darkMode?: boolean;
-  menuForm: { name: string; category: string; price: string };
-  setMenuForm: React.Dispatch<React.SetStateAction<{ name: string; category: string; price: string }>>;
-  createMenuItem: () => Promise<void>;
-  menuCategories: MenuCategory[];
-  createMenuCategory: (name: string) => Promise<void>;
-  menuItems: MenuItem[];
-  tl: Intl.NumberFormat;
-  toggleMenuItem: (item: MenuItem) => Promise<void>;
-  deleteMenuItem: (item: MenuItem) => Promise<void>;
-  updateMenuItem: (item: MenuItem, updates: Partial<Pick<MenuItem, "name" | "category" | "price">>) => Promise<void>;
-  canManageMenu: boolean;
-}) {
+}: MenuTabProps) {
   const dm = darkMode ?? false;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ name: "", category: "", price: "" });
+  const [editForm, setEditForm] = useState<EditForm>({ name: "", description: "", category: "", price: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tümü");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [recipeForm, setRecipeForm] = useState<{ ingredientId: string; qtyPerItem: string }>({ ingredientId: "", qtyPerItem: "" });
 
   const activeCount = menuItems.filter((m) => m.active).length;
   const passiveCount = menuItems.length - activeCount;
@@ -85,7 +96,8 @@ export function MenuTab({
 
   const openEdit = (item: MenuItem) => {
     setEditingItem(item);
-    setEditForm({ name: item.name, category: item.category, price: String(item.price) });
+    setEditForm({ name: item.name, description: item.description || "", category: item.category, price: String(item.price) });
+    setRecipeForm({ ingredientId: "", qtyPerItem: "" });
   };
 
   const handleSaveEdit = async () => {
@@ -93,7 +105,7 @@ export function MenuTab({
     const price = Number(editForm.price);
     if (!editForm.name || !editForm.category || isNaN(price) || price <= 0) return;
     setSaving(true);
-    await updateMenuItem(editingItem, { name: editForm.name, category: editForm.category, price });
+    await updateMenuItem(editingItem, { name: editForm.name, description: editForm.description || null, category: editForm.category, price });
     setSaving(false);
     setEditingItem(null);
   };
@@ -217,7 +229,12 @@ export function MenuTab({
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] font-medium ${dm ? "text-slate-500" : "text-slate-400"}`}>{item.category}</p>
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    <p className={`text-[11px] font-medium ${dm ? "text-indigo-400" : "text-indigo-600"}`}>{item.category}</p>
+                    {item.description && (
+                      <p className={`truncate text-[11px] ${dm ? "text-slate-500" : "text-slate-500"}`}>{item.description}</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Fiyat */}
@@ -285,6 +302,9 @@ export function MenuTab({
             <Field dm={dm} label="Ürün Adı">
               <input className={inputClass} placeholder="Örn: Izgara Köfte" value={menuForm.name} onChange={(e) => setMenuForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
+            <Field dm={dm} label="Açıklama (İsteğe Bağlı)">
+              <textarea className={`${inputClass} resize-none`} rows={2} placeholder="Örn: 200gr antrikot, patates kızartması ile..." value={menuForm.description || ""} onChange={(e) => setMenuForm((p) => ({ ...p, description: e.target.value }))} />
+            </Field>
             <Field dm={dm} label="Kategori">
               <div className="space-y-2">
                 <select
@@ -350,6 +370,9 @@ export function MenuTab({
             <Field dm={dm} label="Ürün Adı">
               <input className={inputClass} value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
+            <Field dm={dm} label="Açıklama (İsteğe Bağlı)">
+              <textarea className={`${inputClass} resize-none`} rows={2} value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} />
+            </Field>
             <Field dm={dm} label="Kategori">
               <select
                 className={inputClass}
@@ -369,6 +392,78 @@ export function MenuTab({
             <Field dm={dm} label="Satış Fiyatı (₺)">
               <input className={inputClass} type="number" min="0" value={editForm.price} onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))} />
             </Field>
+
+            <div className={`rounded-2xl border p-4 ${dm ? "border-white/10 bg-white/[0.02]" : "border-slate-200 bg-slate-50"}`}>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${dm ? "text-slate-500" : "text-slate-500"}`}>Reçete</p>
+              <p className={`mt-1 text-xs ${dm ? "text-slate-500" : "text-slate-500"}`}>Ürün başına malzeme miktarını tanımlayın.</p>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <select
+                  className={inputClass}
+                  value={recipeForm.ingredientId}
+                  onChange={(e) => setRecipeForm((p) => ({ ...p, ingredientId: e.target.value }))}
+                >
+                  <option value="">Malzeme seçin</option>
+                  {ingredients
+                    .filter((i) => i.active)
+                    .map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.name} ({i.unit})
+                      </option>
+                    ))}
+                </select>
+                <input
+                  className={inputClass}
+                  type="number"
+                  min="0"
+                  placeholder="Miktar"
+                  value={recipeForm.qtyPerItem}
+                  onChange={(e) => setRecipeForm((p) => ({ ...p, qtyPerItem: e.target.value }))}
+                />
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button
+                  onClick={async () => {
+                    if (!editingItem) return;
+                    if (!recipeForm.ingredientId || !recipeForm.qtyPerItem) return;
+                    await upsertMenuItemIngredient({ menuItemId: editingItem.id, ingredientId: recipeForm.ingredientId, qtyPerItem: recipeForm.qtyPerItem });
+                    setRecipeForm({ ingredientId: "", qtyPerItem: "" });
+                  }}
+                  className={`rounded-xl px-4 py-2 text-xs font-black transition active:scale-95 ${
+                    dm ? "bg-white/10 text-white hover:bg-white/15" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  Malzeme Ekle
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {menuItemIngredients
+                  .filter((r) => r.menuItemId === editingItem.id)
+                  .map((r) => {
+                    const ing = ingredients.find((i) => i.id === r.ingredientId);
+                    return (
+                      <div key={r.id} className={`flex items-center justify-between rounded-xl border px-3 py-2 ${dm ? "border-white/10 bg-white/[0.02]" : "border-slate-200 bg-white"}`}>
+                        <div className="min-w-0">
+                          <p className={`truncate text-xs font-bold ${dm ? "text-slate-200" : "text-slate-800"}`}>{ing?.name ?? "Malzeme"}</p>
+                          <p className={`text-[10px] ${dm ? "text-slate-500" : "text-slate-500"}`}>{r.qtyPerItem} {ing?.unit ?? ""} / ürün</p>
+                        </div>
+                        <button
+                          onClick={() => deleteMenuItemIngredient(r.id)}
+                          className={`rounded-lg px-2 py-1 text-[10px] font-black transition ${
+                            dm ? "text-rose-300 hover:bg-rose-500/10" : "text-rose-600 hover:bg-rose-50"
+                          }`}
+                        >
+                          Sil
+                        </button>
+                      </div>
+                    );
+                  })}
+                {menuItemIngredients.filter((r) => r.menuItemId === editingItem.id).length === 0 && (
+                  <p className={`text-[11px] ${dm ? "text-slate-600" : "text-slate-500"}`}>Henüz reçete yok.</p>
+                )}
+              </div>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <CancelBtn dm={dm} onClick={() => setEditingItem(null)} />
               <button

@@ -6,9 +6,11 @@ import { ALL_PERMISSIONS, PermissionKey, TabType, UserRole } from "@/lib/types";
 
 // Components
 import { DashboardTab } from "@/components/dashboard/DashboardTab";
+import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
+import { StockTab } from "@/components/dashboard/StockTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
 import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
 import { AuditLogsTab } from "@/components/dashboard/AuditLogsTab";
@@ -30,14 +32,11 @@ const makeReceiptNo = (dateIso: string, seq: number) => `F-${dateIso}-${String(s
 
 export default function Home() {
   // Global App State
-  const [tab, setTab] = useState<TabType>("dashboard");
-  
-  useEffect(() => {
-    const savedTab = localStorage.getItem("activeTab") as TabType;
-    if (savedTab) {
-      setTab(savedTab);
-    }
-  }, []);
+  const [tab, setTab] = useState<TabType>(() => {
+    if (typeof window === "undefined") return "dashboard";
+    const savedTab = localStorage.getItem("activeTab") as TabType | null;
+    return savedTab ?? "dashboard";
+  });
 
   useEffect(() => {
     localStorage.setItem("activeTab", tab);
@@ -46,11 +45,16 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [menuForm, setMenuForm] = useState({ name: "", category: "", price: "" });
+  const [menuForm, setMenuForm] = useState<{ name: string; description?: string; category: string; price: string }>({
+    name: "",
+    description: "",
+    category: "",
+    price: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [dashboardVisible, setDashboardVisible] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Custom Hooks
   const { toasts, pushToast } = useToast();
@@ -73,6 +77,9 @@ export default function Home() {
     appUsers, 
     menuItems, 
     menuCategories,
+    ingredients,
+    inventoryMovements,
+    menuItemIngredients,
     sales, 
     expenses, 
     auditLogs,
@@ -83,6 +90,12 @@ export default function Home() {
     salesChartData,
     createMenuItem,
     createMenuCategory,
+    createIngredient,
+    deleteIngredient,
+    updateIngredientReorderLevel,
+    recordInventoryMovement,
+    upsertMenuItemIngredient,
+    deleteMenuItemIngredient,
     toggleMenuItem,
     deleteMenuItem,
     updateMenuItem,
@@ -135,8 +148,16 @@ export default function Home() {
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
     },
     { 
-      key: "menu", label: "Menü Paneli", roles: ["admin", "manager", "staff"],
+      key: "menu", label: "Menü Yönetimi", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+    },
+    { 
+      key: "reports", label: "Raporlar", roles: ["admin", "manager"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    },
+    {
+      key: "stock", label: "Stok", roles: ["admin"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V7a2 2 0 00-2-2h-4l-2-2H8a2 2 0 00-2 2v2H4a2 2 0 00-2 2v6a2 2 0 002 2h14a2 2 0 002-2z" /></svg>
     },
     { 
       key: "transactions", label: "İşlemler", roles: ["admin", "manager", "staff"],
@@ -158,28 +179,24 @@ export default function Home() {
 
   const tabPermissionMap: Record<TabType, PermissionKey> = {
     dashboard: "dashboard_view",
+    reports: "reports_view",
     sales: "sales_manage",
     transactions: "transactions_view",
     expenses: "expenses_manage",
     menu: "menu_manage",
+    stock: "menu_manage",
     settings: "settings_manage",
     audit: "audit_view",
   };
 
   const canAccessTab = (tabKey: TabType) => {
+    if (tabKey === "stock") return user?.role === "admin";
     return hasPermission(tabPermissionMap[tabKey]);
   };
 
   const activeTab = canAccessTab(tab) ? tab : "dashboard";
 
   // Effects
-  useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => setDashboardVisible(true), 50);
-      return () => clearTimeout(timer);
-    }
-    setDashboardVisible(false);
-  }, [user]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -266,9 +283,9 @@ export default function Home() {
   return (
     <main className={`relative min-h-screen w-full overflow-hidden p-4 transition-opacity duration-700 ${
         darkMode ? "theme-dark bg-slate-950 text-slate-100" : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
-      } ${dashboardVisible ? "opacity-100" : "opacity-0"}`}
+      } ${user ? "opacity-100" : "opacity-0"}`}
     >
-      <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
+      <div className={`grid gap-4 transition-all duration-300 ${isSidebarCollapsed ? "xl:grid-cols-[72px_1fr]" : "xl:grid-cols-[280px_1fr]"}`}>
         <Sidebar 
           user={user} 
           tab={activeTab} 
@@ -279,6 +296,7 @@ export default function Home() {
           canAccessTab={canAccessTab}
           onSettingsClick={() => setTab("settings")}
           pushToast={pushToast}
+          onCollapseChange={setIsSidebarCollapsed}
         />
 
         <div className="space-y-4">
@@ -362,8 +380,9 @@ export default function Home() {
           </header>
 
           <section className="min-h-[80vh]">
-            {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} panelClass={panelClass} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
-            {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
+            {activeTab === "dashboard" && <DashboardTab darkMode={darkMode} stats={stats} salesChartData={salesChartData} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
+            {activeTab === "reports" && <ReportsTab darkMode={darkMode} sales={sales} expenses={expenses} menuItems={menuItems} tl={tl} />}
+            {activeTab === "sales" && <SalesTab darkMode={darkMode} panelClass={panelClass} menuItems={menuItems} activeMenu={activeMenu} cart={cart} orderTotal={orderTotal} addToCart={(id) => setCart(p => ({...p, [id]: (p[id]??0)+1}))} clearCart={() => setCart({})} createSale={createSale} sales={sales} tl={tl} />}
             {activeTab === "transactions" && <TransactionsTab darkMode={darkMode} panelClass={panelClass} sales={sales} expenses={expenses} tl={tl} />}
             {activeTab === "expenses" && <ExpensesTab darkMode={darkMode} panelClass={panelClass} inputClass={inputClass} expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm} createExpense={() => createExpense(makeReceiptNo, user?.id ?? null)} tl={tl} />}
             {activeTab === "menu" && (
@@ -375,16 +394,33 @@ export default function Home() {
                 setMenuForm={setMenuForm}
                 createMenuItem={async () => {
                   await createMenuItem(menuForm);
-                  setMenuForm({ name: "", category: "", price: "" });
+                  setMenuForm({ name: "", description: "", category: "", price: "" });
                 }}
                 menuCategories={menuCategories}
                 createMenuCategory={createMenuCategory}
+                ingredients={ingredients}
+                menuItemIngredients={menuItemIngredients}
+                upsertMenuItemIngredient={upsertMenuItemIngredient}
+                deleteMenuItemIngredient={deleteMenuItemIngredient}
                 menuItems={menuItems}
                 tl={tl}
                 toggleMenuItem={toggleMenuItem}
                 deleteMenuItem={deleteMenuItem}
                 updateMenuItem={updateMenuItem}
                 canManageMenu={canManageMenu}
+              />
+            )}
+            {activeTab === "stock" && (
+              <StockTab
+                darkMode={darkMode}
+                panelClass={panelClass}
+                inputClass={inputClass}
+                ingredients={ingredients}
+                inventoryMovements={inventoryMovements}
+                createIngredient={createIngredient}
+                deleteIngredient={deleteIngredient}
+                updateIngredientReorderLevel={updateIngredientReorderLevel}
+                recordInventoryMovement={recordInventoryMovement}
               />
             )}
             {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={toggleTheme} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} allPermissions={ALL_PERMISSIONS} />}

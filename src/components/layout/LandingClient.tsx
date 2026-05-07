@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChefLoading } from "@/components/ui/ChefLoading";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -21,6 +22,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
 
   return (
     <div
+      suppressHydrationWarning
       className={`relative min-h-screen flex flex-col items-center justify-center overflow-hidden selection:bg-violet-500/10 transition-colors duration-500 ${
         isDark ? "bg-[#020408]" : "bg-[#fafafa]"
       }`}
@@ -37,7 +39,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
           {/* Left: Logo & Name */}
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border ${isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/70"}`}>
-              <img src="/logo.png" alt={`${displayName} logosu`} className="h-full w-full object-contain p-1" />
+              <Image src="/logo.png" alt={`${displayName} logosu`} width={40} height={40} className="h-full w-full object-contain p-1" />
             </div>
             <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-white" : "text-slate-800"}`}>{displayName}</span>
           </div>
@@ -88,7 +90,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
           <div className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2.2rem] border shadow-xl transition-transform duration-500 group-hover:scale-110 ${
             isDark ? "border-white/10 bg-white/5 shadow-violet-900/40" : "border-black/10 bg-white/85 shadow-violet-200"
           }`}>
-            <img src="/logo.png" alt={`${displayName} logosu`} className="h-full w-full object-contain p-3" />
+            <Image src="/logo.png" alt={`${displayName} logosu`} width={96} height={96} className="h-full w-full object-contain p-3" />
           </div>
         </div>
 

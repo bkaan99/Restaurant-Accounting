@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AppUser, AuditLog, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
+import { useState } from "react";
+import { AppUser, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 
 type RestaurantSettings = {
@@ -67,13 +67,6 @@ export function SettingsTab({
     password: "",
     role: "staff",
   });
-
-  useEffect(() => {
-    setRolePermissionDrafts({
-      manager: rolePermissions.manager,
-      staff: rolePermissions.staff,
-    });
-  }, [rolePermissions.manager, rolePermissions.staff]);
 
   const handleSave = async () => {
     await onSaveRestaurantSettings(localRestaurantSettings);
@@ -152,60 +145,32 @@ export function SettingsTab({
   };
 
   return (
-    <div className={`${panelClass} overflow-hidden p-0 flex flex-col md:flex-row min-h-[600px]`}>
-      {/* Birleşik Sidebar */}
-      <aside className={`w-full md:w-64 border-b md:border-b-0 md:border-r ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-100 bg-slate-50/50"}`}>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${darkMode ? "bg-indigo-500/20 text-indigo-400" : "bg-indigo-600 text-white shadow-lg shadow-indigo-200"}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>Ayarlar</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kontrol Paneli</p>
-            </div>
-          </div>
-
-          <nav className="space-y-1">
+    <section className={`${panelClass} ${darkMode ? "border-white/10 bg-white/5" : "border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-white"} overflow-hidden p-0 min-h-[600px]`}>
+      <main className="flex flex-col min-w-0">
+        <header className={`px-8 py-8 border-b ${darkMode ? "border-white/10" : "border-indigo-100"} bg-gradient-to-r from-transparent to-indigo-500/[0.04]`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-400">Ayarlar</p>
+          <h1 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{getSectionTitle()}</h1>
+          <p className={`mt-1 text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{getSectionDescription()}</p>
+          <div className={`mt-5 flex flex-wrap gap-2 rounded-2xl border p-2 ${darkMode ? "border-white/10 bg-white/5" : "border-indigo-100 bg-white/80"}`}>
             {sections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all group ${
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
                   activeSection === s.id
                     ? darkMode
-                      ? "bg-indigo-500/10 text-indigo-400"
-                      : "bg-indigo-50 text-indigo-700"
+                      ? "border-indigo-400/30 bg-indigo-500/10 text-indigo-300"
+                      : "border-indigo-200 bg-indigo-50 text-indigo-700"
                     : darkMode
-                    ? "text-slate-400 hover:bg-white/5 hover:text-slate-200"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
-                <span className={`transition-colors ${activeSection === s.id ? (darkMode ? "text-indigo-400" : "text-indigo-600") : "text-slate-400 group-hover:text-slate-500"}`}>
-                  {s.icon}
-                </span>
-                {s.label}
+                {s.icon}
+                <span>{s.label}</span>
               </button>
             ))}
-          </nav>
-        </div>
-        
-        <div className="mt-auto p-6 hidden md:block">
-          <div className={`p-4 rounded-2xl border ${darkMode ? "border-white/5 bg-white/5" : "border-slate-100 bg-white"}`}>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Destek</p>
-            <p className={`text-xs font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-slate-600"}`}>Yardıma mı ihtiyacınız var? Destek ekibimizle görüşün.</p>
           </div>
-        </div>
-      </aside>
-
-      {/* Birleşik İçerik Alanı */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="px-8 py-8 border-b border-slate-100 dark:border-white/5 bg-gradient-to-r from-transparent to-indigo-500/[0.02]">
-          <h1 className={`text-2xl font-black tracking-tight ${darkMode ? "text-white" : "text-slate-900"}`}>{getSectionTitle()}</h1>
-          <p className={`mt-1 text-sm font-medium ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{getSectionDescription()}</p>
         </header>
 
         <div className="flex-1 p-8 overflow-y-auto max-h-[calc(100vh-300px)]">
@@ -327,7 +292,7 @@ export function SettingsTab({
           {activeSection === "users" && (
             <div className="space-y-8">
               {canManageUsers && (
-                <div className={`p-6 rounded-2xl border ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"}`}>
+                <div className={`p-6 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-indigo-100 shadow-sm"}`}>
                   <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-indigo-500">Yeni Personel Ekle</h3>
                   <div className="grid gap-4 md:grid-cols-4">
                     <input className={inputClass} placeholder="Ad Soyad" value={newUserForm.name} onChange={(e) => setNewUserForm(p => ({...p, name: e.target.value}))} />
@@ -343,9 +308,9 @@ export function SettingsTab({
                 </div>
               )}
 
-              <div className={`rounded-2xl border overflow-hidden ${darkMode ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-white"}`}>
+              <div className={`rounded-2xl border overflow-hidden ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-indigo-100 bg-white shadow-sm"}`}>
                 <table className="w-full text-left">
-                  <thead className={`text-[10px] font-black uppercase tracking-widest text-slate-500 border-b ${darkMode ? "border-white/5" : "border-slate-100"}`}>
+                  <thead className={`text-[10px] font-black uppercase tracking-widest text-slate-500 border-b ${darkMode ? "border-white/10 bg-white/5" : "border-indigo-100 bg-slate-50/90"}`}>
                     <tr>
                       <th className="px-6 py-4">Kullanıcı</th>
                       <th className="px-6 py-4">Yetki</th>
@@ -401,7 +366,7 @@ export function SettingsTab({
               )}
 
               {canManagePermissions && (
-                <div className={`rounded-2xl border p-5 space-y-5 ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white"}`}>
+                <div className={`rounded-2xl border p-5 space-y-5 ${darkMode ? "border-white/10 bg-white/[0.03]" : "border-indigo-100 bg-white shadow-sm"}`}>
                   <div>
                     <h4 className={`text-sm font-black ${darkMode ? "text-slate-100" : "text-slate-900"}`}>Rol Bazlı Yetki Ayarı</h4>
                     <p className="text-xs font-medium text-slate-500">Bu ayarlar varsayılan rol yetkilerini belirler. Admin her zaman tüm yetkilere sahiptir.</p>
@@ -410,7 +375,7 @@ export function SettingsTab({
                   {(["manager", "staff"] as const).map((roleKey) => {
                     const selectedPermissions = rolePermissionDrafts[roleKey] ?? rolePermissions[roleKey];
                     return (
-                      <div key={roleKey} className={`rounded-xl border p-4 space-y-3 ${darkMode ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <div key={roleKey} className={`rounded-xl border p-4 space-y-3 ${darkMode ? "border-white/10 bg-white/5" : "border-indigo-100 bg-slate-50/80"}`}>
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-black uppercase tracking-wider text-indigo-500">{roleKey}</p>
                           <button
@@ -425,7 +390,7 @@ export function SettingsTab({
                           {allPermissions.map((permission) => {
                             const checked = selectedPermissions.includes(permission);
                             return (
-                              <label key={`${roleKey}-${permission}`} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold ${darkMode ? "border-white/10 bg-white/5 text-slate-300" : "border-slate-200 bg-white text-slate-700"}`}>
+                              <label key={`${roleKey}-${permission}`} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold ${darkMode ? "border-white/10 bg-white/5 text-slate-300" : "border-indigo-100 bg-white text-slate-700"}`}>
                                 <input
                                   type="checkbox"
                                   checked={checked}
@@ -457,7 +422,7 @@ export function SettingsTab({
           {/* Görünüm */}
           {activeSection === "appearance" && (
             <div className="max-w-xl space-y-4">
-              <div className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-indigo-100 shadow-sm"}`}>
                 <div>
                   <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Karanlık Mod</p>
                   <p className="text-[11px] font-medium text-slate-500">Sistem temasını değiştirin</p>
@@ -471,7 +436,7 @@ export function SettingsTab({
                   <div className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${darkMode ? "translate-x-[24px]" : "translate-x-[4px]"}`} />
                 </button>
               </div>
-              <div className={`p-4 rounded-2xl border flex items-center justify-between opacity-50 ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
+              <div className={`p-4 rounded-2xl border flex items-center justify-between opacity-50 ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-indigo-100 shadow-sm"}`}>
                 <div>
                   <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>Kompakt Arayüz</p>
                   <p className="text-[11px] font-medium text-slate-500">Daha fazla içerik sığdırın</p>
@@ -493,7 +458,7 @@ export function SettingsTab({
                   { label: "Bağlantı", value: hasSupabaseConfig ? "Bulut" : "Demo", color: hasSupabaseConfig ? "text-indigo-500" : "text-amber-500" },
                   { label: "Gecikme", value: "24ms", color: "text-emerald-500" },
                 ].map((s, i) => (
-                  <div key={i} className={`p-4 rounded-2xl border ${darkMode ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-100"}`}>
+                  <div key={i} className={`p-4 rounded-2xl border ${darkMode ? "bg-white/5 border-white/10" : "bg-white border-indigo-100 shadow-sm"}`}>
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{s.label}</p>
                     <p className={`text-sm font-black ${s.color || (darkMode ? "text-slate-200" : "text-slate-800")}`}>{s.value}</p>
                   </div>
@@ -523,6 +488,6 @@ export function SettingsTab({
           )}
         </div>
       </main>
-    </div>
+    </section>
   );
 }

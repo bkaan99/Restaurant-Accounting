@@ -54,7 +54,7 @@ export function SearchModal({
           {!searchQuery && (
             <div className="text-center py-10 text-slate-500">
               <p className="text-sm font-bold">Aramaya başlayın...</p>
-              <p className="text-xs mt-1">Örn: "Pizza", "F-2024", "Kira"</p>
+              <p className="text-xs mt-1">Orn: &quot;Pizza&quot;, &quot;F-2024&quot;, &quot;Kira&quot;</p>
             </div>
           )}
 

@@ -12,24 +12,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Hydration mismatch olmamasi icin ilk render her zaman light.
-  const [theme, setTheme] = useState<Theme>("light");
-
-  useEffect(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
     const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      setTheme(savedTheme);
-      return;
-    }
-
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
     const legacyDarkMode = localStorage.getItem("darkMode");
     if (legacyDarkMode === "true" || legacyDarkMode === "false") {
-      setTheme(legacyDarkMode === "true" ? "dark" : "light");
-      return;
+      return legacyDarkMode === "true" ? "dark" : "light";
     }
-
-    setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  }, []);
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
     localStorage.setItem("theme", theme);

@@ -17,11 +17,15 @@ alter table public.users add column if not exists permissions jsonb;
 create table if not exists public.menu_items (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  category text not null,
+  description text,
+  category_id uuid,
   price numeric(10,2) not null check (price > 0),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.menu_items add column if not exists description text;
+alter table public.menu_items add column if not exists category_id uuid;
 
 create table if not exists public.menu_categories (
   id uuid primary key default gen_random_uuid(),
@@ -30,11 +34,72 @@ create table if not exists public.menu_categories (
   created_at timestamptz not null default now()
 );
 
-insert into public.menu_categories (name)
-select distinct category
-from public.menu_items
-where coalesce(trim(category), '') <> ''
-on conflict (name) do nothing;
+alter table public.menu_items
+  drop constraint if exists menu_items_category_id_fkey;
+alter table public.menu_items
+  add constraint menu_items_category_id_fkey
+  foreign key (category_id) references public.menu_categories(id) on delete set null;
+
+-- Stok: Malzemeler (ingredients) + Recete (menu_item_ingredients) + Stok hareketleri (inventory_movements)
+create table if not exists public.ingredients (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  unit text not null default 'adet', -- adet, gr, ml vb.
+  on_hand numeric(14,3) not null default 0 check (on_hand >= 0),
+  reorder_level numeric(14,3) not null default 0 check (reorder_level >= 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.menu_item_ingredients (
+  id uuid primary key default gen_random_uuid(),
+  menu_item_id uuid not null references public.menu_items(id) on delete cascade,
+  ingredient_id uuid not null references public.ingredients(id) on delete restrict,
+  qty_per_item numeric(14,3) not null check (qty_per_item > 0),
+  created_at timestamptz not null default now(),
+  unique (menu_item_id, ingredient_id)
+);
+
+create table if not exists public.inventory_movements (
+  id uuid primary key default gen_random_uuid(),
+  ingredient_id uuid not null references public.ingredients(id) on delete restrict,
+  movement_type text not null check (movement_type in ('in', 'out', 'adjust')),
+  qty numeric(14,3) not null check (qty > 0),
+  reason text,
+  related_sale_id uuid references public.sales(id) on delete set null,
+  created_by uuid references public.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'menu_items'
+      and column_name = 'category'
+  ) then
+    insert into public.menu_categories (name)
+    select distinct mi.category
+    from public.menu_items mi
+    where coalesce(trim(mi.category), '') <> ''
+    on conflict (name) do nothing;
+
+    update public.menu_items mi
+    set category_id = mc.id
+    from public.menu_categories mc
+    where mi.category_id is null
+      and lower(trim(mi.category)) = lower(trim(mc.name));
+  end if;
+end
+$$;
+
+alter table public.menu_items
+  alter column category_id set not null;
+
+alter table public.menu_items
+  drop column if exists category;
 
 create table if not exists public.sales (
   id uuid primary key default gen_random_uuid(),
@@ -130,6 +195,74 @@ before insert on public.sales
 for each row
 execute function public.assign_sales_receipt_no();
 
+-- Satis + kalemleri atomik olarak olustur (tek transaction)
+create or replace function public.create_sale_with_items(p_items jsonb)
+returns table (
+  id uuid,
+  receipt_no text,
+  created_at timestamptz,
+  total_amount numeric
+)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  actor_profile_id uuid;
+  sale_id uuid;
+  sale_receipt_no text;
+  sale_created_at timestamptz;
+  computed_total numeric(10,2) := 0;
+  current_item jsonb;
+begin
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'p_items must be a non-empty array';
+  end if;
+
+  actor_profile_id := public.get_current_profile_id();
+  if actor_profile_id is null then
+    raise exception 'current profile not found';
+  end if;
+
+  for current_item in select * from jsonb_array_elements(p_items)
+  loop
+    if coalesce((current_item->>'qty')::integer, 0) <= 0 then
+      raise exception 'qty must be greater than 0';
+    end if;
+    if coalesce((current_item->>'unitPrice')::numeric, 0) < 0 then
+      raise exception 'unitPrice cannot be negative';
+    end if;
+    computed_total := computed_total + coalesce(
+      (current_item->>'lineTotal')::numeric,
+      ((current_item->>'qty')::numeric * (current_item->>'unitPrice')::numeric)
+    );
+  end loop;
+
+  insert into public.sales (created_by, total_amount, payment_status)
+  values (actor_profile_id, computed_total, 'paid_manual')
+  returning sales.id, sales.receipt_no, sales.created_at
+  into sale_id, sale_receipt_no, sale_created_at;
+
+  insert into public.sale_items (sale_id, menu_item_id, name, qty, unit_price, line_total)
+  select
+    sale_id,
+    nullif(raw_item->>'menuItemId', '')::uuid,
+    coalesce(nullif(raw_item->>'name', ''), 'Urun'),
+    (raw_item->>'qty')::integer,
+    (raw_item->>'unitPrice')::numeric,
+    coalesce(
+      (raw_item->>'lineTotal')::numeric,
+      ((raw_item->>'qty')::numeric * (raw_item->>'unitPrice')::numeric)
+    )
+  from jsonb_array_elements(p_items) as raw_item;
+
+  return query
+  select sale_id, sale_receipt_no, sale_created_at, computed_total;
+end;
+$$;
+
+grant execute on function public.create_sale_with_items(jsonb) to authenticated;
+
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
   ayar_anahtari text not null unique,
@@ -143,6 +276,9 @@ create table if not exists public.app_settings (
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.menu_categories enable row level security;
+alter table public.ingredients enable row level security;
+alter table public.menu_item_ingredients enable row level security;
+alter table public.inventory_movements enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
@@ -207,6 +343,51 @@ create policy "menu_categories_select_authenticated"
   using (true);
 create policy "menu_categories_write_admin_manager"
   on public.menu_categories
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- ingredients: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "ingredients_select_authenticated" on public.ingredients;
+drop policy if exists "ingredients_write_admin_manager" on public.ingredients;
+create policy "ingredients_select_authenticated"
+  on public.ingredients
+  for select
+  to authenticated
+  using (true);
+create policy "ingredients_write_admin_manager"
+  on public.ingredients
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- menu_item_ingredients (recete): herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "menu_item_ingredients_select_authenticated" on public.menu_item_ingredients;
+drop policy if exists "menu_item_ingredients_write_admin_manager" on public.menu_item_ingredients;
+create policy "menu_item_ingredients_select_authenticated"
+  on public.menu_item_ingredients
+  for select
+  to authenticated
+  using (true);
+create policy "menu_item_ingredients_write_admin_manager"
+  on public.menu_item_ingredients
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- inventory_movements: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "inventory_movements_select_authenticated" on public.inventory_movements;
+drop policy if exists "inventory_movements_write_admin_manager" on public.inventory_movements;
+create policy "inventory_movements_select_authenticated"
+  on public.inventory_movements
+  for select
+  to authenticated
+  using (true);
+create policy "inventory_movements_write_admin_manager"
+  on public.inventory_movements
   for all
   to authenticated
   using (public.get_current_user_role() in ('admin', 'manager'))
@@ -394,6 +575,9 @@ $$;
 drop trigger if exists trg_audit_users_iud on public.users;
 drop trigger if exists trg_audit_menu_items_iud on public.menu_items;
 drop trigger if exists trg_audit_menu_categories_iud on public.menu_categories;
+drop trigger if exists trg_audit_ingredients_iud on public.ingredients;
+drop trigger if exists trg_audit_menu_item_ingredients_iud on public.menu_item_ingredients;
+drop trigger if exists trg_audit_inventory_movements_iud on public.inventory_movements;
 drop trigger if exists trg_audit_sales_iud on public.sales;
 drop trigger if exists trg_audit_sale_items_iud on public.sale_items;
 drop trigger if exists trg_audit_expenses_iud on public.expenses;
@@ -417,6 +601,21 @@ execute function public.audit_log_data_change();
 
 create trigger trg_audit_menu_categories_iud
 after insert or update or delete on public.menu_categories
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_ingredients_iud
+after insert or update or delete on public.ingredients
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_menu_item_ingredients_iud
+after insert or update or delete on public.menu_item_ingredients
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_inventory_movements_iud
+after insert or update or delete on public.inventory_movements
 for each row
 execute function public.audit_log_data_change();
 
