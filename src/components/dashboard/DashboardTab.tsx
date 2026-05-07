@@ -37,6 +37,18 @@ export function DashboardTab({
   const topProducts = Object.values(productSales).sort((a, b) => b.qty - a.qty).slice(0, 5);
   const recentSales = sales.slice(0, 5);
   const maxRevenue = Math.max(...salesChartData.map((item) => item.total), 1);
+  const orderCountTrend = useMemo(() => {
+    const grouped = sales.reduce<Record<string, number>>((acc, sale) => {
+      const key = sale.createdAt.slice(0, 10);
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-10)
+      .map(([date, count]) => ({ date, count }));
+  }, [sales]);
+  const maxOrderCount = Math.max(...orderCountTrend.map((item) => item.count), 1);
   const gaugePercent = Math.min(Math.max((stats.net / Math.max(stats.totalSales, 1)) * 100, 8), 100);
   const averageOrderValue = stats.orderCount > 0 ? stats.totalSales / stats.orderCount : 0;
 
@@ -99,7 +111,14 @@ export function DashboardTab({
 
   const card = dm
     ? "rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm"
-    : "rounded-3xl border p-5 shadow-sm bg-white";
+    : "rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm";
+  const tooltipStyle = {
+    background: dm ? "rgba(15, 23, 42, 0.92)" : "rgba(255, 255, 255, 0.96)",
+    border: dm ? "1px solid #334155" : "1px solid #e2e8f0",
+    borderRadius: 14,
+    color: dm ? "#e2e8f0" : "#1e293b",
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+  };
 
   return (
     <section className="grid items-start gap-4 xl:grid-cols-3">
@@ -117,10 +136,10 @@ export function DashboardTab({
             </span>
           </div>
           <div>
-            <p className={`mt-4 text-3xl font-bold tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(stats.totalSales)}</p>
+              <p className={`mt-4 text-3xl font-black tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>{tl.format(stats.totalSales)}</p>
             <div className="mt-4 flex h-10 items-end gap-1.5">
               {salesChartData.slice(-10).map((item, i) => (
-                <div key={item.date + i} className="w-full rounded-t-sm bg-gradient-to-t from-violet-600 to-indigo-400 opacity-80 hover:opacity-100 transition-opacity"
+                <div key={item.date + i} className="w-full rounded-t-sm bg-gradient-to-t from-violet-600 to-indigo-400 opacity-85 hover:opacity-100 transition-opacity"
                   style={{ height: `${Math.max((item.total / maxRevenue) * 100, 16)}%` }} title={item.date} />
               ))}
             </div>
@@ -139,11 +158,11 @@ export function DashboardTab({
             </span>
           </div>
           <div>
-            <p className={`mt-4 text-3xl font-bold tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>{stats.orderCount}</p>
+              <p className={`mt-4 text-3xl font-black tracking-tight ${dm ? "text-slate-100" : "text-slate-900"}`}>{stats.orderCount}</p>
             <div className="mt-4 flex h-10 items-end gap-1.5">
-              {salesChartData.slice(-10).map((item, index) => (
+              {orderCountTrend.map((item, index) => (
                 <div key={`${item.date}-${index}`} className="w-full rounded-t-sm bg-gradient-to-t from-indigo-500 to-sky-400 opacity-80 hover:opacity-100 transition-opacity"
-                  style={{ height: `${Math.max(((index + 2) / 10) * 100, 16)}%` }} />
+                  style={{ height: `${Math.max((item.count / maxOrderCount) * 100, 16)}%` }} title={item.date} />
               ))}
             </div>
           </div>
@@ -220,7 +239,7 @@ export function DashboardTab({
                 </Pie>
                 <Tooltip
                   formatter={(value) => (typeof value === "number" ? tl.format(value) : `${value ?? ""}`)}
-                  contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, color: dm ? "#e2e8f0" : "#1e293b", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                  contentStyle={tooltipStyle}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -270,7 +289,7 @@ export function DashboardTab({
                 <YAxis stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fill: dm ? "#94a3b8" : "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₺${val}`} dx={-10} />
                 <Tooltip
                   formatter={(value) => (typeof value === "number" ? tl.format(value) : `${value ?? ""}`)}
-                  contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 16, color: dm ? "#e2e8f0" : "#1e293b", backdropFilter: "blur(8px)", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                  contentStyle={tooltipStyle}
                   itemStyle={{ fontSize: '13px', fontWeight: 600 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
@@ -303,7 +322,7 @@ export function DashboardTab({
                 <YAxis stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fill: dm ? "#94a3b8" : "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{ fill: dm ? '#334155' : '#f1f5f9', opacity: 0.4 }}
-                  contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, color: dm ? "#e2e8f0" : "#1e293b", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                  contentStyle={tooltipStyle}
                 />
                 <Bar dataKey="Sipariş" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
               </BarChart>
@@ -334,7 +353,7 @@ export function DashboardTab({
                   <Tooltip
                     formatter={(value) => [`${typeof value === "number" ? value : value ?? ""} Adet`, "Satış"]}
                     cursor={{ fill: dm ? '#334155' : '#f1f5f9', opacity: 0.4 }}
-                    contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, color: dm ? "#e2e8f0" : "#1e293b", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                    contentStyle={tooltipStyle}
                   />
                   <Bar dataKey="Adet" fill="#10b981" radius={[0, 4, 4, 0]} barSize={16} />
                 </BarChart>
