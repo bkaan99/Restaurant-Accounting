@@ -734,7 +734,102 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     } else {
       newSale.receiptNo = `SAT-${newSale.id.slice(0, 12).toUpperCase()}`;
     }
+
+    const soldQtyByMenuItem = items.reduce<Record<string, number>>((acc, item) => {
+      acc[item.menuItemId] = (acc[item.menuItemId] ?? 0) + item.qty;
+      return acc;
+    }, {});
+
+    const consumedByIngredient = menuItemIngredients.reduce<Record<string, number>>((acc, recipeRow) => {
+      const soldQty = soldQtyByMenuItem[recipeRow.menuItemId] ?? 0;
+      if (soldQty <= 0) return acc;
+      acc[recipeRow.ingredientId] = (acc[recipeRow.ingredientId] ?? 0) + (recipeRow.qtyPerItem * soldQty);
+      return acc;
+    }, {});
+
+    const consumedEntries = Object.entries(consumedByIngredient)
+      .filter(([, qty]) => qty > 0)
+      .map(([ingredientId, qty]) => ({ ingredientId, qty }));
+
+    let stockSyncFailedMessage: string | null = null;
+    let localMovementRows: InventoryMovement[] = [];
+
+    if (consumedEntries.length > 0) {
+      if (hasSupabaseConfig && supabase) {
+        for (const entry of consumedEntries) {
+          const ing = ingredients.find((i) => i.id === entry.ingredientId);
+          if (!ing) continue;
+          const nextOnHand = Math.max(0, ing.onHand - entry.qty);
+          const { error } = await supabase.from("ingredients").update({ on_hand: nextOnHand }).eq("id", entry.ingredientId);
+          if (error) {
+            stockSyncFailedMessage = error.message;
+            break;
+          }
+        }
+
+        if (!stockSyncFailedMessage) {
+          const movementPayload = consumedEntries.map((entry) => ({
+            ingredient_id: entry.ingredientId,
+            movement_type: "out" as const,
+            qty: entry.qty,
+            reason: `Satis: ${newSale.receiptNo}`,
+            related_sale_id: newSale.id,
+            created_by: actorUser.id,
+          }));
+
+          const { data: movementData, error: movementErr } = await supabase
+            .from("inventory_movements")
+            .insert(movementPayload)
+            .select("id, ingredient_id, movement_type, qty, reason, related_sale_id, created_by, created_at");
+
+          if (movementErr) {
+            stockSyncFailedMessage = movementErr.message;
+          } else {
+            localMovementRows = (movementData ?? []).map((m) => ({
+              id: m.id,
+              ingredientId: m.ingredient_id,
+              movementType: m.movement_type,
+              qty: Number(m.qty),
+              reason: m.reason ?? null,
+              relatedSaleId: m.related_sale_id ?? null,
+              createdBy: m.created_by ?? null,
+              createdAt: m.created_at,
+            }));
+          }
+        }
+      } else {
+        localMovementRows = consumedEntries.map((entry) => ({
+          id: crypto.randomUUID(),
+          ingredientId: entry.ingredientId,
+          movementType: "out",
+          qty: entry.qty,
+          reason: `Satis: ${newSale.receiptNo}`,
+          relatedSaleId: newSale.id,
+          createdBy: actorUser.id,
+          createdAt: new Date().toISOString(),
+        }));
+      }
+
+      if (!stockSyncFailedMessage) {
+        setIngredients((prev) =>
+          prev.map((ing) => {
+            const consumed = consumedByIngredient[ing.id] ?? 0;
+            if (consumed <= 0) return ing;
+            return { ...ing, onHand: Math.max(0, ing.onHand - consumed) };
+          })
+        );
+        if (localMovementRows.length > 0) {
+          setInventoryMovements((prev) => [...localMovementRows, ...prev].slice(0, 300));
+        }
+      }
+    }
+
     setSales(prev => [newSale, ...prev]);
+    if (stockSyncFailedMessage) {
+      pushToast(`Satış kaydedildi ancak stok düşürülemedi: ${stockSyncFailedMessage}`, "warning");
+      void loadData();
+      return;
+    }
     pushToast("Satış başarıyla kaydedildi.", "success");
   };
 
