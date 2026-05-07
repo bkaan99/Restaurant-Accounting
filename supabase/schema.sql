@@ -40,6 +40,37 @@ alter table public.menu_items
   add constraint menu_items_category_id_fkey
   foreign key (category_id) references public.menu_categories(id) on delete set null;
 
+-- Stok: Malzemeler (ingredients) + Recete (menu_item_ingredients) + Stok hareketleri (inventory_movements)
+create table if not exists public.ingredients (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  unit text not null default 'adet', -- adet, gr, ml vb.
+  on_hand numeric(14,3) not null default 0 check (on_hand >= 0),
+  reorder_level numeric(14,3) not null default 0 check (reorder_level >= 0),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.menu_item_ingredients (
+  id uuid primary key default gen_random_uuid(),
+  menu_item_id uuid not null references public.menu_items(id) on delete cascade,
+  ingredient_id uuid not null references public.ingredients(id) on delete restrict,
+  qty_per_item numeric(14,3) not null check (qty_per_item > 0),
+  created_at timestamptz not null default now(),
+  unique (menu_item_id, ingredient_id)
+);
+
+create table if not exists public.inventory_movements (
+  id uuid primary key default gen_random_uuid(),
+  ingredient_id uuid not null references public.ingredients(id) on delete restrict,
+  movement_type text not null check (movement_type in ('in', 'out', 'adjust')),
+  qty numeric(14,3) not null check (qty > 0),
+  reason text,
+  related_sale_id uuid references public.sales(id) on delete set null,
+  created_by uuid references public.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 do $$
 begin
   if exists (
@@ -245,6 +276,9 @@ create table if not exists public.app_settings (
 alter table public.users enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.menu_categories enable row level security;
+alter table public.ingredients enable row level security;
+alter table public.menu_item_ingredients enable row level security;
+alter table public.inventory_movements enable row level security;
 alter table public.sales enable row level security;
 alter table public.sale_items enable row level security;
 alter table public.expenses enable row level security;
@@ -309,6 +343,51 @@ create policy "menu_categories_select_authenticated"
   using (true);
 create policy "menu_categories_write_admin_manager"
   on public.menu_categories
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- ingredients: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "ingredients_select_authenticated" on public.ingredients;
+drop policy if exists "ingredients_write_admin_manager" on public.ingredients;
+create policy "ingredients_select_authenticated"
+  on public.ingredients
+  for select
+  to authenticated
+  using (true);
+create policy "ingredients_write_admin_manager"
+  on public.ingredients
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- menu_item_ingredients (recete): herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "menu_item_ingredients_select_authenticated" on public.menu_item_ingredients;
+drop policy if exists "menu_item_ingredients_write_admin_manager" on public.menu_item_ingredients;
+create policy "menu_item_ingredients_select_authenticated"
+  on public.menu_item_ingredients
+  for select
+  to authenticated
+  using (true);
+create policy "menu_item_ingredients_write_admin_manager"
+  on public.menu_item_ingredients
+  for all
+  to authenticated
+  using (public.get_current_user_role() in ('admin', 'manager'))
+  with check (public.get_current_user_role() in ('admin', 'manager'));
+
+-- inventory_movements: herkes okuyabilir, sadece manager/admin degistirebilir
+drop policy if exists "inventory_movements_select_authenticated" on public.inventory_movements;
+drop policy if exists "inventory_movements_write_admin_manager" on public.inventory_movements;
+create policy "inventory_movements_select_authenticated"
+  on public.inventory_movements
+  for select
+  to authenticated
+  using (true);
+create policy "inventory_movements_write_admin_manager"
+  on public.inventory_movements
   for all
   to authenticated
   using (public.get_current_user_role() in ('admin', 'manager'))
@@ -496,6 +575,9 @@ $$;
 drop trigger if exists trg_audit_users_iud on public.users;
 drop trigger if exists trg_audit_menu_items_iud on public.menu_items;
 drop trigger if exists trg_audit_menu_categories_iud on public.menu_categories;
+drop trigger if exists trg_audit_ingredients_iud on public.ingredients;
+drop trigger if exists trg_audit_menu_item_ingredients_iud on public.menu_item_ingredients;
+drop trigger if exists trg_audit_inventory_movements_iud on public.inventory_movements;
 drop trigger if exists trg_audit_sales_iud on public.sales;
 drop trigger if exists trg_audit_sale_items_iud on public.sale_items;
 drop trigger if exists trg_audit_expenses_iud on public.expenses;
@@ -519,6 +601,21 @@ execute function public.audit_log_data_change();
 
 create trigger trg_audit_menu_categories_iud
 after insert or update or delete on public.menu_categories
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_ingredients_iud
+after insert or update or delete on public.ingredients
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_menu_item_ingredients_iud
+after insert or update or delete on public.menu_item_ingredients
+for each row
+execute function public.audit_log_data_change();
+
+create trigger trg_audit_inventory_movements_iud
+after insert or update or delete on public.inventory_movements
 for each row
 execute function public.audit_log_data_change();
 

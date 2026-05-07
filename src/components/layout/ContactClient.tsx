@@ -9,7 +9,10 @@ export function ContactClient({ displayName }: { displayName: string }) {
   const isDark = theme === "dark";
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${isDark ? "bg-[#020408] text-slate-100" : "bg-[#fafafa] text-slate-800"}`}>
+    <div
+      suppressHydrationWarning
+      className={`min-h-screen transition-colors duration-500 ${isDark ? "bg-[#020408] text-slate-100" : "bg-[#fafafa] text-slate-800"}`}
+    >
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-violet-600/10" : "bg-violet-600/5"}`} />
         <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-fuchsia-600/10" : "bg-fuchsia-600/5"}`} />

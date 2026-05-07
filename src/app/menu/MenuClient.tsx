@@ -51,6 +51,7 @@ export function MenuClient({
 
   return (
     <div
+      suppressHydrationWarning
       className={`min-h-screen selection:bg-violet-500/10 font-sans transition-colors duration-500 ${
         isDark ? "bg-[#020408] text-slate-100" : "bg-[#fafafa] text-slate-800"
       }`}

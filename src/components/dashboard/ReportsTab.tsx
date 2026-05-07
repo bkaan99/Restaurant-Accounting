@@ -233,7 +233,7 @@ export function ReportsTab({
                   <XAxis dataKey="date" stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fontSize: 11, fill: dm ? "#94a3b8" : "#64748b" }} axisLine={false} tickLine={false} dy={10} />
                   <YAxis stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fontSize: 11, fill: dm ? "#94a3b8" : "#64748b" }} axisLine={false} tickLine={false} dx={-10} tickFormatter={(v) => `₺${v}`} />
                   <Tooltip 
-                    formatter={(val: number) => tl.format(val)}
+                    formatter={(val) => (typeof val === "number" ? tl.format(val) : `${val ?? ""}`)}
                     contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 20 }} />
@@ -261,7 +261,7 @@ export function ReportsTab({
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fontSize: 11, fill: dm ? "#94a3b8" : "#64748b", fontWeight: 500 }} axisLine={false} tickLine={false} width={50} />
                   <Tooltip 
-                    formatter={(val: number) => tl.format(val)}
+                    formatter={(val) => (typeof val === "number" ? tl.format(val) : `${val ?? ""}`)}
                     cursor={{ fill: dm ? '#334155' : '#f1f5f9', opacity: 0.4 }}
                     contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                   />
@@ -295,7 +295,7 @@ export function ReportsTab({
                       <Pie data={categorySales} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
                         {categorySales.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(val: number) => tl.format(val)} contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }} />
+                      <Tooltip formatter={(val) => (typeof val === "number" ? tl.format(val) : `${val ?? ""}`)} contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -332,7 +332,7 @@ export function ReportsTab({
                       <Pie data={expenseBreakdown} cx="50%" cy="50%" innerRadius={0} outerRadius={85} dataKey="value" stroke={dm ? "#0f172a" : "#ffffff"} strokeWidth={2}>
                         {expenseBreakdown.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(val: number) => tl.format(val)} contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }} />
+                      <Tooltip formatter={(val) => (typeof val === "number" ? tl.format(val) : `${val ?? ""}`)} contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>

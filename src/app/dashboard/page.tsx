@@ -10,6 +10,7 @@ import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { SalesTab } from "@/components/dashboard/SalesTab";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { MenuTab } from "@/components/dashboard/MenuTab";
+import { StockTab } from "@/components/dashboard/StockTab";
 import { SettingsTab } from "@/components/dashboard/SettingsTab";
 import { TransactionsTab } from "@/components/dashboard/TransactionsTab";
 import { AuditLogsTab } from "@/components/dashboard/AuditLogsTab";
@@ -75,6 +76,9 @@ export default function Home() {
     appUsers, 
     menuItems, 
     menuCategories,
+    ingredients,
+    inventoryMovements,
+    menuItemIngredients,
     sales, 
     expenses, 
     auditLogs,
@@ -85,6 +89,12 @@ export default function Home() {
     salesChartData,
     createMenuItem,
     createMenuCategory,
+    createIngredient,
+    deleteIngredient,
+    updateIngredientReorderLevel,
+    recordInventoryMovement,
+    upsertMenuItemIngredient,
+    deleteMenuItemIngredient,
     toggleMenuItem,
     deleteMenuItem,
     updateMenuItem,
@@ -144,6 +154,10 @@ export default function Home() {
       key: "menu", label: "Menü Paneli", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
     },
+    {
+      key: "stock", label: "Stok", roles: ["admin"],
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V7a2 2 0 00-2-2h-4l-2-2H8a2 2 0 00-2 2v2H4a2 2 0 00-2 2v6a2 2 0 002 2h14a2 2 0 002-2z" /></svg>
+    },
     { 
       key: "transactions", label: "İşlemler", roles: ["admin", "manager", "staff"],
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
@@ -169,11 +183,13 @@ export default function Home() {
     transactions: "transactions_view",
     expenses: "expenses_manage",
     menu: "menu_manage",
+    stock: "menu_manage",
     settings: "settings_manage",
     audit: "audit_view",
   };
 
   const canAccessTab = (tabKey: TabType) => {
+    if (tabKey === "stock") return user?.role === "admin";
     return hasPermission(tabPermissionMap[tabKey]);
   };
 
@@ -380,12 +396,29 @@ export default function Home() {
                 }}
                 menuCategories={menuCategories}
                 createMenuCategory={createMenuCategory}
+                ingredients={ingredients}
+                menuItemIngredients={menuItemIngredients}
+                upsertMenuItemIngredient={upsertMenuItemIngredient}
+                deleteMenuItemIngredient={deleteMenuItemIngredient}
                 menuItems={menuItems}
                 tl={tl}
                 toggleMenuItem={toggleMenuItem}
                 deleteMenuItem={deleteMenuItem}
                 updateMenuItem={updateMenuItem}
                 canManageMenu={canManageMenu}
+              />
+            )}
+            {activeTab === "stock" && (
+              <StockTab
+                darkMode={darkMode}
+                panelClass={panelClass}
+                inputClass={inputClass}
+                ingredients={ingredients}
+                inventoryMovements={inventoryMovements}
+                createIngredient={createIngredient}
+                deleteIngredient={deleteIngredient}
+                updateIngredientReorderLevel={updateIngredientReorderLevel}
+                recordInventoryMovement={recordInventoryMovement}
               />
             )}
             {activeTab === "settings" && <SettingsTab user={user} panelClass={panelClass} inputClass={inputClass} darkMode={darkMode} onToggleDarkMode={toggleTheme} restaurantSettings={restaurantSettings} onSaveRestaurantSettings={(settings) => saveRestaurantSettings(settings, user?.id ?? null)} canManageSettings={canManageSettings} appUsers={appUsers} canManageUsers={canManageUsers} canManagePermissions={canManagePermissions} onUpdateUserRole={updateUserRole} onUpdateRolePermissions={updateRolePermissions} rolePermissions={rolePermissions} onCreateUser={createUserByAdmin} allPermissions={ALL_PERMISSIONS} />}

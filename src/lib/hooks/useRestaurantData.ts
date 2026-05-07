@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, hasSupabaseConfig } from "@/lib/supabase";
-import { AppUser, AuditLog, Expense, MenuCategory, MenuItem, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
+import { AppUser, AuditLog, Expense, Ingredient, InventoryMovement, MenuCategory, MenuItem, MenuItemIngredient, PermissionKey, ROLE_PERMISSION_DEFAULTS, RolePermissionConfig, Sale, SaleItem, RestaurantSettings, ToastType, UserRole } from "@/lib/types";
 
 export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => void, userId?: string | null) {
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([]);
+  const [menuItemIngredients, setMenuItemIngredients] = useState<MenuItemIngredient[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -50,8 +53,11 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         ? await supabase.from("menu_items").select("id, name, description, category_id, price, active").order("name", { ascending: true })
         : menuWithDescriptionRes;
 
-      const [categoriesRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
+      const [categoriesRes, ingredientsRes, recipeRes, movementsRes, salesRes, saleItemsRes, expensesRes, auditLogsRes] = await Promise.all([
         supabase.from("menu_categories").select("id, name, active").order("name", { ascending: true }),
+        supabase.from("ingredients").select("id, name, unit, on_hand, reorder_level, active").order("name", { ascending: true }),
+        supabase.from("menu_item_ingredients").select("id, menu_item_id, ingredient_id, qty_per_item"),
+        supabase.from("inventory_movements").select("id, ingredient_id, movement_type, qty, reason, related_sale_id, created_by, created_at").order("created_at", { ascending: false }).limit(200),
         supabase.from("sales").select("id, receipt_no, created_at, created_by, total_amount").order("created_at", { ascending: false }),
         supabase.from("sale_items").select("sale_id, menu_item_id, name, qty, unit_price, line_total"),
         supabase.from("expenses").select("id, receipt_no, title, supplier, amount, expense_date, note").order("expense_date", { ascending: false }),
@@ -104,6 +110,33 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
         id: name,
         name,
         active: true,
+      }));
+
+      const mappedIngredients: Ingredient[] = (ingredientsRes?.data ?? []).map((i) => ({
+        id: i.id,
+        name: i.name,
+        unit: i.unit ?? "adet",
+        onHand: Number(i.on_hand ?? 0),
+        reorderLevel: Number(i.reorder_level ?? 0),
+        active: Boolean(i.active),
+      }));
+
+      const mappedRecipe: MenuItemIngredient[] = (recipeRes?.data ?? []).map((r) => ({
+        id: r.id,
+        menuItemId: r.menu_item_id,
+        ingredientId: r.ingredient_id,
+        qtyPerItem: Number(r.qty_per_item),
+      }));
+
+      const mappedMovements: InventoryMovement[] = (movementsRes?.data ?? []).map((m) => ({
+        id: m.id,
+        ingredientId: m.ingredient_id,
+        movementType: m.movement_type,
+        qty: Number(m.qty),
+        reason: m.reason ?? null,
+        relatedSaleId: m.related_sale_id ?? null,
+        createdBy: m.created_by ?? null,
+        createdAt: m.created_at,
       }));
 
       const saleItemsBySale = (saleItemsRes.data ?? []).reduce<Record<string, SaleItem[]>>((acc, row) => {
@@ -169,6 +202,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       setAppUsers(mappedUsers);
       setMenuItems(mappedMenu);
       setMenuCategories(mappedCategories.length > 0 ? mappedCategories : fallbackFromMenuItems);
+      setIngredients(mappedIngredients);
+      setMenuItemIngredients(mappedRecipe);
+      setInventoryMovements(mappedMovements);
       setSales(mappedSales);
       setExpenses(mappedExpenses);
 
@@ -301,6 +337,233 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
 
     setMenuCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name, "tr")));
     pushToast("Kategori oluşturuldu.", "success");
+  };
+
+  // --- Stock / Inventory ---
+  const createIngredient = async (payload: { name: string; unit: string; onHand?: string; reorderLevel?: string }) => {
+    const name = payload.name.trim();
+    const unit = payload.unit.trim() || "adet";
+    const onHand = Number(payload.onHand ?? 0);
+    const reorderLevel = Number(payload.reorderLevel ?? 0);
+    if (!name) {
+      pushToast("Malzeme adı zorunludur.", "warning");
+      return;
+    }
+    if (Number.isNaN(onHand) || onHand < 0) {
+      pushToast("Mevcut stok geçersiz.", "warning");
+      return;
+    }
+    if (Number.isNaN(reorderLevel) || reorderLevel < 0) {
+      pushToast("Kritik seviye geçersiz.", "warning");
+      return;
+    }
+
+    const newIng: Ingredient = {
+      id: crypto.randomUUID(),
+      name,
+      unit,
+      onHand,
+      reorderLevel,
+      active: true,
+    };
+
+    if (hasSupabaseConfig && supabase) {
+      const { data, error } = await supabase
+        .from("ingredients")
+        .insert({ name, unit, on_hand: onHand, reorder_level: reorderLevel, active: true })
+        .select("id, name, unit, on_hand, reorder_level, active")
+        .single();
+      if (error || !data) {
+        pushToast(`Malzeme kaydedilemedi: ${error?.message ?? "Bilinmeyen hata"}`, "error");
+        return;
+      }
+      newIng.id = data.id;
+      newIng.onHand = Number(data.on_hand ?? onHand);
+      newIng.reorderLevel = Number(data.reorder_level ?? reorderLevel);
+      newIng.active = Boolean(data.active);
+    }
+
+    setIngredients((prev) => [...prev, newIng].sort((a, b) => a.name.localeCompare(b.name, "tr")));
+    pushToast("Malzeme eklendi.", "success");
+  };
+
+  const recordInventoryMovement = async (payload: { ingredientId: string; movementType: "in" | "out" | "adjust"; qty: string; reason?: string }) => {
+    const qty = Number(payload.qty);
+    if (!payload.ingredientId) {
+      pushToast("Malzeme seçin.", "warning");
+      return;
+    }
+    if (Number.isNaN(qty) || qty <= 0) {
+      pushToast("Miktar geçersiz.", "warning");
+      return;
+    }
+
+    const ing = ingredients.find((i) => i.id === payload.ingredientId);
+    if (!ing) return;
+
+    const nextOnHand =
+      payload.movementType === "in"
+        ? ing.onHand + qty
+        : payload.movementType === "out"
+          ? Math.max(0, ing.onHand - qty)
+          : qty;
+
+    const movement: InventoryMovement = {
+      id: crypto.randomUUID(),
+      ingredientId: payload.ingredientId,
+      movementType: payload.movementType,
+      qty,
+      reason: payload.reason?.trim() || null,
+      relatedSaleId: null,
+      createdBy: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    if (hasSupabaseConfig && supabase) {
+      const { error: updateErr } = await supabase.from("ingredients").update({ on_hand: nextOnHand }).eq("id", payload.ingredientId);
+      if (updateErr) {
+        pushToast(`Stok güncellenemedi: ${updateErr.message}`, "error");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("inventory_movements")
+        .insert({
+          ingredient_id: payload.ingredientId,
+          movement_type: payload.movementType,
+          qty,
+          reason: payload.reason?.trim() || null,
+          related_sale_id: null,
+          created_by: null,
+        })
+        .select("id, ingredient_id, movement_type, qty, reason, related_sale_id, created_by, created_at")
+        .single();
+
+      if (error || !data) {
+        pushToast(`Stok hareketi kaydedilemedi: ${error?.message ?? "Bilinmeyen hata"}`, "error");
+        return;
+      }
+
+      movement.id = data.id;
+      movement.createdAt = data.created_at;
+    }
+
+    setIngredients((prev) => prev.map((i) => (i.id === payload.ingredientId ? { ...i, onHand: nextOnHand } : i)));
+    setInventoryMovements((prev) => [movement, ...prev].slice(0, 300));
+    pushToast("Stok güncellendi.", "success");
+  };
+
+  const deleteIngredient = async (ingredientId: string) => {
+    if (!ingredientId) return;
+
+    const ingredient = ingredients.find((i) => i.id === ingredientId);
+    if (!ingredient) return;
+
+    const hasRecipeDependency = menuItemIngredients.some((r) => r.ingredientId === ingredientId);
+    if (hasRecipeDependency) {
+      pushToast("Bu malzeme reçetelerde kullanıldığı için silinemez.", "warning");
+      return;
+    }
+
+    const hasMovementDependency = inventoryMovements.some((m) => m.ingredientId === ingredientId);
+    if (hasMovementDependency) {
+      pushToast("Bu malzeme stok hareketlerinde kullanıldığı için silinemez.", "warning");
+      return;
+    }
+
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("ingredients").delete().eq("id", ingredientId);
+      if (error) {
+        pushToast(`Malzeme silinemedi: ${error.message}`, "error");
+        return;
+      }
+    }
+
+    setIngredients((prev) => prev.filter((i) => i.id !== ingredientId));
+    pushToast("Malzeme silindi.", "success");
+  };
+
+  const updateIngredientReorderLevel = async (payload: { ingredientId: string; reorderLevel: string }) => {
+    if (!payload.ingredientId) return;
+    const reorderLevel = Number(payload.reorderLevel);
+    if (Number.isNaN(reorderLevel) || reorderLevel < 0) {
+      pushToast("Kritik seviye geçersiz.", "warning");
+      return;
+    }
+
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase
+        .from("ingredients")
+        .update({ reorder_level: reorderLevel })
+        .eq("id", payload.ingredientId);
+
+      if (error) {
+        pushToast(`Kritik seviye güncellenemedi: ${error.message}`, "error");
+        return;
+      }
+    }
+
+    setIngredients((prev) =>
+      prev.map((i) => (i.id === payload.ingredientId ? { ...i, reorderLevel } : i))
+    );
+    pushToast("Kritik seviye güncellendi.", "success");
+  };
+
+  const upsertMenuItemIngredient = async (payload: { menuItemId: string; ingredientId: string; qtyPerItem: string }) => {
+    const qtyPerItem = Number(payload.qtyPerItem);
+    if (!payload.menuItemId || !payload.ingredientId) return;
+    if (Number.isNaN(qtyPerItem) || qtyPerItem <= 0) return;
+
+    const existing = menuItemIngredients.find(
+      (r) => r.menuItemId === payload.menuItemId && r.ingredientId === payload.ingredientId
+    );
+
+    const next: MenuItemIngredient = existing
+      ? { ...existing, qtyPerItem }
+      : { id: crypto.randomUUID(), menuItemId: payload.menuItemId, ingredientId: payload.ingredientId, qtyPerItem };
+
+    if (hasSupabaseConfig && supabase) {
+      if (existing) {
+        const { error } = await supabase
+          .from("menu_item_ingredients")
+          .update({ qty_per_item: qtyPerItem })
+          .eq("id", existing.id);
+        if (error) {
+          pushToast("Reçete güncellenemedi.");
+          return;
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("menu_item_ingredients")
+          .insert({ menu_item_id: payload.menuItemId, ingredient_id: payload.ingredientId, qty_per_item: qtyPerItem })
+          .select("id, menu_item_id, ingredient_id, qty_per_item")
+          .single();
+        if (error || !data) {
+          pushToast("Reçete kaydedilemedi.");
+          return;
+        }
+        next.id = data.id;
+      }
+    }
+
+    setMenuItemIngredients((prev) => {
+      const filtered = prev.filter((r) => !(r.menuItemId === payload.menuItemId && r.ingredientId === payload.ingredientId));
+      return [...filtered, next];
+    });
+    pushToast("Reçete güncellendi.", "success");
+  };
+
+  const deleteMenuItemIngredient = async (id: string) => {
+    if (!id) return;
+    if (hasSupabaseConfig && supabase) {
+      const { error } = await supabase.from("menu_item_ingredients").delete().eq("id", id);
+      if (error) {
+        pushToast("Reçete satırı silinemedi.");
+        return;
+      }
+    }
+    setMenuItemIngredients((prev) => prev.filter((r) => r.id !== id));
+    pushToast("Reçete satırı silindi.", "success");
   };
 
   const toggleMenuItem = async (item: MenuItem) => {
@@ -525,6 +788,9 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     appUsers,
     menuItems,
     menuCategories,
+    ingredients,
+    inventoryMovements,
+    menuItemIngredients,
     sales,
     expenses,
     auditLogs,
@@ -535,6 +801,12 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     salesChartData,
     createMenuItem,
     createMenuCategory,
+    createIngredient,
+    deleteIngredient,
+    updateIngredientReorderLevel,
+    recordInventoryMovement,
+    upsertMenuItemIngredient,
+    deleteMenuItemIngredient,
     toggleMenuItem,
     deleteMenuItem,
     updateMenuItem,

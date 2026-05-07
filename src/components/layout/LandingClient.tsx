@@ -22,6 +22,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
 
   return (
     <div
+      suppressHydrationWarning
       className={`relative min-h-screen flex flex-col items-center justify-center overflow-hidden selection:bg-violet-500/10 transition-colors duration-500 ${
         isDark ? "bg-[#020408]" : "bg-[#fafafa]"
       }`}

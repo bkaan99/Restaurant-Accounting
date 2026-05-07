@@ -219,7 +219,7 @@ export function DashboardTab({
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => tl.format(value)}
+                  formatter={(value) => (typeof value === "number" ? tl.format(value) : `${value ?? ""}`)}
                   contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, color: dm ? "#e2e8f0" : "#1e293b", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                 />
               </PieChart>
@@ -269,7 +269,7 @@ export function DashboardTab({
                 <XAxis dataKey="date" stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fill: dm ? "#94a3b8" : "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
                 <YAxis stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fill: dm ? "#94a3b8" : "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(val) => `₺${val}`} dx={-10} />
                 <Tooltip
-                  formatter={(value: number) => tl.format(value)}
+                  formatter={(value) => (typeof value === "number" ? tl.format(value) : `${value ?? ""}`)}
                   contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 16, color: dm ? "#e2e8f0" : "#1e293b", backdropFilter: "blur(8px)", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                   itemStyle={{ fontSize: '13px', fontWeight: 600 }}
                 />
@@ -332,7 +332,7 @@ export function DashboardTab({
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" stroke={dm ? "#64748b" : "#94a3b8"} tick={{ fill: dm ? "#94a3b8" : "#475569", fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} width={85} />
                   <Tooltip
-                    formatter={(value: number) => [`${value} Adet`, "Satış"]}
+                    formatter={(value) => [`${typeof value === "number" ? value : value ?? ""} Adet`, "Satış"]}
                     cursor={{ fill: dm ? '#334155' : '#f1f5f9', opacity: 0.4 }}
                     contentStyle={{ background: dm ? "rgba(15, 23, 42, 0.9)" : "rgba(255, 255, 255, 0.95)", border: dm ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: 12, color: dm ? "#e2e8f0" : "#1e293b", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                   />

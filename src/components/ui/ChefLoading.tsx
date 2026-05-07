@@ -8,6 +8,7 @@ export function ChefLoading() {
 
   return (
     <div
+      suppressHydrationWarning
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-500 ${
         isDark ? "bg-[#020408]" : "bg-[#fafafa]"
       }`}
