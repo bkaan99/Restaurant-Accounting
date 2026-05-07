@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AppUser, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
+import packageJson from "../../../package.json";
 
 type RestaurantSettings = {
   restaurantName: string;
@@ -46,6 +47,7 @@ export function SettingsTab({
   onCreateUser: (payload: { name: string; email: string; password: string; role: UserRole }) => Promise<void>;
   allPermissions: PermissionKey[];
 }) {
+  const appVersion = `v${packageJson.version ?? "0.0.0"}`;
   const defaultRestaurantSettings: RestaurantSettings = {
     restaurantName: "LUMINOX",
     currency: "TRY",
@@ -454,7 +456,7 @@ export function SettingsTab({
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[
                   { label: "Durum", value: "Aktif", color: "text-emerald-500" },
-                  { label: "Versiyon", value: "v2.0.1" },
+                  { label: "Versiyon", value: appVersion },
                   { label: "Bağlantı", value: hasSupabaseConfig ? "Bulut" : "Demo", color: hasSupabaseConfig ? "text-indigo-500" : "text-amber-500" },
                   { label: "Gecikme", value: "24ms", color: "text-emerald-500" },
                 ].map((s, i) => (
