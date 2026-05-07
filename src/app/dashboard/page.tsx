@@ -54,6 +54,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Custom Hooks
   const { toasts, pushToast } = useToast();
@@ -284,7 +285,7 @@ export default function Home() {
         darkMode ? "theme-dark bg-slate-950 text-slate-100" : "theme-light bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100"
       } ${user ? "opacity-100" : "opacity-0"}`}
     >
-      <div className="grid gap-4 xl:grid-cols-[280px_1fr]">
+      <div className={`grid gap-4 transition-all duration-300 ${isSidebarCollapsed ? "xl:grid-cols-[72px_1fr]" : "xl:grid-cols-[280px_1fr]"}`}>
         <Sidebar 
           user={user} 
           tab={activeTab} 
@@ -295,6 +296,7 @@ export default function Home() {
           canAccessTab={canAccessTab}
           onSettingsClick={() => setTab("settings")}
           pushToast={pushToast}
+          onCollapseChange={setIsSidebarCollapsed}
         />
 
         <div className="space-y-4">
