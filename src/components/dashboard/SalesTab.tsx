@@ -28,6 +28,7 @@ export function SalesTab({
   sales: Sale[];
 }) {
   const dm = darkMode ?? false;
+  const recentSales = sales.slice(0, 10);
 
   return (
     <section className="grid gap-4 lg:grid-cols-3">
@@ -115,7 +116,7 @@ export function SalesTab({
         <div className="mb-3 flex items-end justify-between gap-3">
           <h2 className={`text-lg font-semibold ${dm ? "text-slate-100" : "text-slate-900"}`}>Son Siparişler</h2>
           <span className={`rounded-full border px-3 py-1 text-xs font-medium ${dm ? "border-white/10 bg-white/5 text-slate-300" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
-            Toplam {sales.length} sipariş
+            Son {recentSales.length} / Toplam {sales.length}
           </span>
         </div>
         <div className="overflow-auto">
@@ -129,7 +130,7 @@ export function SalesTab({
               </tr>
             </thead>
             <tbody>
-              {sales.map((sale) => (
+              {recentSales.map((sale) => (
                 <tr
                   key={sale.id}
                   className={`border-b transition ${dm ? "border-white/5 hover:bg-white/5" : "border-slate-100 hover:bg-slate-50/70"}`}
