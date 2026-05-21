@@ -104,52 +104,52 @@ export function MenuClient({
   return (
     <div
       suppressHydrationWarning
-      className={`min-h-screen selection:bg-violet-500/10 font-sans transition-colors duration-500 ${
-        isDark ? "bg-[#020408] text-slate-100" : "bg-[#fafafa] text-slate-800"
+      className={`min-h-screen bg-grain selection:bg-emerald-500/10 font-outfit transition-colors duration-500 ${
+        isDark ? "bg-[#050d09] text-[#f7ebd4]" : "bg-[#faf6f2] text-[#122b1c]"
       }`}
     >
       {/* Background Ornaments */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-violet-600/10" : "bg-violet-600/5"}`} />
-        <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/5 blur-[120px]" />
-        <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-fuchsia-600/10" : "bg-fuchsia-600/5"}`} />
+        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-emerald-600/10" : "bg-amber-600/5"}`} />
+        <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-700/5 blur-[120px]" />
+        <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-amber-600/10" : "bg-emerald-600/5"}`} />
         <div
-          className={`absolute inset-0 ${isDark ? "text-white/30 opacity-[0.03]" : "text-black/30 opacity-[0.05]"}`}
+          className={`absolute inset-0 ${isDark ? "text-[#f7ebd4]/20 opacity-[0.02]" : "text-[#122b1c]/30 opacity-[0.03]"}`}
           style={{
             backgroundImage: "radial-gradient(currentColor 0.5px, transparent 0.5px)",
-            backgroundSize: "32px 32px",
+            backgroundSize: "24px 24px",
           }}
         />
       </div>
 
       {/* Navbar */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl ${
-          isDark ? "border-white/5 bg-black/20" : "border-black/5 bg-white/40"
+        className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
+          isDark ? "border-[#f7ebd4]/5 bg-[#050d09]/75" : "border-[#122b1c]/5 bg-[#faf6f2]/75"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border ${
-              isDark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/70"
+            <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border transition ${
+              isDark ? "border-[#f7ebd4]/10 bg-white/5" : "border-[#122b1c]/10 bg-[#f5f1ea]"
             }`}>
               <Image src="/logo.png" alt={`${displayName} logosu`} width={40} height={40} className="h-full w-full object-contain p-1" />
             </div>
-            <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-white" : "text-slate-800"}`}>{displayName}</span>
+            <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-[#f7ebd4]" : "text-[#122b1c]"}`}>{displayName}</span>
           </Link>
 
           <div className="flex items-center gap-6 sm:gap-8">
-            <span className={`text-xs font-bold uppercase tracking-widest ${isDark ? "text-white" : "text-violet-600"}`}>Menü</span>
-            <Link href="/contact" className={`text-xs font-bold uppercase tracking-widest transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-violet-600"}`}>
+            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? "text-[#d4af37]" : "text-[#143d28]"}`}>Menü</span>
+            <Link href="/contact" className={`text-xs font-bold uppercase tracking-widest transition ${isDark ? "text-[#f7ebd4]/60 hover:text-[#d4af37]" : "text-[#122b1c]/60 hover:text-[#143d28]"}`}>
               İletişim
             </Link>
             <button
               type="button"
               onClick={() => setCartOpen(true)}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition duration-300 ${
                 isDark
-                  ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                  : "border-black/10 bg-white/60 text-slate-600 hover:bg-white"
+                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+                  : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
               }`}
               title="Sepet"
             >
@@ -157,21 +157,21 @@ export function MenuClient({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {cartItemCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-0.5 text-[9px] font-black text-white">
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c85a32] px-0.5 text-[9px] font-black text-white">
                   {cartItemCount > 9 ? "9+" : cartItemCount}
                 </span>
               ) : null}
             </button>
             <button
               onClick={toggleTheme}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition duration-300 ${
                 isDark
-                  ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                  : "border-black/10 bg-white/60 text-slate-600 hover:bg-white"
+                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+                  : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
               }`}
               title="Temayı değiştir"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 3a9 9 0 000 18V3z" fill="currentColor" stroke="none" />
               </svg>
@@ -181,28 +181,57 @@ export function MenuClient({
       </nav>
 
       {/* Header Section */}
-      <header className="relative z-10 flex flex-col items-center pt-28 pb-12">
-        <Link href="/" className="absolute top-8 left-8 flex h-10 w-10 items-center justify-center rounded-2xl border border-black/5 dark:border-white/5 bg-white/50 dark:bg-white/[0.03] shadow-sm transition hover:bg-white/80 dark:hover:bg-white/[0.08]">
-          <svg className="h-5 w-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <header className="relative z-10 flex flex-col items-center pt-32 pb-14 px-6">
+        <Link href="/" className={`absolute top-8 left-8 flex h-10 w-10 items-center justify-center rounded-2xl border transition shadow-sm ${
+          isDark 
+            ? "border-[#f7ebd4]/10 bg-[#0e241b]/60 hover:bg-[#143d28] text-[#f7ebd4]" 
+            : "border-[#122b1c]/10 bg-white/50 hover:bg-[#f5f1ea] text-[#122b1c]"
+        }`}>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <div className="text-center">
-          <p className="text-4xl sm:text-5xl text-violet-600 dark:text-violet-400" style={{ fontFamily: '"Brush Script MT", cursive' }}>
+        
+        <div className="text-center max-w-lg">
+          <p className={`text-4xl sm:text-5xl font-serif-cormorant font-bold italic tracking-wide ${
+            isDark ? "text-[#d4af37]" : "text-[#c85a32]"
+          }`}>
             {displayName}
           </p>
-          <h1 className={`mt-2 text-7xl sm:text-8xl font-black uppercase tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}>
-            MENU
-          </h1>
-          <div className={`mx-auto mt-4 h-1.5 w-24 rounded-full shadow-lg ${isDark ? "bg-violet-500 shadow-violet-900/40" : "bg-violet-600 shadow-violet-200"}`} />
+          
+          <div className="flex items-center justify-center gap-4 mt-2">
+            <div className={`h-[1px] w-8 sm:w-16 ${isDark ? "bg-[#d4af37]/30" : "bg-[#c85a32]/30"}`} />
+            <h1 className={`text-5xl sm:text-6xl font-serif-cormorant font-light tracking-[0.18em] uppercase ${
+              isDark ? "text-white" : "text-[#122b1c]"
+            }`}>
+              MENÜ
+            </h1>
+            <div className={`h-[1px] w-8 sm:w-16 ${isDark ? "bg-[#d4af37]/30" : "bg-[#c85a32]/30"}`} />
+          </div>
+
+          <div className={`mx-auto mt-4 flex items-center justify-center gap-1.5`}>
+            <div className={`h-1.5 w-1.5 rounded-full ${isDark ? "bg-[#d4af37]" : "bg-[#c85a32]"}`} />
+            <div className={`h-1 w-20 rounded-full ${isDark ? "bg-[#d4af37]/30" : "bg-[#c85a32]/30"}`} />
+            <div className={`h-1.5 w-1.5 rounded-full ${isDark ? "bg-[#d4af37]" : "bg-[#c85a32]"}`} />
+          </div>
+          
+          <p className={`mt-5 text-[11px] font-medium tracking-[0.25em] uppercase leading-relaxed ${
+            isDark ? "text-[#f7ebd4]/50" : "text-[#122b1c]/50"
+          }`}>
+            Dijital Lezzet Kartı
+          </p>
         </div>
       </header>
 
       <main className="relative z-10 mx-auto max-w-3xl px-6 pb-32">
         {/* Controls */}
-        <div className="mb-16 flex flex-col items-center gap-8">
-          <div className={`flex h-12 w-full max-w-sm items-center rounded-2xl border px-4 backdrop-blur-md shadow-sm focus-within:border-violet-500/50 ${isDark ? "border-white/10 bg-white/[0.03]" : "border-black/5 bg-white/50"}`}>
-            <svg className={`h-4 w-4 ${isDark ? "text-slate-500" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mb-16 flex flex-col items-center gap-6">
+          <div className={`flex h-11 w-full max-w-sm items-center rounded-xl border px-4 transition-all duration-300 ${
+            isDark 
+              ? "border-[#f7ebd4]/15 bg-[#0e241b]/60 focus-within:border-[#d4af37]/45 shadow-[inset_0_1px_3px_rgba(0,0,0,0.4)]" 
+              : "border-[#122b1c]/10 bg-[#f5f1ea]/80 focus-within:border-[#143d28]/35 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
+          }`}>
+            <svg className={`h-4 w-4 ${isDark ? "text-[#f7ebd4]/45" : "text-[#122b1c]/45"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input 
@@ -210,21 +239,25 @@ export function MenuClient({
               placeholder="Ürün Ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-transparent pl-3 text-xs font-medium outline-none ${isDark ? "text-slate-200 placeholder:text-slate-600" : "text-slate-800 placeholder:text-slate-400"}`}
+              className={`w-full bg-transparent pl-3 text-xs font-bold outline-none uppercase tracking-wider ${
+                isDark ? "text-[#f7ebd4] placeholder:text-[#f7ebd4]/35" : "text-[#122b1c] placeholder:text-[#122b1c]/35"
+              }`}
             />
           </div>
           
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-2">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`rounded-xl px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                className={`rounded-lg px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                   activeCategory === cat
-                    ? "bg-violet-600 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/40"
+                    ? isDark
+                      ? "bg-[#d4af37] text-[#050d09] border border-[#d4af37] shadow-lg shadow-[#d4af37]/10"
+                      : "bg-[#143d28] text-[#faf6f2] border border-[#143d28] shadow-lg shadow-[#143d28]/10"
                     : isDark
-                    ? "bg-white/[0.03] text-slate-400 border border-white/5 hover:bg-white/[0.08] hover:text-slate-200 shadow-sm"
-                    : "bg-white/50 text-slate-500 border border-black/5 hover:bg-white hover:text-slate-800 shadow-sm"
+                    ? "bg-[#0e241b]/60 text-[#f7ebd4]/60 border border-white/5 hover:bg-[#0e241b] hover:text-[#f7ebd4] shadow-sm"
+                    : "bg-[#f5f1ea]/80 text-[#122b1c]/60 border border-[#122b1c]/10 hover:bg-[#f5ebd7] hover:text-[#122b1c] shadow-sm"
                 }`}
               >
                 {cat}
@@ -237,87 +270,124 @@ export function MenuClient({
         {Object.keys(groupedItems).length === 0 ? (
           <div className="py-20 text-center text-slate-400 dark:text-slate-500 italic font-medium">Aradığınız lezzet bulunamadı...</div>
         ) : (
-          <div className="space-y-20">
+          <div className="space-y-16">
             {Object.entries(groupedItems).map(([category, items]) => (
               <section key={category} className="relative">
                 {/* Category Header */}
-                <div className="mb-10 flex items-center justify-center">
-                  <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-black/10 dark:via-white/10 to-transparent" />
-                  <h2 className={`px-8 text-xl font-black uppercase tracking-[0.3em] ${isDark ? "text-violet-300/90" : "text-slate-800"}`}>
-                    {category}
-                  </h2>
-                  <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-black/10 dark:via-white/10 to-transparent" />
+                <div className="mb-8 flex flex-col items-center justify-center">
+                  <div className="flex items-center justify-center gap-3 w-full">
+                    <div className={`h-[1px] flex-1 ${isDark ? "bg-[#d4af37]/20" : "bg-[#c85a32]/20"}`} />
+                    <span className={`text-[10px] font-black tracking-[0.3em] uppercase ${isDark ? "text-[#d4af37]" : "text-[#c85a32]"}`}>
+                      ★
+                    </span>
+                    <h2 className={`px-2 text-2xl font-serif-cormorant font-bold italic tracking-[0.1em] ${isDark ? "text-[#fcd3b6]" : "text-[#143d28]"}`}>
+                      {category}
+                    </h2>
+                    <span className={`text-[10px] font-black tracking-[0.3em] uppercase ${isDark ? "text-[#d4af37]" : "text-[#c85a32]"}`}>
+                      ★
+                    </span>
+                    <div className={`h-[1px] flex-1 ${isDark ? "bg-[#d4af37]/20" : "bg-[#c85a32]/20"}`} />
+                  </div>
                 </div>
 
                 {/* Items Box with Premium Menu Card Aesthetic */}
-                <div className={`relative overflow-hidden rounded-[2.2rem] border p-7 sm:p-10 shadow-sm transition-all ${
+                <div className={`relative overflow-hidden rounded-[1.8rem] border p-6 sm:p-9 shadow-sm transition-all duration-300 ${
                   isDark 
-                    ? "border-white/15 bg-gradient-to-b from-white/[0.06] via-white/[0.04] to-white/[0.03] shadow-none backdrop-blur-sm" 
-                    : "border-slate-200 bg-gradient-to-b from-white via-slate-50 to-white"
+                    ? "border-[#d4af37]/20 bg-gradient-to-b from-[#0e241b] via-[#091b13] to-[#050d09] shadow-none backdrop-blur-sm" 
+                    : "border-[#143d28]/15 bg-gradient-to-b from-[#fbf9f4] via-[#f7f2ea] to-[#fbf9f4] shadow-md shadow-[#122b1c]/5"
                 }`}>
+                  {/* Dashed Inner Frame */}
+                  <div className={`absolute inset-2 sm:inset-3 border border-dashed rounded-[1.4rem] pointer-events-none ${
+                    isDark ? "border-[#d4af37]/10" : "border-[#143d28]/10"
+                  }`} />
+                  
+                  {/* Subtle decorative dot pattern */}
                   <div
-                    className={`pointer-events-none absolute inset-0 opacity-[0.14] ${
-                      isDark ? "text-white/40" : "text-slate-500/30"
+                    className={`pointer-events-none absolute inset-0 opacity-[0.03] ${
+                      isDark ? "text-white" : "text-slate-900"
                     }`}
                     style={{
                       backgroundImage: "radial-gradient(currentColor 0.6px, transparent 0.6px)",
-                      backgroundSize: "22px 22px",
+                      backgroundSize: "20px 20px",
                     }}
                   />
-                  <div className="grid gap-8 sm:grid-cols-1">
+                  
+                  <div className="grid gap-7 sm:grid-cols-1">
                     {items.map((item) => (
-                      <div key={item.id} className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6 group">
+                      <div key={item.id} className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-3 group z-10">
                         <div className="flex-1">
-                          <h3 className={`text-[1.17rem] font-black tracking-tight transition-colors ${
-                            isDark ? "text-[#ffb078] group-hover:text-[#ffc497]" : "text-[#a54d2f] group-hover:text-[#8f3d24]"
-                          }`}>
-                            {item.name}
-                          </h3>
+                          {/* Name & Dot Leader & Price Row */}
+                          <div className="flex items-baseline justify-between gap-1">
+                            <h3 className={`text-base font-serif-cormorant font-bold tracking-tight transition-colors duration-200 ${
+                              isDark ? "text-[#fcd3b6] group-hover:text-white" : "text-[#143d28] group-hover:text-[#c85a32]"
+                            }`}>
+                              {item.name}
+                            </h3>
+                            <div className={`hidden sm:block flex-1 border-b border-dotted mx-3 self-baseline relative -top-[4px] ${
+                              isDark ? "border-[#d4af37]/25" : "border-[#143d28]/25"
+                            }`} />
+                            <span className={`hidden sm:block text-base font-serif-cormorant font-bold shrink-0 ${
+                              isDark ? "text-[#d4af37]" : "text-[#c85a32]"
+                            }`}>
+                              {tl.format(item.price).replace(",00", "").replace("₺", "")} TL
+                            </span>
+                          </div>
+                          
+                          {/* Description */}
                           {item.description && (
-                            <p className={`mt-1 text-[0.84rem] font-semibold leading-relaxed ${
-                              isDark ? "text-[#f2d4c2]/85" : "text-[#8d5f4c]"
+                            <p className={`mt-1.5 text-xs font-serif-cormorant italic leading-relaxed pr-8 ${
+                              isDark ? "text-[#f7ebd4]/70" : "text-[#122b1c]/70"
                             }`}>
                               {item.description}
                             </p>
                           )}
-                          <div className={`mt-2 h-[1px] w-full border-t border-dashed ${
-                            isDark ? "border-[#ffb078]/25" : "border-[#be8a74]/35"
-                          }`} />
                         </div>
 
-                        <div className="flex shrink-0 flex-col items-end gap-2 sm:pt-0.5">
-                          <span className={`text-[1.35rem] font-black tracking-tight ${
-                            isDark ? "text-[#ffb078]" : "text-[#a54d2f]"
+                        {/* Add to Cart & Cart Quantity Section */}
+                        <div className="flex shrink-0 flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1.5 justify-between sm:justify-start">
+                          <span className={`sm:hidden text-base font-serif-cormorant font-bold ${
+                            isDark ? "text-[#d4af37]" : "text-[#c85a32]"
                           }`}>
                             {tl.format(item.price).replace(",00", "").replace("₺", "")} TL
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => addToCart(item)}
-                            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition ${
-                              addedFlashId === item.id
-                                ? "bg-emerald-500 text-white"
-                                : isDark
-                                ? "border border-white/15 bg-white/10 text-slate-200 hover:bg-white/15"
-                                : "border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
-                            }`}
-                          >
-                            {addedFlashId === item.id ? "Eklendi ✓" : "Sepete Ekle"}
-                          </button>
-                          {(cartQty[item.id] ?? 0) > 0 ? (
-                            <span className={`text-[10px] font-bold ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                              Sepette: {cartQty[item.id]}
-                            </span>
-                          ) : null}
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => addToCart(item)}
+                              className={`rounded-lg px-3 py-1.5 text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                addedFlashId === item.id
+                                  ? "bg-[#10b981] text-white"
+                                  : isDark
+                                  ? "border border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37] hover:bg-[#d4af37]/20 hover:text-white"
+                                  : "border border-[#143d28]/20 bg-[#143d28]/5 text-[#143d28] hover:bg-[#143d28] hover:text-[#faf6f2]"
+                              }`}
+                            >
+                              {addedFlashId === item.id ? "Eklendi ✓" : "Ekle"}
+                            </button>
+                            {(cartQty[item.id] ?? 0) > 0 ? (
+                              <span className={`text-[9px] font-black uppercase tracking-wider ${isDark ? "text-[#d4af37]/80" : "text-[#c85a32]/80"}`}>
+                                ({cartQty[item.id]} adet)
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Decorative Icon */}
-                <div className="absolute -bottom-5 -right-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-black/5 dark:border-white/10 bg-white dark:bg-[#07090f] shadow-xl dark:shadow-2xl text-2xl">
-                   {category.includes("İçecek") ? "🥤" : category.includes("Tatlı") ? "🍮" : "🍽️"}
+                {/* Decorative Vintage Stamp / Badge */}
+                <div className={`absolute -bottom-4 -right-4 flex h-14 w-14 items-center justify-center rounded-full border shadow-md transition-transform duration-500 hover:rotate-12 ${
+                  isDark 
+                    ? "border-[#d4af37]/35 bg-[#0e241b] text-[#d4af37] shadow-black/40" 
+                    : "border-[#143d28]/20 bg-[#faf6f2] text-[#143d28] shadow-[#122b1c]/10"
+                }`}>
+                  <span className="text-xl">
+                    {category.toLowerCase().includes("içecek") || category.toLowerCase().includes("bar") ? "☕" : 
+                     category.toLowerCase().includes("tatlı") || category.toLowerCase().includes("pasta") ? "🍰" : 
+                     category.toLowerCase().includes("kahvaltı") ? "🍳" : "🍽️"}
+                  </span>
                 </div>
               </section>
             ))}
@@ -348,10 +418,11 @@ export function MenuClient({
       />
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        
-        h1 {
-          font-family: 'Inter', sans-serif;
+        h1, h2, h3, .font-serif-cormorant {
+          font-family: 'Cormorant Garamond', Georgia, serif !important;
+        }
+        body, input, button, .font-outfit {
+          font-family: 'Outfit', sans-serif !important;
         }
       `}</style>
     </div>
