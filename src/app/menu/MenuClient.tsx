@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MenuItem } from "@/lib/types";
 import { useTheme } from "@/context/ThemeContext";
+import { MenuCart } from "@/components/menu/MenuCart";
 
 const tl = new Intl.NumberFormat("tr-TR", {
   style: "currency",
@@ -15,14 +16,19 @@ const tl = new Intl.NumberFormat("tr-TR", {
 export function MenuClient({
   menuItems,
   restaurantName,
+  whatsappPhone,
 }: {
   menuItems: MenuItem[];
   restaurantName: string;
+  whatsappPhone: string;
 }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
   const [activeCategory, setActiveCategory] = useState<string>("Tümü");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cartQty, setCartQty] = useState<Record<string, number>>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [addedFlashId, setAddedFlashId] = useState<string | null>(null);
 
   const displayName = restaurantName || "Restaurant";
 
@@ -48,6 +54,52 @@ export function MenuClient({
       return acc;
     }, {});
   }, [filteredItems, activeCategory]);
+
+  const cartLines = useMemo(() => {
+    return Object.entries(cartQty)
+      .map(([id, qty]) => {
+        const item = menuItems.find((m) => m.id === id);
+        if (!item || qty <= 0) return null;
+        return { id: item.id, name: item.name, price: item.price, qty };
+      })
+      .filter((line): line is { id: string; name: string; price: number; qty: number } => line !== null);
+  }, [cartQty, menuItems]);
+
+  const cartTotal = useMemo(
+    () => cartLines.reduce((sum, line) => sum + line.price * line.qty, 0),
+    [cartLines]
+  );
+
+  const cartItemCount = useMemo(
+    () => cartLines.reduce((sum, line) => sum + line.qty, 0),
+    [cartLines]
+  );
+
+  const addToCart = (item: MenuItem) => {
+    setCartQty((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
+    setAddedFlashId(item.id);
+    window.setTimeout(() => setAddedFlashId((current) => (current === item.id ? null : current)), 600);
+  };
+
+  const updateCartQty = (id: string, delta: number) => {
+    setCartQty((prev) => {
+      const nextQty = (prev[id] ?? 0) + delta;
+      if (nextQty <= 0) {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: nextQty };
+    });
+  };
+
+  const removeFromCart = (id: string) => {
+    setCartQty((prev) => {
+      const { [id]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const clearCart = () => setCartQty({});
 
   return (
     <div
@@ -92,6 +144,25 @@ export function MenuClient({
               İletişim
             </Link>
             <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+                isDark
+                  ? "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  : "border-black/10 bg-white/60 text-slate-600 hover:bg-white"
+              }`}
+              title="Sepet"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartItemCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-0.5 text-[9px] font-black text-white">
+                  {cartItemCount > 9 ? "9+" : cartItemCount}
+                </span>
+              ) : null}
+            </button>
+            <button
               onClick={toggleTheme}
               className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
                 isDark
@@ -127,7 +198,7 @@ export function MenuClient({
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-3xl px-6 pb-24">
+      <main className="relative z-10 mx-auto max-w-3xl px-6 pb-32">
         {/* Controls */}
         <div className="mb-16 flex flex-col items-center gap-8">
           <div className={`flex h-12 w-full max-w-sm items-center rounded-2xl border px-4 backdrop-blur-md shadow-sm focus-within:border-violet-500/50 ${isDark ? "border-white/10 bg-white/[0.03]" : "border-black/5 bg-white/50"}`}>
@@ -195,7 +266,7 @@ export function MenuClient({
                   />
                   <div className="grid gap-8 sm:grid-cols-1">
                     {items.map((item) => (
-                      <div key={item.id} className="relative flex items-start justify-between gap-6 group">
+                      <div key={item.id} className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6 group">
                         <div className="flex-1">
                           <h3 className={`text-[1.17rem] font-black tracking-tight transition-colors ${
                             isDark ? "text-[#ffb078] group-hover:text-[#ffc497]" : "text-[#a54d2f] group-hover:text-[#8f3d24]"
@@ -213,15 +284,31 @@ export function MenuClient({
                             isDark ? "border-[#ffb078]/25" : "border-[#be8a74]/35"
                           }`} />
                         </div>
-                        
-                        <div className="flex shrink-0 items-center pt-0.5">
-                          <div className="relative min-w-[84px] text-right">
-                            <span className={`relative text-[1.35rem] font-black tracking-tight ${
-                              isDark ? "text-[#ffb078]" : "text-[#a54d2f]"
-                            }`}>
-                              {tl.format(item.price).replace(",00", "").replace("₺", "")} TL
+
+                        <div className="flex shrink-0 flex-col items-end gap-2 sm:pt-0.5">
+                          <span className={`text-[1.35rem] font-black tracking-tight ${
+                            isDark ? "text-[#ffb078]" : "text-[#a54d2f]"
+                          }`}>
+                            {tl.format(item.price).replace(",00", "").replace("₺", "")} TL
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => addToCart(item)}
+                            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition ${
+                              addedFlashId === item.id
+                                ? "bg-emerald-500 text-white"
+                                : isDark
+                                ? "border border-white/15 bg-white/10 text-slate-200 hover:bg-white/15"
+                                : "border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
+                            }`}
+                          >
+                            {addedFlashId === item.id ? "Eklendi ✓" : "Sepete Ekle"}
+                          </button>
+                          {(cartQty[item.id] ?? 0) > 0 ? (
+                            <span className={`text-[10px] font-bold ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                              Sepette: {cartQty[item.id]}
                             </span>
-                          </div>
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -244,6 +331,21 @@ export function MenuClient({
           </p>
         </footer>
       </main>
+
+      <MenuCart
+        isDark={isDark}
+        lines={cartLines}
+        total={cartTotal}
+        itemCount={cartItemCount}
+        isOpen={cartOpen}
+        onOpen={() => setCartOpen(true)}
+        onClose={() => setCartOpen(false)}
+        onUpdateQty={updateCartQty}
+        onRemoveLine={removeFromCart}
+        onClear={clearCart}
+        whatsappPhone={whatsappPhone}
+        restaurantName={displayName}
+      />
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');

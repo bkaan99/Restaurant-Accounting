@@ -1,16 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { AppUser, PermissionKey, RolePermissionConfig, UserRole } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { AppUser, PermissionKey, RestaurantSettings, RolePermissionConfig, UserRole } from "@/lib/types";
 import { hasSupabaseConfig } from "@/lib/supabase";
 import packageJson from "../../../package.json";
-
-type RestaurantSettings = {
-  restaurantName: string;
-  currency: string;
-  timezone: string;
-  taxRate: string;
-};
 
 export function SettingsTab({
   user,
@@ -53,10 +46,15 @@ export function SettingsTab({
     currency: "TRY",
     timezone: "Europe/Istanbul",
     taxRate: "10",
+    whatsappOrderPhone: "",
   };
 
   const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setLocalRestaurantSettings(restaurantSettings);
+  }, [restaurantSettings]);
   const [activeSection, setActiveSection] = useState<"profile" | "restaurant" | "users" | "permissions" | "appearance" | "system">("profile");
   const [roleDrafts, setRoleDrafts] = useState<Record<string, UserRole>>({});
   const [rolePermissionDrafts, setRolePermissionDrafts] = useState<Record<"manager" | "staff", PermissionKey[]>>({
@@ -263,6 +261,24 @@ export function SettingsTab({
                     disabled={!canManageSettings}
                     onChange={(e) => setLocalRestaurantSettings((p) => ({ ...p, taxRate: e.target.value }))}
                   />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    WhatsApp Sipariş Numarası
+                  </label>
+                  <input
+                    className={inputClass}
+                    type="tel"
+                    placeholder="905551234567 veya 0555 123 45 67"
+                    value={localRestaurantSettings.whatsappOrderPhone}
+                    disabled={!canManageSettings}
+                    onChange={(e) =>
+                      setLocalRestaurantSettings((p) => ({ ...p, whatsappOrderPhone: e.target.value }))
+                    }
+                  />
+                  <p className={`text-xs font-semibold ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
+                    Menü sayfasındaki WhatsApp siparişi yalnızca bu numarayı kullanır. Kaydettikten sonra müşteriler /menu üzerinden sipariş verebilir.
+                  </p>
                 </div>
               </div>
               <div className="pt-6 flex gap-3">
