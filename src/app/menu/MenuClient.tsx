@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { MenuItem } from "@/lib/types";
 import { useTheme } from "@/context/ThemeContext";
 import { MenuCart } from "@/components/menu/MenuCart";
+import { PublicNav } from "@/components/layout/PublicNav";
 
 const tl = new Intl.NumberFormat("tr-TR", {
   style: "currency",
@@ -122,67 +122,40 @@ export function MenuClient({
         />
       </div>
 
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
-          isDark ? "border-[#f7ebd4]/5 bg-[#050d09]/75" : "border-[#122b1c]/5 bg-[#faf6f2]/75"
-        }`}
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border transition ${
-              isDark ? "border-[#f7ebd4]/10 bg-white/5" : "border-[#122b1c]/10 bg-[#f5f1ea]"
-            }`}>
-              <Image src="/logo.png" alt={`${displayName} logosu`} width={40} height={40} className="h-full w-full object-contain p-1" />
-            </div>
-            <span className={`text-sm font-black tracking-tight sm:text-base ${isDark ? "text-[#f7ebd4]" : "text-[#122b1c]"}`}>{displayName}</span>
-          </Link>
-
-          <div className="flex items-center gap-6 sm:gap-8">
-            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? "text-[#d4af37]" : "text-[#143d28]"}`}>Menü</span>
-            <Link href="/contact" className={`text-xs font-bold uppercase tracking-widest transition ${isDark ? "text-[#f7ebd4]/60 hover:text-[#d4af37]" : "text-[#122b1c]/60 hover:text-[#143d28]"}`}>
-              İletişim
-            </Link>
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border transition duration-300 ${
-                isDark
-                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
-                  : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
-              }`}
-              title="Sepet"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cartItemCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c85a32] px-0.5 text-[9px] font-black text-white">
-                  {cartItemCount > 9 ? "9+" : cartItemCount}
-                </span>
-              ) : null}
-            </button>
-            <button
-              onClick={toggleTheme}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition duration-300 ${
-                isDark
-                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
-                  : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
-              }`}
-              title="Temayı değiştir"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3a9 9 0 000 18V3z" fill="currentColor" stroke="none" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicNav
+        displayName={displayName}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
+        links={[
+          { href: "/menu", label: "Menü", active: true },
+          { href: "/contact", label: "İletişim" },
+        ]}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition duration-300 ${
+              isDark
+                ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+                : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
+            }`}
+            title="Sepet"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {cartItemCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c85a32] px-0.5 text-[9px] font-black text-white">
+                {cartItemCount > 9 ? "9+" : cartItemCount}
+              </span>
+            ) : null}
+          </button>
+        }
+      />
 
       {/* Header Section */}
       <header className="relative z-10 flex flex-col items-center pt-32 pb-14 px-6">
-        <Link href="/" className={`absolute top-8 left-8 flex h-10 w-10 items-center justify-center rounded-2xl border transition shadow-sm ${
+        <Link href="/" className={`absolute top-8 left-8 hidden h-10 w-10 items-center justify-center rounded-2xl border transition shadow-sm md:flex ${
           isDark 
             ? "border-[#f7ebd4]/10 bg-[#0e241b]/60 hover:bg-[#143d28] text-[#f7ebd4]" 
             : "border-[#122b1c]/10 bg-white/50 hover:bg-[#f5f1ea] text-[#122b1c]"
@@ -245,12 +218,12 @@ export function MenuClient({
             />
           </div>
           
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="-mx-2 flex gap-2 overflow-x-auto px-2 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`rounded-lg px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                className={`shrink-0 rounded-lg px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                   activeCategory === cat
                     ? isDark
                       ? "bg-[#d4af37] text-[#050d09] border border-[#d4af37] shadow-lg shadow-[#d4af37]/10"

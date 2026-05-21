@@ -59,7 +59,7 @@ export function MenuCart({
         type="button"
         onClick={onOpen}
         aria-label="Sepeti aç"
-        className={`fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg transition hover:scale-105 active:scale-95 ${
+        className={`fixed bottom-5 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg transition hover:scale-105 active:scale-95 sm:bottom-6 sm:right-6 ${
           isDark
             ? "border-white/15 bg-violet-600 text-white shadow-violet-900/40"
             : "border-violet-200 bg-violet-600 text-white shadow-violet-300/50"
