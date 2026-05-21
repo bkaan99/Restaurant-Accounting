@@ -2,12 +2,16 @@ import { createClient } from "@supabase/supabase-js";
 import { MenuItem } from "@/lib/types";
 import { MenuClient } from "./MenuClient";
 
-async function getMenuData(): Promise<{ menuItems: MenuItem[]; restaurantName: string }> {
+async function getMenuData(): Promise<{
+  menuItems: MenuItem[];
+  restaurantName: string;
+  whatsappPhone: string;
+}> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    return { menuItems: [], restaurantName: "" };
+    return { menuItems: [], restaurantName: "", whatsappPhone: "" };
   }
 
   try {
@@ -46,14 +50,24 @@ async function getMenuData(): Promise<{ menuItems: MenuItem[]; restaurantName: s
       (r) => r.ayar_anahtari === "restaurant_name"
     );
     const restaurantName = nameRow?.ayar_degeri ?? "";
+    const whatsappRow = (settingsRes.data ?? []).find(
+      (r) => r.ayar_anahtari === "whatsapp_order_phone"
+    );
+    const whatsappPhone = whatsappRow?.ayar_degeri?.trim() ?? "";
 
-    return { menuItems, restaurantName };
+    return { menuItems, restaurantName, whatsappPhone };
   } catch {
-    return { menuItems: [], restaurantName: "" };
+    return { menuItems: [], restaurantName: "", whatsappPhone: "" };
   }
 }
 
 export default async function MenuPage() {
-  const { menuItems, restaurantName } = await getMenuData();
-  return <MenuClient menuItems={menuItems} restaurantName={restaurantName} />;
+  const { menuItems, restaurantName, whatsappPhone } = await getMenuData();
+  return (
+    <MenuClient
+      menuItems={menuItems}
+      restaurantName={restaurantName}
+      whatsappPhone={whatsappPhone}
+    />
+  );
 }

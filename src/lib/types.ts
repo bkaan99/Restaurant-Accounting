@@ -53,6 +53,7 @@ export type RestaurantSettings = {
   currency: string;
   timezone: string;
   taxRate: string;
+  whatsappOrderPhone: string;
 };
 
 export type ToastType = "error" | "warning" | "success";

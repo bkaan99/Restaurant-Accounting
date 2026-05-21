@@ -25,7 +25,7 @@ export default async function LandingPage() {
   const displayName = restaurantName || "Restoran";
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
+    <main className="relative min-h-[100dvh] overflow-x-hidden">
       <LandingClient displayName={displayName} />
     </main>
   );
