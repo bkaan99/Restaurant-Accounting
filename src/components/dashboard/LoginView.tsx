@@ -2,11 +2,41 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  checkSupabaseConnection,
+  hasSupabaseConfig,
+  type SupabaseConnectionStatus,
+} from "@/lib/supabase";
 
 const heroTitle = "Restoran operasyonunu tek ekranda yonet.";
 
+const connectionBadge: Record<
+  SupabaseConnectionStatus,
+  { border: string; dot: string; label: string }
+> = {
+  missing: {
+    border: "border-amber-200/70 bg-amber-50/90 text-amber-900",
+    dot: "bg-amber-500",
+    label: "Supabase yapılandırması bulunamadı",
+  },
+  checking: {
+    border: "border-slate-200/80 bg-slate-50/90 text-slate-700",
+    dot: "bg-slate-400 animate-pulse",
+    label: "Supabase bağlantısı kontrol ediliyor…",
+  },
+  connected: {
+    border: "border-emerald-200/80 bg-emerald-50/90 text-emerald-800",
+    dot: "bg-emerald-500",
+    label: "Supabase bağlantısı başarılı",
+  },
+  failed: {
+    border: "border-red-200/80 bg-red-50/90 text-red-800",
+    dot: "bg-red-500",
+    label: "Supabase bağlantısı kurulamadı",
+  },
+};
+
 export function LoginView({
-  hasSupabaseConfig,
   loading,
   email,
   password,
@@ -16,7 +46,6 @@ export function LoginView({
   errorMessage,
   isSubmitting,
 }: {
-  hasSupabaseConfig: boolean;
   loading: boolean;
   email: string;
   password: string;
@@ -29,6 +58,27 @@ export function LoginView({
   const [typedHeroTitle, setTypedHeroTitle] = useState("");
   const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false, false]);
   const [formVisible, setFormVisible] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<SupabaseConnectionStatus>(
+    hasSupabaseConfig ? "checking" : "missing"
+  );
+
+  useEffect(() => {
+    if (!hasSupabaseConfig) {
+      setConnectionStatus("missing");
+      return;
+    }
+
+    let cancelled = false;
+    setConnectionStatus("checking");
+
+    void checkSupabaseConnection().then((status) => {
+      if (!cancelled) setConnectionStatus(status);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let charIndex = 0;
@@ -117,14 +167,10 @@ export function LoginView({
           <p className="mt-2 text-sm text-slate-200">Hesabinizla giris yapip yonetim paneline devam edin.</p>
 
           <div
-            className={`mt-5 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${
-              hasSupabaseConfig
-                ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-800"
-                : "border-amber-200/70 bg-amber-50/90 text-amber-900"
-            }`}
+            className={`mt-5 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${connectionBadge[connectionStatus].border}`}
           >
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${hasSupabaseConfig ? "bg-emerald-500" : "bg-amber-500"}`} />
-            <span>Supabase baglantisi {hasSupabaseConfig ? "basarili" : "bulunamadi"}</span>
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${connectionBadge[connectionStatus].dot}`} />
+            <span>{connectionBadge[connectionStatus].label}</span>
           </div>
           {loading ? <p className="mt-2 text-xs text-blue-700">Supabase verileri yukleniyor...</p> : null}
 

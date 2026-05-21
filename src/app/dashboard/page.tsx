@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { hasSupabaseConfig } from "@/lib/supabase";
 import { ALL_PERMISSIONS, PermissionKey, TabType, UserRole } from "@/lib/types";
 
 // Components
@@ -265,7 +264,6 @@ export default function Home() {
         )}
         {!showSplash && (
           <LoginView
-            hasSupabaseConfig={hasSupabaseConfig}
             loading={loading}
             email={email}
             password={password}
