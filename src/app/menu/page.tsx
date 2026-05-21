@@ -6,12 +6,13 @@ async function getMenuData(): Promise<{
   menuItems: MenuItem[];
   restaurantName: string;
   whatsappPhone: string;
+  isClosed: boolean;
 }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    return { menuItems: [], restaurantName: "", whatsappPhone: "" };
+    return { menuItems: [], restaurantName: "", whatsappPhone: "", isClosed: false };
   }
 
   try {
@@ -54,20 +55,25 @@ async function getMenuData(): Promise<{
       (r) => r.ayar_anahtari === "whatsapp_order_phone"
     );
     const whatsappPhone = whatsappRow?.ayar_degeri?.trim() ?? "";
+    const closedRow = (settingsRes.data ?? []).find(
+      (r) => r.ayar_anahtari === "is_closed"
+    );
+    const isClosed = closedRow?.ayar_degeri === "true";
 
-    return { menuItems, restaurantName, whatsappPhone };
+    return { menuItems, restaurantName, whatsappPhone, isClosed };
   } catch {
-    return { menuItems: [], restaurantName: "", whatsappPhone: "" };
+    return { menuItems: [], restaurantName: "", whatsappPhone: "", isClosed: false };
   }
 }
 
 export default async function MenuPage() {
-  const { menuItems, restaurantName, whatsappPhone } = await getMenuData();
+  const { menuItems, restaurantName, whatsappPhone, isClosed } = await getMenuData();
   return (
     <MenuClient
       menuItems={menuItems}
       restaurantName={restaurantName}
       whatsappPhone={whatsappPhone}
+      isClosed={isClosed}
     />
   );
 }

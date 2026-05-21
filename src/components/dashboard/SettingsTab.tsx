@@ -47,6 +47,7 @@ export function SettingsTab({
     timezone: "Europe/Istanbul",
     taxRate: "10",
     whatsappOrderPhone: "",
+    isClosed: false,
   };
 
   const [localRestaurantSettings, setLocalRestaurantSettings] = useState<RestaurantSettings>(restaurantSettings);
@@ -279,6 +280,27 @@ export function SettingsTab({
                   <p className={`text-xs font-semibold ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
                     Menü sayfasındaki WhatsApp siparişi yalnızca bu numarayı kullanır. Kaydettikten sonra müşteriler /menu üzerinden sipariş verebilir.
                   </p>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={localRestaurantSettings.isClosed || false}
+                      disabled={!canManageSettings}
+                      onChange={(e) =>
+                        setLocalRestaurantSettings((p) => ({ ...p, isClosed: e.target.checked }))
+                      }
+                      className="w-5 h-5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <p className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
+                        Dükkanı Kapat (Sipariş Alımını Durdur)
+                      </p>
+                      <p className={`text-xs font-semibold ${darkMode ? "text-slate-500" : "text-slate-500"}`}>
+                        Dükkan kapalıyken müşteriler menüyü görebilir ancak sepet üzerinden sipariş veremez.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
               <div className="pt-6 flex gap-3">

@@ -26,6 +26,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
     timezone: "Europe/Istanbul",
     taxRate: "10",
     whatsappOrderPhone: "",
+    isClosed: false,
   });
   const [expenseForm, setExpenseForm] = useState({ title: "", supplier: "", amount: "", expenseDate: new Date().toISOString().slice(0, 10), note: "" });
 
@@ -221,6 +222,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
           timezone: settingsByKey.timezone || "Europe/Istanbul",
           taxRate: settingsByKey.tax_rate || "10",
           whatsappOrderPhone: settingsByKey.whatsapp_order_phone || "",
+          isClosed: settingsByKey.is_closed === "true",
         });
 
         const parsePermissionSetting = (key: string, fallback: PermissionKey[]) => {
@@ -634,6 +636,7 @@ export function useRestaurantData(pushToast: (msg: string, type?: ToastType) => 
       { ayar_anahtari: "timezone", ayar_degeri: settings.timezone, guncelleyen_kullanici: actorUserId ?? null },
       { ayar_anahtari: "tax_rate", ayar_degeri: settings.taxRate, guncelleyen_kullanici: actorUserId ?? null },
       { ayar_anahtari: "whatsapp_order_phone", ayar_degeri: settings.whatsappOrderPhone, guncelleyen_kullanici: actorUserId ?? null },
+      { ayar_anahtari: "is_closed", ayar_degeri: settings.isClosed ? "true" : "false", guncelleyen_kullanici: actorUserId ?? null },
     ];
     const fallbackPayload = payload.map(({ ayar_anahtari, ayar_degeri }) => ({ ayar_anahtari, ayar_degeri }));
 

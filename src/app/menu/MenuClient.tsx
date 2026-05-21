@@ -17,10 +17,12 @@ export function MenuClient({
   menuItems,
   restaurantName,
   whatsappPhone,
+  isClosed,
 }: {
   menuItems: MenuItem[];
   restaurantName: string;
   whatsappPhone: string;
+  isClosed: boolean;
 }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
@@ -131,25 +133,27 @@ export function MenuClient({
           { href: "/contact", label: "İletişim" },
         ]}
         trailing={
-          <button
-            type="button"
-            onClick={() => setCartOpen(true)}
-            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition duration-300 ${
-              isDark
-                ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
-                : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
-            }`}
-            title="Sepet"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {cartItemCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c85a32] px-0.5 text-[9px] font-black text-white">
-                {cartItemCount > 9 ? "9+" : cartItemCount}
-              </span>
-            ) : null}
-          </button>
+          !isClosed ? (
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition duration-300 ${
+                isDark
+                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+                  : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
+              }`}
+              title="Sepet"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartItemCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c85a32] px-0.5 text-[9px] font-black text-white">
+                  {cartItemCount > 9 ? "9+" : cartItemCount}
+                </span>
+              ) : null}
+            </button>
+          ) : null
         }
       />
 
@@ -193,6 +197,15 @@ export function MenuClient({
           }`}>
             Dijital Lezzet Kartı
           </p>
+          {isClosed && (
+            <div className={`mt-6 inline-block px-6 py-3 rounded-2xl border shadow-sm ${
+              isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-200 text-red-600"
+            }`}>
+              <p className="text-sm font-bold tracking-wide">
+                ⚠️ Dükkan kapalı. Şu an sipariş alınamıyor.
+              </p>
+            </div>
+          )}
         </div>
       </header>
 
@@ -325,24 +338,28 @@ export function MenuClient({
                           </span>
                           
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => addToCart(item)}
-                              className={`rounded-lg px-3 py-1.5 text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${
-                                addedFlashId === item.id
-                                  ? "bg-[#10b981] text-white"
-                                  : isDark
-                                  ? "border border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37] hover:bg-[#d4af37]/20 hover:text-white"
-                                  : "border border-[#143d28]/20 bg-[#143d28]/5 text-[#143d28] hover:bg-[#143d28] hover:text-[#faf6f2]"
-                              }`}
-                            >
-                              {addedFlashId === item.id ? "Eklendi ✓" : "Ekle"}
-                            </button>
-                            {(cartQty[item.id] ?? 0) > 0 ? (
-                              <span className={`text-[9px] font-black uppercase tracking-wider ${isDark ? "text-[#d4af37]/80" : "text-[#c85a32]/80"}`}>
-                                ({cartQty[item.id]} adet)
-                              </span>
-                            ) : null}
+                            {!isClosed && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => addToCart(item)}
+                                  className={`rounded-lg px-3 py-1.5 text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                    addedFlashId === item.id
+                                      ? "bg-[#10b981] text-white"
+                                      : isDark
+                                      ? "border border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37] hover:bg-[#d4af37]/20 hover:text-white"
+                                      : "border border-[#143d28]/20 bg-[#143d28]/5 text-[#143d28] hover:bg-[#143d28] hover:text-[#faf6f2]"
+                                  }`}
+                                >
+                                  {addedFlashId === item.id ? "Eklendi ✓" : "Ekle"}
+                                </button>
+                                {(cartQty[item.id] ?? 0) > 0 ? (
+                                  <span className={`text-[9px] font-black uppercase tracking-wider ${isDark ? "text-[#d4af37]/80" : "text-[#c85a32]/80"}`}>
+                                    ({cartQty[item.id]} adet)
+                                  </span>
+                                ) : null}
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
