@@ -61,7 +61,7 @@ export function PublicNav({
       : "text-[#122b1c]/60 hover:text-[#143d28]";
 
   const iconBtnClass = isDark
-    ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+    ? "border-white/10 bg-[#121217] text-[#f7ebd4] hover:bg-[#1a1a24] hover:border-white/20"
     : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]";
 
   const themeToggle = (
@@ -82,14 +82,14 @@ export function PublicNav({
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
-          isDark ? "border-[#f7ebd4]/5 bg-[#050d09]/75" : "border-[#122b1c]/5 bg-[#faf6f2]/75"
+          isDark ? "border-white/5 bg-[#09090b]/80" : "border-[#122b1c]/5 bg-[#faf6f2]/75"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3" onClick={handleLinkClick}>
             <div
               className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition sm:h-10 sm:w-10 ${
-                isDark ? "border-[#f7ebd4]/10 bg-white/5" : "border-[#122b1c]/10 bg-[#f5f1ea]"
+                isDark ? "border-white/10 bg-white/5" : "border-[#122b1c]/10 bg-[#f5f1ea]"
               }`}
             >
               <Image
@@ -171,7 +171,7 @@ export function PublicNav({
           <div
             className={`absolute left-0 right-0 top-[57px] border-b px-4 py-4 shadow-xl sm:top-[65px] ${
               isDark
-                ? "border-[#f7ebd4]/10 bg-[#050d09]/95"
+                ? "border-white/10 bg-[#09090b]/95"
                 : "border-[#122b1c]/10 bg-[#faf6f2]/95"
             }`}
           >

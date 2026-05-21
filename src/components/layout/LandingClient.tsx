@@ -24,8 +24,8 @@ export function LandingClient({ displayName }: { displayName: string }) {
   return (
     <div
       suppressHydrationWarning
-      className={`relative flex min-h-[100dvh] flex-col overflow-x-hidden bg-grain selection:bg-emerald-500/10 transition-colors duration-500 ${
-        isDark ? "bg-[#050d09]" : "bg-[#faf6f2]"
+      className={`relative flex min-h-[100dvh] flex-col overflow-x-hidden selection:bg-emerald-500/10 transition-colors duration-500 ${
+        isDark ? "bg-[#09090b]" : "bg-[#faf6f2]"
       }`}
     >
       {isLoading && <ChefLoading />}
@@ -44,20 +44,13 @@ export function LandingClient({ displayName }: { displayName: string }) {
       <div className="pointer-events-none absolute inset-0 z-0">
         <div
           className={`absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full blur-[100px] sm:h-[560px] sm:w-[560px] md:h-[700px] md:w-[700px] ${
-            isDark ? "bg-emerald-800/15" : "bg-emerald-600/5"
+            isDark ? "bg-[#d4af37]/8" : "bg-emerald-600/5"
           }`}
         />
         <div
           className={`absolute -bottom-32 left-1/4 h-[280px] w-[280px] rounded-full blur-[90px] sm:h-[400px] sm:w-[400px] md:h-[500px] md:w-[500px] ${
-            isDark ? "bg-amber-600/10" : "bg-amber-500/5"
+            isDark ? "bg-indigo-900/10" : "bg-amber-500/5"
           }`}
-        />
-        <div
-          className={`absolute inset-0 ${isDark ? "text-[#f7ebd4]/20 opacity-[0.02]" : "text-[#122b1c]/30 opacity-[0.03]"}`}
-          style={{
-            backgroundImage: "radial-gradient(currentColor 0.6px, transparent 0.6px)",
-            backgroundSize: "28px 28px",
-          }}
         />
       </div>
 
@@ -71,7 +64,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
             />
             <div
               className={`relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-[1.75rem] border shadow-xl transition-transform duration-500 group-hover:scale-105 sm:h-24 sm:w-24 sm:rounded-[2.2rem] ${
-                isDark ? "border-[#d4af37]/20 bg-[#0e241b]" : "border-[#143d28]/20 bg-[#faf6f2]"
+                isDark ? "border-[#d4af37]/30 bg-[#121217]" : "border-[#143d28]/20 bg-[#faf6f2]"
               }`}
             >
               <Image
@@ -88,7 +81,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
             <span
               className={`animate-fade-in inline-block rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-[0.22em] opacity-0 sm:px-4 sm:py-1.5 sm:text-[9px] sm:tracking-[0.3em] ${
                 isDark
-                  ? "border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37]"
+                  ? "border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]"
                   : "border-[#c85a32]/20 bg-[#c85a32]/5 text-[#c85a32]"
               }`}
               style={{ animationFillMode: "forwards", animationDelay: "0.1s" }}
@@ -123,7 +116,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
               onClick={handleNav}
               className={`animate-slide-up flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 rounded-[1.25rem] px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] transition-all hover:scale-[1.02] active:scale-[0.98] opacity-0 sm:min-h-0 sm:gap-3 sm:rounded-[1.5rem] sm:px-6 sm:py-5 sm:text-xs sm:tracking-[0.2em] ${
                 isDark
-                  ? "border border-[#d4af37] bg-[#d4af37] text-[#050d09]"
+                  ? "border border-[#d4af37] bg-[#d4af37] text-[#09090b] shadow-lg shadow-[#d4af37]/15 hover:bg-[#e5be4a]"
                   : "border border-[#143d28] bg-[#143d28] text-[#faf6f2] shadow-lg shadow-[#122b1c]/10"
               }`}
               style={{ animationFillMode: "forwards", animationDelay: "1.2s" }}
@@ -144,7 +137,7 @@ export function LandingClient({ displayName }: { displayName: string }) {
               onClick={handleNav}
               className={`animate-slide-up flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 rounded-[1.25rem] border px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] transition-all active:scale-[0.98] opacity-0 sm:min-h-0 sm:gap-3 sm:rounded-[1.5rem] sm:px-6 sm:py-5 sm:text-xs sm:tracking-[0.2em] ${
                 isDark
-                  ? "border-white/10 bg-[#0e241b]/60 text-[#f7ebd4]/80 hover:bg-[#143d28] hover:text-white"
+                  ? "border-white/10 bg-[#121217]/60 text-[#f7ebd4]/80 hover:bg-[#1a1a24] hover:text-white hover:border-white/20"
                   : "border-[#122b1c]/15 bg-white text-[#122b1c]/80 hover:bg-[#f5f1ea]"
               }`}
               style={{ animationFillMode: "forwards", animationDelay: "1.3s" }}

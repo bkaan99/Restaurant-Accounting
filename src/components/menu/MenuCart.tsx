@@ -85,7 +85,7 @@ export function MenuCart({
           />
           <aside
             className={`relative flex h-full w-full max-w-md flex-col border-l shadow-2xl ${
-              isDark ? "border-white/10 bg-[#07090f] text-slate-100" : "border-slate-200 bg-white text-slate-800"
+              isDark ? "border-white/10 bg-[#09090b] text-slate-100" : "border-slate-200 bg-white text-slate-800"
             }`}
           >
             <div className={`flex items-center justify-between border-b px-5 py-4 ${isDark ? "border-white/10" : "border-slate-200"}`}>
@@ -114,7 +114,7 @@ export function MenuCart({
                   {lines.map((line) => (
                     <li
                       key={line.id}
-                      className={`rounded-2xl border p-4 ${isDark ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-slate-50"}`}
+                      className={`rounded-2xl border p-4 ${isDark ? "border-white/5 bg-[#121217]/80" : "border-slate-200 bg-slate-50"}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>

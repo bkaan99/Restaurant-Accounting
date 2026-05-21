@@ -11,13 +11,13 @@ export function ContactClient({ displayName }: { displayName: string }) {
   return (
     <div
       suppressHydrationWarning
-      className={`min-h-screen bg-grain font-outfit transition-colors duration-500 ${
-        isDark ? "bg-[#050d09] text-[#f7ebd4]" : "bg-[#faf6f2] text-[#122b1c]"
+      className={`min-h-screen font-outfit transition-colors duration-500 ${
+        isDark ? "bg-[#09090b] text-[#f7ebd4]" : "bg-[#faf6f2] text-[#122b1c]"
       }`}
     >
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-emerald-600/10" : "bg-amber-600/5"}`} />
-        <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-amber-600/10" : "bg-emerald-600/5"}`} />
+        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-[#d4af37]/8" : "bg-amber-600/5"}`} />
+        <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-indigo-900/10" : "bg-emerald-600/5"}`} />
       </div>
 
       <PublicNav
@@ -65,7 +65,7 @@ export function ContactClient({ displayName }: { displayName: string }) {
             <Link
               href="/menu"
               className={`rounded-xl px-5 py-2.5 text-center text-sm font-black transition hover:opacity-90 ${
-                isDark ? "bg-[#d4af37] text-[#050d09]" : "bg-[#143d28] text-[#faf6f2]"
+                isDark ? "bg-[#d4af37] text-[#09090b] hover:bg-[#e5be4a]" : "bg-[#143d28] text-[#faf6f2]"
               }`}
             >
               Menüye Dön

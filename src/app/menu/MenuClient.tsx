@@ -106,22 +106,15 @@ export function MenuClient({
   return (
     <div
       suppressHydrationWarning
-      className={`min-h-screen bg-grain selection:bg-emerald-500/10 font-outfit transition-colors duration-500 ${
-        isDark ? "bg-[#050d09] text-[#f7ebd4]" : "bg-[#faf6f2] text-[#122b1c]"
+      className={`min-h-screen selection:bg-emerald-500/10 font-outfit transition-colors duration-500 ${
+        isDark ? "bg-[#09090b] text-[#f7ebd4]" : "bg-[#faf6f2] text-[#122b1c]"
       }`}
     >
       {/* Background Ornaments */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-emerald-600/10" : "bg-amber-600/5"}`} />
-        <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-700/5 blur-[120px]" />
+        <div className={`absolute -top-24 -left-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-[#d4af37]/8" : "bg-amber-600/5"}`} />
+        <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-900/5 blur-[120px]" />
         <div className={`absolute -bottom-24 -right-24 h-96 w-96 rounded-full blur-[100px] ${isDark ? "bg-amber-600/10" : "bg-emerald-600/5"}`} />
-        <div
-          className={`absolute inset-0 ${isDark ? "text-[#f7ebd4]/20 opacity-[0.02]" : "text-[#122b1c]/30 opacity-[0.03]"}`}
-          style={{
-            backgroundImage: "radial-gradient(currentColor 0.5px, transparent 0.5px)",
-            backgroundSize: "24px 24px",
-          }}
-        />
       </div>
 
       <PublicNav
@@ -139,7 +132,7 @@ export function MenuClient({
               onClick={() => setCartOpen(true)}
               className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition duration-300 ${
                 isDark
-                  ? "border-[#f7ebd4]/10 bg-[#0e241b] text-[#f7ebd4] hover:bg-[#143d28]"
+                  ? "border-white/10 bg-[#121217] text-[#f7ebd4] hover:bg-[#181822] hover:border-[#d4af37]/30"
                   : "border-[#122b1c]/10 bg-[#f5f1ea] text-[#122b1c] hover:bg-[#faf6f2]"
               }`}
               title="Sepet"
@@ -161,7 +154,7 @@ export function MenuClient({
       <header className="relative z-10 flex flex-col items-center pt-32 pb-14 px-6">
         <Link href="/" className={`absolute top-8 left-8 hidden h-10 w-10 items-center justify-center rounded-2xl border transition shadow-sm md:flex ${
           isDark 
-            ? "border-[#f7ebd4]/10 bg-[#0e241b]/60 hover:bg-[#143d28] text-[#f7ebd4]" 
+            ? "border-white/10 bg-[#121217]/60 hover:bg-[#181822] text-[#f7ebd4] hover:border-white/20" 
             : "border-[#122b1c]/10 bg-white/50 hover:bg-[#f5f1ea] text-[#122b1c]"
         }`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,7 +207,7 @@ export function MenuClient({
         <div className="mb-16 flex flex-col items-center gap-6">
           <div className={`flex h-11 w-full max-w-sm items-center rounded-xl border px-4 transition-all duration-300 ${
             isDark 
-              ? "border-[#f7ebd4]/15 bg-[#0e241b]/60 focus-within:border-[#d4af37]/45 shadow-[inset_0_1px_3px_rgba(0,0,0,0.4)]" 
+              ? "border-white/10 bg-[#121217]/60 focus-within:border-[#d4af37]/50 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]" 
               : "border-[#122b1c]/10 bg-[#f5f1ea]/80 focus-within:border-[#143d28]/35 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
           }`}>
             <svg className={`h-4 w-4 ${isDark ? "text-[#f7ebd4]/45" : "text-[#122b1c]/45"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -239,10 +232,10 @@ export function MenuClient({
                 className={`shrink-0 rounded-lg px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                   activeCategory === cat
                     ? isDark
-                      ? "bg-[#d4af37] text-[#050d09] border border-[#d4af37] shadow-lg shadow-[#d4af37]/10"
+                      ? "bg-[#d4af37] text-[#09090b] border border-[#d4af37] shadow-lg shadow-[#d4af37]/10"
                       : "bg-[#143d28] text-[#faf6f2] border border-[#143d28] shadow-lg shadow-[#143d28]/10"
                     : isDark
-                    ? "bg-[#0e241b]/60 text-[#f7ebd4]/60 border border-white/5 hover:bg-[#0e241b] hover:text-[#f7ebd4] shadow-sm"
+                    ? "bg-[#121217]/60 text-[#f7ebd4]/70 border border-white/5 hover:bg-[#181822] hover:text-[#f7ebd4] hover:border-white/10 shadow-sm"
                     : "bg-[#f5f1ea]/80 text-[#122b1c]/60 border border-[#122b1c]/10 hover:bg-[#f5ebd7] hover:text-[#122b1c] shadow-sm"
                 }`}
               >
@@ -279,24 +272,13 @@ export function MenuClient({
                 {/* Items Box with Premium Menu Card Aesthetic */}
                 <div className={`relative overflow-hidden rounded-[1.8rem] border p-6 sm:p-9 shadow-sm transition-all duration-300 ${
                   isDark 
-                    ? "border-[#d4af37]/20 bg-gradient-to-b from-[#0e241b] via-[#091b13] to-[#050d09] shadow-none backdrop-blur-sm" 
+                    ? "border-[#d4af37]/20 bg-gradient-to-b from-[#13131a] via-[#0e0e13] to-[#09090c] shadow-2xl shadow-black/45 backdrop-blur-sm" 
                     : "border-[#143d28]/15 bg-gradient-to-b from-[#fbf9f4] via-[#f7f2ea] to-[#fbf9f4] shadow-md shadow-[#122b1c]/5"
                 }`}>
                   {/* Dashed Inner Frame */}
                   <div className={`absolute inset-2 sm:inset-3 border border-dashed rounded-[1.4rem] pointer-events-none ${
                     isDark ? "border-[#d4af37]/10" : "border-[#143d28]/10"
                   }`} />
-                  
-                  {/* Subtle decorative dot pattern */}
-                  <div
-                    className={`pointer-events-none absolute inset-0 opacity-[0.03] ${
-                      isDark ? "text-white" : "text-slate-900"
-                    }`}
-                    style={{
-                      backgroundImage: "radial-gradient(currentColor 0.6px, transparent 0.6px)",
-                      backgroundSize: "20px 20px",
-                    }}
-                  />
                   
                   <div className="grid gap-7 sm:grid-cols-1">
                     {items.map((item) => (
@@ -347,7 +329,7 @@ export function MenuClient({
                                     addedFlashId === item.id
                                       ? "bg-[#10b981] text-white"
                                       : isDark
-                                      ? "border border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37] hover:bg-[#d4af37]/20 hover:text-white"
+                                      ? "border border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37] hover:bg-[#d4af37] hover:text-[#09090b] shadow-sm shadow-[#d4af37]/5"
                                       : "border border-[#143d28]/20 bg-[#143d28]/5 text-[#143d28] hover:bg-[#143d28] hover:text-[#faf6f2]"
                                   }`}
                                 >
@@ -370,7 +352,7 @@ export function MenuClient({
                 {/* Decorative Vintage Stamp / Badge */}
                 <div className={`absolute -bottom-4 -right-4 flex h-14 w-14 items-center justify-center rounded-full border shadow-md transition-transform duration-500 hover:rotate-12 ${
                   isDark 
-                    ? "border-[#d4af37]/35 bg-[#0e241b] text-[#d4af37] shadow-black/40" 
+                    ? "border-[#d4af37]/35 bg-[#121217] text-[#d4af37] shadow-black/45 hover:border-[#d4af37]" 
                     : "border-[#143d28]/20 bg-[#faf6f2] text-[#143d28] shadow-[#122b1c]/10"
                 }`}>
                   <span className="text-xl">
